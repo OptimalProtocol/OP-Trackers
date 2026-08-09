@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>OP · Progressive Overload Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--cyan:#00B4D8;--cyan-dim:rgba(0,180,216,0.12);--cyan-border:rgba(0,180,216,0.35);--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--surface3:#222;--border:rgba(255,255,255,0.07);--text:#f0f0f0;--muted:#666;--dim:#999;--red:#ff4d4d;--gold:#FFB800;--green:#00C896;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.4;min-height:100vh;overflow-x:hidden;}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.nav-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.1em;padding:10px 4px 8px;text-align:center;text-transform:uppercase;transition:color 0.15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.nav-btn.active{color:var(--cyan);}
+.nav-icon{font-size:18px;line-height:1;}
+.app-header{position:sticky;top:0;z-index:50;background:rgba(10,10,10,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--cyan);text-transform:uppercase;}
+.header-sub{font-size:11px;color:var(--muted);}
+.page{display:none;padding-bottom:90px;min-height:100vh;}
+.page.active{display:block;}
+.section{padding:20px 16px 0;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+.card-body{padding:14px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.field-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;padding:10px 12px;width:100%;outline:none;transition:border-color 0.15s;-webkit-appearance:none;appearance:none;}
+.field-input:focus{border-color:var(--cyan-border);}
+.field-input::placeholder{color:var(--muted);}
+select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-color:var(--surface2);padding-right:32px;cursor:pointer;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.toggle-group{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.toggle-opt{flex:1;background:none;border:none;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:8px;text-align:center;transition:all 0.15s;}
+.toggle-opt.active{background:var(--cyan);color:#000;}
+.rpe-table{width:100%;border-collapse:collapse;}
+.rpe-table td{padding:6px 8px;font-size:12px;border-bottom:1px solid var(--border);}
+.rpe-table td:first-child{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap;width:60px;}
+.rpe-table tr:last-child td{border-bottom:none;}
+.search-wrap{padding:16px 16px 0;position:sticky;top:57px;z-index:40;background:var(--bg);padding-bottom:8px;}
+.search-input{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:10px 14px 10px 38px;width:100%;outline:none;transition:border-color 0.15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;}
+.search-input:focus{border-color:var(--cyan-border);}
+.filter-row{display:flex;gap:8px;overflow-x:auto;padding:0 16px 0;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;font-size:11px;font-weight:600;padding:5px 12px;white-space:nowrap;transition:all 0.15s;-webkit-appearance:none;appearance:none;font-family:'Inter',sans-serif;}
+.filter-chip.active{background:var(--cyan-dim);border-color:var(--cyan-border);color:var(--cyan);}
+.exercise-group{padding:10px 16px 0;}
+.group-label{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);padding:0 0 8px;}
+.ex-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.ex-item.custom-ex{border-color:rgba(0,180,216,0.2);}
+.ex-name{font-size:13px;font-weight:500;}
+.ex-meta{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.ex-badge{font-size:9px;font-weight:700;letter-spacing:0.06em;padding:3px 7px;border-radius:4px;text-transform:uppercase;}
+.badge-compound{background:rgba(0,180,216,0.15);color:var(--cyan);}
+.badge-isolation{background:rgba(255,184,0,0.15);color:var(--gold);}
+.badge-stability{background:rgba(0,200,150,0.15);color:var(--green);}
+.badge-custom{background:rgba(0,180,216,0.1);color:var(--cyan);border:1px solid var(--cyan-border);}
+.add-ex-form{background:var(--surface);border:1px solid var(--cyan-border);border-radius:12px;padding:14px;margin:12px 16px 0;}
+.add-ex-title{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;}
+.btn{border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:10px 16px;text-align:center;transition:opacity 0.15s;border:none;display:inline-block;}
+.btn:active{opacity:0.7;}
+.btn-primary{background:var(--cyan);color:#000;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-full{width:100%;}
+.btn-sm{font-size:11px;padding:7px 12px;border-radius:8px;}
+.session-meta{padding:16px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.meta-full{grid-column:1/-1;}
+.copy-last-btn{margin:12px 16px 0;width:calc(100% - 32px);background:var(--surface);border:1px dashed var(--cyan-border);border-radius:10px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:11px;text-align:center;letter-spacing:0.05em;transition:background 0.15s;display:block;}
+.copy-last-btn:active{background:var(--cyan-dim);}
+.ex-list{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px;}
+.ex-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.ex-card-header{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);}
+.ex-num{font-size:10px;font-weight:700;color:var(--cyan);min-width:22px;}
+.ex-select{flex:1;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center;padding-right:16px;}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:4px;transition:color 0.15s;}
+.del-btn:active{color:var(--red);}
+.ex-table{width:100%;}
+.tbl-head{display:grid;grid-template-columns:48px 54px repeat(5,1fr) 42px;padding:5px 14px;border-bottom:1px solid var(--border);}
+.th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-align:center;}
+.th:first-child{text-align:left;}
+.ex-row{display:grid;grid-template-columns:48px 54px repeat(5,1fr) 42px;padding:7px 14px;align-items:center;gap:3px;}
+.ex-row.last-row{background:rgba(255,255,255,0.025);border-bottom:1px solid var(--border);}
+.ex-row.this-row{background:var(--cyan-dim);}
+.row-tag{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;}
+.row-tag.last{color:var(--muted);}
+.row-tag.this{color:var(--cyan);}
+.cell-in{background:rgba(255,255,255,0.04);border:1px solid transparent;border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:5px 3px;text-align:center;width:100%;outline:none;transition:border-color 0.15s;-webkit-appearance:none;appearance:none;}
+.cell-in:focus{border-color:var(--cyan-border);background:rgba(0,180,216,0.08);}
+.last-row .cell-in{color:var(--dim);background:transparent;}
+.last-row .cell-in:focus{border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);}
+.notes-row{padding:7px 14px 9px;border-top:1px solid var(--border);}
+.notes-in{background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--dim);font-family:'Inter',sans-serif;font-size:11px;outline:none;padding:4px 0;width:100%;transition:border-color 0.15s;}
+.notes-in:focus{border-color:var(--cyan-border);color:var(--text);}
+.notes-in::placeholder{color:var(--muted);}
+.add-ex-btn{margin:10px 16px 0;width:calc(100% - 32px);background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:12px;text-align:center;transition:border-color 0.15s,color 0.15s;display:block;}
+.add-ex-btn:active{border-color:var(--cyan-border);color:var(--cyan);}
+.save-bar{padding:10px 16px;display:flex;gap:10px;margin-top:12px;}
+.prog-list{padding:12px 16px 0;}
+.prog-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:13px 14px;cursor:pointer;transition:border-color 0.15s;}
+.prog-item:active{border-color:var(--cyan-border);}
+.prog-item-name{font-size:13px;font-weight:600;margin-bottom:4px;}
+.prog-item-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.prog-stat{font-size:11px;color:var(--dim);}
+.prog-stat span{color:var(--text);font-weight:600;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s;padding-bottom:env(safe-area-inset-bottom);}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:5;}
+.modal-title{font-size:14px;font-weight:700;}
+.modal-close-btn{background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;font-size:13px;padding:5px 12px;font-family:'Inter',sans-serif;}
+.modal-body{padding:16px;}
+.chart-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+.chart-title{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.chart-svg{width:100%;overflow:visible;}
+.hist-table{width:100%;border-collapse:collapse;}
+.hist-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.hist-table td{font-size:12px;padding:8px 8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
+.hist-table td:first-child{font-family:'Inter',sans-serif;color:var(--dim);}
+.hist-table tr:last-child td{border-bottom:none;}
+.pr-load-cell{color:var(--cyan);font-weight:700;}
+.pr-rep-cell{color:var(--gold);font-weight:700;}
+.pr-both-cell{color:var(--green);font-weight:700;}
+.pr-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;display:inline-block;}
+.pr-badge-load{background:rgba(0,180,216,0.15);color:var(--cyan);}
+.pr-badge-rep{background:rgba(255,184,0,0.15);color:var(--gold);}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--cyan);color:#000;font-size:11px;font-weight:700;letter-spacing:0.05em;padding:7px 16px;border-radius:20px;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;z-index:999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted);}
+.empty-icon{font-size:36px;margin-bottom:12px;}
+.empty-text{font-size:13px;line-height:1.6;}
+.data-btns{display:flex;gap:10px;margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <span class="logo">Optimal Protocol</span>
+  <span class="header-sub" id="header-sub">Settings</span>
+</div>
+
+<!-- TAB 1: SETTINGS -->
+<div class="page active" id="page-settings">
+  <div class="section">
+    <div class="section-title">Programme Setup</div>
+    <div class="card"><div class="card-body">
+      <div class="field">
+        <label class="field-label">Trainee Name</label>
+        <input type="text" class="field-input" id="s-name" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label class="field-label">Training Block</label>
+        <input type="text" class="field-input" id="s-block" placeholder="e.g. Block 1 — Hypertrophy">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">Block Start Date</label>
+          <input type="date" class="field-input" id="s-start">
+        </div>
+        <div class="field">
+          <label class="field-label">Block Length</label>
+          <select class="field-input" id="s-weeks">
+            <option value="8">8 weeks</option>
+            <option value="10" selected>10 weeks</option>
+            <option value="12">12 weeks</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Weight Unit</label>
+        <div class="toggle-group">
+          <button class="toggle-opt active" id="unit-kg" data-unit="kg">kg</button>
+          <button class="toggle-opt" id="unit-lbs" data-unit="lbs">lbs</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Data Backup</div>
+    <div class="card"><div class="card-body">
+      <p style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.6;">Your data is saved in this browser. Export regularly to back it up. Import to restore on a new device.</p>
+      <div class="data-btns">
+        <button class="btn btn-secondary" style="flex:1" id="export-btn">Export Data</button>
+        <button class="btn btn-secondary" style="flex:1" id="import-btn">Import Data</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none">
+    </div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">RPE Reference</div>
+    <div class="card"><div class="card-body" style="padding:0;">
+      <table class="rpe-table">
+        <tr><td>RPE 10</td><td>Muscular failure — could not complete another rep</td></tr>
+        <tr><td>RPE 9</td><td>One rep remaining — <strong>target for all working sets</strong></td></tr>
+        <tr><td>RPE 8</td><td>Two reps remaining</td></tr>
+        <tr><td>RPE 7</td><td>Three reps remaining</td></tr>
+        <tr><td>RPE 6–7</td><td>Deload intensity — use when deload week is triggered only</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Progression Rules</div>
+    <div class="card"><div class="card-body" style="padding:0;">
+      <table class="rpe-table">
+        <tr><td>Rep increment</td><td>+1 rep per working set. Keep load fixed until ceiling is hit</td></tr>
+        <tr><td>Load increase</td><td>All sets at rep ceiling × 2 consecutive sessions</td></tr>
+        <tr><td>Load amount</td><td>Smallest available increment (e.g. 2.5 kg each side)</td></tr>
+        <tr><td>Stall</td><td>No rep improvement × 2 consecutive sessions — check RPE first</td></tr>
+        <tr><td>Deload trigger</td><td>No progression × 3+ consecutive weeks at RPE 9</td></tr>
+        <tr><td>Deload protocol</td><td>50% of working sets at RPE 6–7. Return at full load next week</td></tr>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<!-- TAB 2: LIBRARY -->
+<div class="page" id="page-library">
+  <div class="search-wrap">
+    <input type="text" class="search-input" id="lib-search" placeholder="Search exercises…">
+    <div class="filter-row" id="filter-row" style="margin-top:8px;"></div>
+  </div>
+  <div class="add-ex-form" style="margin-top:12px;">
+    <div class="add-ex-title">+ Add Custom Exercise</div>
+    <div class="field">
+      <label class="field-label">Exercise Name</label>
+      <input type="text" class="field-input" id="custom-name" placeholder="e.g. Sissy Squat Machine">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Body Part</label>
+        <select class="field-input" id="custom-group">
+          <option>Quads</option><option>Hamstrings</option><option>Glutes</option><option>Calves</option>
+          <option>Back – Lats</option><option>Back – Mid</option><option>Shoulders</option><option>Chest</option>
+          <option>Biceps</option><option>Triceps</option><option>Abs &amp; Core</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Type</label>
+        <select class="field-input" id="custom-type">
+          <option>Compound</option><option>Isolation</option><option>Stability</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="add-custom-btn">Add to Library</button>
+  </div>
+  <div id="lib-list"></div>
+</div>
+
+<!-- TAB 3: SESSION -->
+<div class="page" id="page-session">
+  <div class="session-meta">
+    <div class="field">
+      <label class="field-label">Date</label>
+      <input type="date" class="field-input" id="sess-date">
+    </div>
+    <div class="field">
+      <label class="field-label">Workout</label>
+      <select class="field-input" id="sess-workout">
+        <option value="" disabled selected>Select</option>
+        <option>Push</option><option>Pull</option><option>Legs</option>
+        <option>Upper Body</option><option>Lower Body</option><option>Full Body</option>
+      </select>
+    </div>
+    <div class="field meta-full">
+      <label class="field-label">Session Notes</label>
+      <input type="text" class="field-input" id="sess-notes" placeholder="Energy, sleep, anything relevant…">
+    </div>
+  </div>
+  <button class="copy-last-btn" id="copy-last-btn">↩ Copy exercises from last session of this type</button>
+  <div class="ex-list" id="ex-list"></div>
+  <button class="add-ex-btn" id="add-ex-btn">+ Add Exercise</button>
+  <div class="save-bar">
+    <button class="btn btn-secondary" style="flex:1" id="clear-btn">Clear</button>
+    <button class="btn btn-primary" style="flex:2" id="save-btn">Save Session</button>
+  </div>
+</div>
+
+<!-- TAB 4: PROGRESSION -->
+<div class="page" id="page-progress">
+  <div class="section"><div class="section-title">Exercise Progression</div></div>
+  <div class="prog-list" id="prog-list"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" data-page="settings"><span class="nav-icon">⚙️</span>Settings</button>
+  <button class="nav-btn" data-page="library"><span class="nav-icon">📋</span>Library</button>
+  <button class="nav-btn" data-page="session"><span class="nav-icon">📅</span>Session</button>
+  <button class="nav-btn" data-page="progress"><span class="nav-icon">📈</span>Progress</button>
+</nav>
+
+<!-- PROGRESSION MODAL -->
+<div class="modal-overlay" id="prog-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-ex-name">Exercise</span>
+      <button class="modal-close-btn" id="modal-close-btn">Close</button>
+    </div>
+    <div class="modal-body">
+      <div class="chart-wrap">
+        <div class="chart-title">Load &amp; Reps Over Time</div>
+        <svg class="chart-svg" id="prog-chart" height="160"></svg>
+        <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;"></span>Normal</span>
+          <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--cyan);border:2px solid var(--gold);margin-right:4px;vertical-align:middle;"></span>Load PR</span>
+          <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--gold);margin-right:4px;vertical-align:middle;"></span>Rep PR</span>
+          <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle;"></span>Both PRs</span>
+          <span style="font-size:10px;color:var(--muted)">Dot size = avg reps</span>
+        </div>
+      </div>
+      <div class="chart-title" style="margin-bottom:10px;">All Sessions</div>
+      <div style="overflow-x:auto;">
+        <table class="hist-table" id="hist-table">
+          <thead><tr>
+            <th>Date</th><th>Load</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th>RPE</th><th>PR</th>
+          </tr></thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+
+<script>
+// ── EXERCISE DATA ──────────────────────────────────────
+var BUILT_IN = [
+  {id:1,name:"Barbell Back Squat",group:"Quads",muscles:"Quadriceps, Glutes, Hamstrings",type:"Compound"},
+  {id:2,name:"Hack Squat Machine",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:3,name:"Leg Press",group:"Quads",muscles:"Quadriceps, Glutes, Hamstrings",type:"Compound"},
+  {id:4,name:"Leg Extension",group:"Quads",muscles:"Quadriceps",type:"Isolation"},
+  {id:5,name:"DB Bulgarian Split Squat",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:6,name:"DB Goblet Squat",group:"Quads",muscles:"Quadriceps, Glutes, Hamstrings",type:"Compound"},
+  {id:7,name:"DB Walking Lunge",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:8,name:"DB Reverse Lunge",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:9,name:"Step-Up DB",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:10,name:"Reverse Nordic Curl",group:"Quads",muscles:"Quadriceps",type:"Compound"},
+  {id:11,name:"Sissy Squat",group:"Quads",muscles:"Quadriceps",type:"Isolation"},
+  {id:12,name:"Resistance Band Squat",group:"Quads",muscles:"Quadriceps, Glutes, Hamstrings",type:"Compound"},
+  {id:13,name:"BW Reverse Lunge",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:14,name:"BW Squat (5-sec eccentric)",group:"Quads",muscles:"Quadriceps, Glutes, Hamstrings",type:"Compound"},
+  {id:15,name:"Wall Sit Isometric",group:"Quads",muscles:"Quadriceps",type:"Isolation"},
+  {id:16,name:"Terminal Knee Extension (band)",group:"Quads",muscles:"Quadriceps",type:"Isolation"},
+  {id:17,name:"Romanian Deadlift",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:18,name:"Seated Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:19,name:"Lying Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:20,name:"DB Stiff-Leg Deadlift",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:21,name:"Stability Ball Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:22,name:"Single-Leg DB RDL",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:23,name:"Nordic Hamstring Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:24,name:"Band Good Morning",group:"Hamstrings",muscles:"Hamstrings, Glutes, Lumbar",type:"Compound"},
+  {id:25,name:"Glute Ham Raise",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:26,name:"Barbell Hip Thrust",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:27,name:"DB Hip Thrust",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:28,name:"Band Hip Thrust",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:29,name:"Single-Leg Glute Bridge",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:30,name:"Glute Bridge BW",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:31,name:"Donkey Kick BW",group:"Glutes",muscles:"Glutes",type:"Isolation"},
+  {id:32,name:"Cable Pull-Through",group:"Glutes",muscles:"Glutes, Hamstrings",type:"Compound"},
+  {id:33,name:"Standing Calf Raise",group:"Calves",muscles:"Gastrocnemius",type:"Isolation"},
+  {id:34,name:"Seated Calf Raise",group:"Calves",muscles:"Soleus",type:"Isolation"},
+  {id:35,name:"Leg Press Calf Raise",group:"Calves",muscles:"Gastrocnemius, Soleus",type:"Isolation"},
+  {id:36,name:"Single-Leg Calf Raise (step)",group:"Calves",muscles:"Gastrocnemius, Soleus",type:"Isolation"},
+  {id:37,name:"Single-Leg BW Calf Raise",group:"Calves",muscles:"Gastrocnemius, Soleus",type:"Isolation"},
+  {id:38,name:"Band Calf Raise",group:"Calves",muscles:"Gastrocnemius, Soleus",type:"Isolation"},
+  {id:39,name:"Pull-Up / Chin-Up",group:"Back \u2013 Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:40,name:"Lat Pulldown (Neutral Grip)",group:"Back \u2013 Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:41,name:"Lat Pulldown (Wide Grip)",group:"Back \u2013 Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:42,name:"Straight-Arm Pulldown",group:"Back \u2013 Lats",muscles:"Lats",type:"Isolation"},
+  {id:43,name:"DB Pullover",group:"Back \u2013 Lats",muscles:"Lats, Serratus",type:"Isolation"},
+  {id:44,name:"Band Straight-Arm Pulldown",group:"Back \u2013 Lats",muscles:"Lats",type:"Isolation"},
+  {id:45,name:"Inverted Row",group:"Back \u2013 Lats",muscles:"Mid-Back, Lats, Biceps",type:"Compound"},
+  {id:46,name:"DB Single-Arm Row",group:"Back \u2013 Mid",muscles:"Lats, Mid-Back",type:"Compound"},
+  {id:47,name:"Chest-Supported DB Row",group:"Back \u2013 Mid",muscles:"Mid-Back, Rhomboids, Lats",type:"Compound"},
+  {id:48,name:"Barbell Bent-Over Row",group:"Back \u2013 Mid",muscles:"Mid-Back, Lats, Biceps",type:"Compound"},
+  {id:49,name:"Seated Cable Row",group:"Back \u2013 Mid",muscles:"Mid-Back, Rhomboids, Lats",type:"Compound"},
+  {id:50,name:"T-Bar Row",group:"Back \u2013 Mid",muscles:"Mid-Back, Lats",type:"Compound"},
+  {id:51,name:"Resistance Band Row",group:"Back \u2013 Mid",muscles:"Mid-Back, Rhomboids, Lats",type:"Compound"},
+  {id:52,name:"Weighted Back Extension",group:"Back \u2013 Mid",muscles:"Erector Spinae, Glutes",type:"Compound"},
+  {id:53,name:"Arnold Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:54,name:"DB Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:55,name:"Barbell Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:56,name:"Machine Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:57,name:"Cable Lateral Raise",group:"Shoulders",muscles:"Medial Delt",type:"Isolation"},
+  {id:58,name:"DB Lateral Raise",group:"Shoulders",muscles:"Medial Delt",type:"Isolation"},
+  {id:59,name:"Machine Lateral Raise",group:"Shoulders",muscles:"Medial Delt",type:"Isolation"},
+  {id:60,name:"Band Lateral Raise",group:"Shoulders",muscles:"Medial Delt",type:"Isolation"},
+  {id:61,name:"Prone Y Raise BW",group:"Shoulders",muscles:"Lower Trapezius, Rear Delt",type:"Isolation"},
+  {id:62,name:"Cable Face Pull",group:"Shoulders",muscles:"Rear Delt, Mid Trap, Ext Rotators",type:"Isolation"},
+  {id:63,name:"DB Rear Delt Fly",group:"Shoulders",muscles:"Rear Delt, Mid Trap",type:"Isolation"},
+  {id:64,name:"Band Face Pull",group:"Shoulders",muscles:"Rear Delt, Mid Trap, Ext Rotators",type:"Isolation"},
+  {id:65,name:"Band Pull-Apart",group:"Shoulders",muscles:"Rear Delt, Mid Trap, Ext Rotators",type:"Isolation"},
+  {id:66,name:"Reverse Pec Dec Machine",group:"Shoulders",muscles:"Rear Delt, Mid Trap",type:"Isolation"},
+  {id:67,name:"Pike Push-Up",group:"Shoulders",muscles:"Ant Delt, Triceps",type:"Compound"},
+  {id:68,name:"Incline DB Press",group:"Chest",muscles:"Upper Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:69,name:"DB Bench Press",group:"Chest",muscles:"Pec Major, Ant Delt, Triceps",type:"Compound"},
+  {id:70,name:"Barbell Bench Press",group:"Chest",muscles:"Pec Major, Ant Delt, Triceps",type:"Compound"},
+  {id:71,name:"Machine Chest Press",group:"Chest",muscles:"Pec Major, Ant Delt, Triceps",type:"Compound"},
+  {id:72,name:"Cable Chest Fly",group:"Chest",muscles:"Pec Major",type:"Isolation"},
+  {id:73,name:"Pec Dec Machine",group:"Chest",muscles:"Pec Major",type:"Isolation"},
+  {id:74,name:"Weighted Push-Up",group:"Chest",muscles:"Pec Major, Ant Delt, Triceps",type:"Compound"},
+  {id:75,name:"Push-Up",group:"Chest",muscles:"Pec Major, Ant Delt, Triceps",type:"Compound"},
+  {id:76,name:"Incline Push-Up (feet elev.)",group:"Chest",muscles:"Upper Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:77,name:"Decline Push-Up (feet elev.)",group:"Chest",muscles:"Lower Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:78,name:"Resistance Band Fly",group:"Chest",muscles:"Pec Major",type:"Isolation"},
+  {id:79,name:"Standing Cable Curl (behind body)",group:"Biceps",muscles:"Biceps (long head)",type:"Isolation"},
+  {id:80,name:"Hammer Preacher Curl",group:"Biceps",muscles:"Biceps, Brachialis",type:"Isolation"},
+  {id:81,name:"Incline DB Curl",group:"Biceps",muscles:"Biceps (long head)",type:"Isolation"},
+  {id:82,name:"Preacher Curl (EZ Bar or DB)",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:83,name:"Hammer Curl",group:"Biceps",muscles:"Brachialis, Brachioradialis",type:"Isolation"},
+  {id:84,name:"EZ Bar Curl",group:"Biceps",muscles:"Biceps, Brachialis",type:"Isolation"},
+  {id:85,name:"DB Standing Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:86,name:"Spider Curl",group:"Biceps",muscles:"Biceps (short head)",type:"Isolation"},
+  {id:87,name:"Band Bicep Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:88,name:"Standing Band Curl (behind body)",group:"Biceps",muscles:"Biceps (long head)",type:"Isolation"},
+  {id:89,name:"Band Hammer Curl",group:"Biceps",muscles:"Brachialis, Brachioradialis",type:"Isolation"},
+  {id:90,name:"Cable Overhead Triceps Ext.",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:91,name:"Cable Triceps Pushdown (rope)",group:"Triceps",muscles:"Triceps (lateral head)",type:"Isolation"},
+  {id:92,name:"Dip (Triceps emphasis)",group:"Triceps",muscles:"Triceps, Pec Minor",type:"Compound"},
+  {id:93,name:"DB Overhead Triceps Ext.",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:94,name:"EZ Bar Skull Crusher",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:95,name:"Close-Grip Bench Press",group:"Triceps",muscles:"Triceps, Pec Major",type:"Compound"},
+  {id:96,name:"Close-Grip Push-Up",group:"Triceps",muscles:"Triceps, Pec Major",type:"Compound"},
+  {id:97,name:"Diamond Push-Up",group:"Triceps",muscles:"Triceps, Pec Major",type:"Compound"},
+  {id:98,name:"Band Overhead Triceps Ext.",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:99,name:"Band Triceps Pushdown",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:100,name:"Bench Dip",group:"Triceps",muscles:"Triceps, Pec Minor",type:"Compound"},
+  {id:101,name:"Dead Bug",group:"Abs & Core",muscles:"Core, Transverse Abdominis",type:"Stability"},
+  {id:102,name:"Plank",group:"Abs & Core",muscles:"Core, Anterior Chain",type:"Stability"},
+  {id:103,name:"Side Plank",group:"Abs & Core",muscles:"Obliques, Core",type:"Stability"},
+  {id:104,name:"Pallof Press",group:"Abs & Core",muscles:"Core (anti-rotation)",type:"Stability"},
+  {id:105,name:"Hollow Body Hold",group:"Abs & Core",muscles:"Core, Anterior Chain",type:"Stability"},
+  {id:106,name:"Hanging Knee Raise",group:"Abs & Core",muscles:"Abs, Hip Flexors",type:"Isolation"},
+  {id:107,name:"Hanging Leg Raise",group:"Abs & Core",muscles:"Abs, Hip Flexors",type:"Isolation"},
+  {id:108,name:"Reverse Crunch",group:"Abs & Core",muscles:"Lower Abs, Hip Flexors",type:"Isolation"},
+  {id:109,name:"BW Crunch",group:"Abs & Core",muscles:"Upper Abs",type:"Isolation"},
+  {id:110,name:"Weighted Crunch",group:"Abs & Core",muscles:"Upper Abs",type:"Isolation"},
+  {id:111,name:"Bicycle Crunch",group:"Abs & Core",muscles:"Obliques, Abs",type:"Isolation"},
+  {id:112,name:"Mountain Climber",group:"Abs & Core",muscles:"Core, Hip Flexors",type:"Compound"},
+  {id:113,name:"Cable Crunch",group:"Abs & Core",muscles:"Upper Abs",type:"Isolation"},
+  {id:114,name:"DB Russian Twist",group:"Abs & Core",muscles:"Obliques",type:"Isolation"},
+  {id:115,name:"Captain's Chair Knee Raise",group:"Abs & Core",muscles:"Abs, Hip Flexors",type:"Isolation"},
+  {id:116,name:"Bird Dog",group:"Abs & Core",muscles:"Core, Erector Spinae",type:"Stability"}
+];
+
+// ── STATE ──────────────────────────────────────────────
+var settings = {name:'',block:'',start:'',weeks:'10',unit:'kg'};
+var customExercises = [];
+var sessionHistory = [];
+var currentSession = {date:'',workout:'',notes:'',exercises:[]};
+var activeLibFilter = 'All';
+var exCount = 0;
+
+function allExercises(){ return BUILT_IN.concat(customExercises); }
+
+function lsGet(k){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){return null;} }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+function loadAll(){
+  var s=lsGet('op-settings'); if(s) settings=s;
+  var c=lsGet('op-custom'); if(c) customExercises=c;
+  var h=lsGet('op-history'); if(h) sessionHistory=h;
+  var cs=lsGet('op-current'); if(cs) currentSession=cs;
+  applySettings();
+  initSession();
+}
+
+// ── NAVIGATION ─────────────────────────────────────────
+var PAGE_LABELS = {settings:'Settings',library:'Exercise Library',session:'Session Log',progress:'Exercise Progression'};
+
+document.querySelectorAll('.nav-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var page = btn.getAttribute('data-page');
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('page-'+page).classList.add('active');
+    btn.classList.add('active');
+    document.getElementById('header-sub').textContent = PAGE_LABELS[page] || page;
+    if(page==='library') renderLibrary();
+    if(page==='progress') renderProgression();
+  });
+});
+
+// ── SETTINGS ───────────────────────────────────────────
+function applySettings(){
+  if(settings.name) document.getElementById('s-name').value=settings.name;
+  if(settings.block) document.getElementById('s-block').value=settings.block;
+  if(settings.start) document.getElementById('s-start').value=settings.start;
+  if(settings.weeks) document.getElementById('s-weeks').value=settings.weeks;
+  setUnit(settings.unit||'kg');
+}
+
+function saveSettings(){
+  settings.name=document.getElementById('s-name').value;
+  settings.block=document.getElementById('s-block').value;
+  settings.start=document.getElementById('s-start').value;
+  settings.weeks=document.getElementById('s-weeks').value;
+  lsSet('op-settings',settings);
+}
+
+function setUnit(u){
+  settings.unit=u;
+  document.getElementById('unit-kg').classList.toggle('active',u==='kg');
+  document.getElementById('unit-lbs').classList.toggle('active',u==='lbs');
+  lsSet('op-settings',settings);
+}
+
+document.getElementById('s-name').addEventListener('input',saveSettings);
+document.getElementById('s-block').addEventListener('input',saveSettings);
+document.getElementById('s-start').addEventListener('change',saveSettings);
+document.getElementById('s-weeks').addEventListener('change',saveSettings);
+
+document.getElementById('unit-kg').addEventListener('click',function(){ setUnit('kg'); });
+document.getElementById('unit-lbs').addEventListener('click',function(){ setUnit('lbs'); });
+
+// Export / Import
+document.getElementById('export-btn').addEventListener('click', function(){
+  var data = {settings:settings, customExercises:customExercises, sessionHistory:sessionHistory, currentSession:currentSession};
+  var blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href=url; a.download='op-tracker-backup.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported ✓');
+});
+
+document.getElementById('import-btn').addEventListener('click', function(){
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', function(e){
+  var file = e.target.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      var data = JSON.parse(ev.target.result);
+      if(data.settings) settings=data.settings;
+      if(data.customExercises) customExercises=data.customExercises;
+      if(data.sessionHistory) sessionHistory=data.sessionHistory;
+      if(data.currentSession) currentSession=data.currentSession;
+      lsSet('op-settings',settings);
+      lsSet('op-custom',customExercises);
+      lsSet('op-history',sessionHistory);
+      lsSet('op-current',currentSession);
+      applySettings();
+      initSession();
+      showToast('Data restored ✓');
+    }catch(err){ showToast('Import failed — invalid file'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+});
+
+// ── LIBRARY ────────────────────────────────────────────
+var GROUPS = ['All','Quads','Hamstrings','Glutes','Calves','Back \u2013 Lats','Back \u2013 Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
+
+document.getElementById('lib-search').addEventListener('input', renderLibrary);
+
+document.getElementById('add-custom-btn').addEventListener('click', function(){
+  var name = document.getElementById('custom-name').value.trim();
+  if(!name){ showToast('Enter exercise name'); return; }
+  var group = document.getElementById('custom-group').value;
+  var type = document.getElementById('custom-type').value;
+  customExercises.push({id:Date.now(),name:name,group:group,muscles:group,type:type,custom:true});
+  lsSet('op-custom',customExercises);
+  document.getElementById('custom-name').value='';
+  renderLibrary();
+  showToast('Exercise added \u2713');
+});
+
+function renderLibrary(){
+  var q=(document.getElementById('lib-search').value||'').toLowerCase();
+  // Filter chips
+  var fr=document.getElementById('filter-row');
+  fr.innerHTML=GROUPS.map(function(g){
+    return '<button class="filter-chip'+(activeLibFilter===g?' active':'')+'" data-grp="'+g+'">'+g+'</button>';
+  }).join('');
+  fr.querySelectorAll('.filter-chip').forEach(function(chip){
+    chip.addEventListener('click',function(){
+      activeLibFilter=chip.getAttribute('data-grp');
+      renderLibrary();
+    });
+  });
+
+  var filtered = allExercises().filter(function(e){
+    var mq=!q||e.name.toLowerCase().indexOf(q)>-1||(e.muscles||'').toLowerCase().indexOf(q)>-1;
+    var mg=activeLibFilter==='All'||e.group===activeLibFilter;
+    return mq&&mg;
+  });
+
+  var byGroup={};
+  filtered.forEach(function(e){ if(!byGroup[e.group]) byGroup[e.group]=[]; byGroup[e.group].push(e); });
+
+  var container=document.getElementById('lib-list');
+  container.innerHTML='';
+  Object.keys(byGroup).forEach(function(g){
+    var div=document.createElement('div');
+    div.className='exercise-group';
+    var html='<div class="group-label">'+g+'</div>';
+    byGroup[g].forEach(function(e){
+      var tc=e.type.toLowerCase();
+      html+='<div class="ex-item'+(e.custom?' custom-ex':'')+'"><div><div class="ex-name">'+e.name+'</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">'+(e.muscles||'')+'</div></div><div class="ex-meta"><span class="ex-badge badge-'+tc+'">'+e.type+'</span>'+(e.custom?'<span class="ex-badge badge-custom">Custom</span>':'')+'</div></div>';
+    });
+    div.innerHTML=html;
+    container.appendChild(div);
+  });
+}
+
+// ── SESSION LOG ────────────────────────────────────────
+function buildExOptions(selected){
+  var groups=['Quads','Hamstrings','Glutes','Calves','Back \u2013 Lats','Back \u2013 Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
+  var html='<option value="">Select exercise\u2026</option>';
+  groups.forEach(function(g){
+    var exs=allExercises().filter(function(e){return e.group===g;});
+    if(!exs.length) return;
+    html+='<optgroup label="'+g+'">';
+    exs.forEach(function(e){ html+='<option value="'+e.name+'"'+(e.name===selected?' selected':'')+'>'+e.name+'</option>'; });
+    html+='</optgroup>';
+  });
+  return html;
+}
+
+function initSession(){
+  var today=new Date().toISOString().split('T')[0];
+  document.getElementById('sess-date').value=currentSession.date||today;
+  if(currentSession.workout) document.getElementById('sess-workout').value=currentSession.workout;
+  if(currentSession.notes) document.getElementById('sess-notes').value=currentSession.notes;
+  document.getElementById('ex-list').innerHTML='';
+  exCount=0;
+  if(currentSession.exercises&&currentSession.exercises.length){
+    currentSession.exercises.forEach(function(ex){ addExRow(ex); });
+  } else {
+    addExRow(); addExRow(); addExRow();
+  }
+}
+
+function addExRow(data){
+  data=data||{};
+  exCount++;
+  var n=exCount;
+  var id='ex-row-'+Date.now()+'-'+n;
+  var last=data.last||{load:'',reps:['','','','',''],rpe:''};
+  var curr=data.curr||{load:'',reps:['','','','',''],rpe:''};
+  var unit=settings.unit||'kg';
+
+  var div=document.createElement('div');
+  div.className='ex-card';
+  div.id=id;
+
+  var html='<div class="ex-card-header">';
+  html+='<span class="ex-num">'+String(n).padStart(2,'0')+'</span>';
+  html+='<select class="ex-select">'+buildExOptions(data.name||'')+'</select>';
+  html+='<button class="del-btn" data-id="'+id+'">&#215;</button>';
+  html+='</div>';
+  html+='<div class="ex-table">';
+  html+='<div class="tbl-head"><div class="th"></div><div class="th">Load('+unit+')</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>';
+  // Last row
+  html+='<div class="ex-row last-row"><span class="row-tag last">Last</span>';
+  html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(last.load||'')+'" inputmode="decimal">';
+  for(var i=0;i<5;i++) html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(last.reps[i]||'')+'" inputmode="numeric">';
+  html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(last.rpe||'')+'" inputmode="decimal" min="1" max="10" step="0.5">';
+  html+='</div>';
+  // This row
+  html+='<div class="ex-row this-row"><span class="row-tag this">This</span>';
+  html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(curr.load||'')+'" inputmode="decimal">';
+  for(var j=0;j<5;j++) html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(curr.reps[j]||'')+'" inputmode="numeric">';
+  html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(curr.rpe||'')+'" inputmode="decimal" min="1" max="10" step="0.5">';
+  html+='</div></div>';
+  html+='<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes: cues, technique, pain\u2026" value="'+(data.notes||'')+'"></div>';
+
+  div.innerHTML=html;
+
+  // Delete
+  div.querySelector('.del-btn').addEventListener('click',function(){
+    div.remove(); saveCurrentSession();
+  });
+
+  // Auto-save on any change
+  div.querySelectorAll('input, select').forEach(function(el){
+    el.addEventListener('change', saveCurrentSession);
+    el.addEventListener('input', saveCurrentSession);
+  });
+
+  document.getElementById('ex-list').appendChild(div);
+}
+
+function saveCurrentSession(){
+  currentSession.date=document.getElementById('sess-date').value;
+  currentSession.workout=document.getElementById('sess-workout').value;
+  currentSession.notes=document.getElementById('sess-notes').value;
+  currentSession.exercises=[];
+  document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
+    var name=card.querySelector('.ex-select').value;
+    var rows=card.querySelectorAll('.ex-row');
+    var li=rows[0].querySelectorAll('input');
+    var ti=rows[1].querySelectorAll('input');
+    var notes=card.querySelector('.notes-in').value;
+    currentSession.exercises.push({
+      name:name, notes:notes,
+      last:{load:li[0].value,reps:[li[1].value,li[2].value,li[3].value,li[4].value,li[5].value],rpe:li[6].value},
+      curr:{load:ti[0].value,reps:[ti[1].value,ti[2].value,ti[3].value,ti[4].value,ti[5].value],rpe:ti[6].value}
+    });
+  });
+  lsSet('op-current',currentSession);
+}
+
+// Wire up session meta fields
+['sess-date','sess-workout','sess-notes'].forEach(function(id){
+  var el=document.getElementById(id);
+  el.addEventListener('change',saveCurrentSession);
+  el.addEventListener('input',saveCurrentSession);
+});
+
+document.getElementById('add-ex-btn').addEventListener('click',function(){ addExRow(); });
+
+document.getElementById('copy-last-btn').addEventListener('click',function(){
+  var workout=document.getElementById('sess-workout').value;
+  if(!workout){ showToast('Select workout type first'); return; }
+  var prev=null;
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    if(sessionHistory[i].workout===workout){ prev=sessionHistory[i]; break; }
+  }
+  if(!prev){ showToast('No previous '+workout+' session found'); return; }
+  document.getElementById('ex-list').innerHTML='';
+  exCount=0;
+  prev.exercises.forEach(function(ex){
+    addExRow({name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}});
+  });
+  showToast('Last '+workout+' session loaded \u2713');
+  saveCurrentSession();
+});
+
+document.getElementById('save-btn').addEventListener('click',function(){
+  saveCurrentSession();
+  var sess=JSON.parse(JSON.stringify(currentSession));
+  if(!sess.workout){ showToast('Select a workout type'); return; }
+  var hasData=sess.exercises.some(function(e){ return e.name&&(e.curr.load||e.curr.reps.some(function(r){return r;})); });
+  if(!hasData){ showToast('Log at least one exercise'); return; }
+  sess.id=Date.now();
+  sessionHistory.push(sess);
+  lsSet('op-history',sessionHistory);
+  // Shift this→last for next session
+  var nextEx=sess.exercises.map(function(ex){
+    return {name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}};
+  });
+  currentSession={date:'',workout:'',notes:'',exercises:nextEx};
+  lsSet('op-current',currentSession);
+  initSession();
+  showToast('Session saved \u2713');
+});
+
+document.getElementById('clear-btn').addEventListener('click',function(){
+  if(!confirm('Clear current session?')) return;
+  currentSession={date:'',workout:'',notes:'',exercises:[]};
+  lsSet('op-current',currentSession);
+  exCount=0;
+  document.getElementById('ex-list').innerHTML='';
+  document.getElementById('sess-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('sess-workout').value='';
+  document.getElementById('sess-notes').value='';
+  addExRow(); addExRow(); addExRow();
+});
+
+// ── PROGRESSION ────────────────────────────────────────
+function renderProgression(){
+  var container=document.getElementById('prog-list');
+  var exMap={};
+  sessionHistory.forEach(function(sess){
+    sess.exercises.forEach(function(ex){
+      if(!ex.name) return;
+      if(!exMap[ex.name]) exMap[ex.name]=[];
+      exMap[ex.name].push({date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe});
+    });
+  });
+
+  if(!Object.keys(exMap).length){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">No sessions logged yet.<br>Save a session to see progression here.</div></div>';
+    return;
+  }
+
+  container.innerHTML='';
+  Object.keys(exMap).sort().forEach(function(name){
+    var logs=exMap[name].filter(function(l){ return l.load||l.reps.some(function(r){return r;}); });
+    if(!logs.length) return;
+    var maxLoad=Math.max.apply(null,logs.map(function(l){return parseFloat(l.load)||0;}));
+    var latest=logs[logs.length-1];
+    var div=document.createElement('div');
+    div.className='prog-item';
+    div.innerHTML='<div class="prog-item-name">'+name+'</div><div class="prog-item-meta"><span class="prog-stat"><span>'+logs.length+'</span> sessions</span><span class="prog-stat">Best: <span>'+maxLoad+(settings.unit||'kg')+'</span></span>'+(latest.load?'<span class="prog-stat">Last: <span>'+latest.load+(settings.unit||'kg')+'</span></span>':'')+'</div>';
+    div.addEventListener('click',function(){ openProgDetail(name,logs); });
+    container.appendChild(div);
+  });
+}
+
+function openProgDetail(name,logs){
+  document.getElementById('modal-ex-name').textContent=name;
+  var maxLoad=0,maxAvg=0;
+  var enriched=logs.map(function(l){
+    var repsArr=l.reps.map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var avg=repsArr.length?repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length:0;
+    var load=parseFloat(l.load)||0;
+    var prLoad=false,prRep=false;
+    if(load>maxLoad){maxLoad=load;prLoad=true;}
+    if(avg>maxAvg){maxAvg=avg;prRep=true;}
+    return {date:l.date,reps:l.reps,rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep};
+  });
+
+  drawChart(enriched);
+
+  var tbody=document.getElementById('hist-body');
+  tbody.innerHTML=enriched.map(function(l){
+    var pr=l.prLoad&&l.prRep?'both':l.prLoad?'load':l.prRep?'rep':'';
+    var cls=pr==='both'?'pr-both-cell':pr==='load'?'pr-load-cell':pr==='rep'?'pr-rep-cell':'';
+    var badge=pr==='both'?'<span class="pr-badge pr-badge-load">Load PR</span><span class="pr-badge pr-badge-rep">Rep PR</span>':pr==='load'?'<span class="pr-badge pr-badge-load">Load PR</span>':pr==='rep'?'<span class="pr-badge pr-badge-rep">Rep PR</span>':'—';
+    return '<tr><td>'+(l.date||'—')+'</td><td class="'+cls+'">'+(l.load||'—')+(l.load?settings.unit||'kg':'')+'</td>'+l.reps.map(function(r){return '<td>'+(r||'—')+'</td>';}).join('')+'<td>'+(l.rpe||'—')+'</td><td>'+badge+'</td></tr>';
+  }).join('');
+
+  document.getElementById('prog-modal').classList.add('open');
+}
+
+function drawChart(logs){
+  var svg=document.getElementById('prog-chart');
+  var W=svg.parentElement.clientWidth-32;
+  var H=140;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.innerHTML='';
+  if(!logs.length) return;
+
+  var loads=logs.map(function(l){return l.load;});
+  var minL=Math.min.apply(null,loads)*0.92;
+  var maxL=Math.max.apply(null,loads)*1.05||1;
+  if(minL===maxL){minL=minL*0.9;maxL=maxL*1.1;}
+  var n=logs.length;
+  var pad={l:30,r:10,t:10,b:24};
+  var ns='http://www.w3.org/2000/svg';
+
+  // Grid
+  [0,0.5,1].forEach(function(t){
+    var y=pad.t+(1-t)*(H-pad.t-pad.b);
+    var val=Math.round(minL+(maxL-minL)*t);
+    var line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);
+    line.setAttribute('y1',y);line.setAttribute('y2',y);
+    line.setAttribute('stroke','rgba(255,255,255,0.06)');line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+    var txt=document.createElementNS(ns,'text');
+    txt.setAttribute('x',pad.l-4);txt.setAttribute('y',y+4);
+    txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');txt.setAttribute('text-anchor','end');
+    txt.textContent=val;
+    svg.appendChild(txt);
+  });
+
+  var pts=logs.map(function(l,i){
+    var x=n===1?pad.l+(W-pad.l-pad.r)/2:pad.l+i*(W-pad.l-pad.r)/(n-1);
+    var y=pad.t+(1-((l.load-minL)/(maxL-minL)))*(H-pad.t-pad.b);
+    return {x:x,y:y,l:l};
+  });
+
+  // Line
+  if(pts.length>1){
+    var poly=document.createElementNS(ns,'polyline');
+    poly.setAttribute('points',pts.map(function(p){return p.x+','+p.y;}).join(' '));
+    poly.setAttribute('fill','none');poly.setAttribute('stroke','rgba(0,180,216,0.25)');poly.setAttribute('stroke-width','2');
+    svg.appendChild(poly);
+  }
+
+  var maxAvg=Math.max.apply(null,logs.map(function(l){return l.avgReps;}));
+  if(!maxAvg) maxAvg=1;
+
+  pts.forEach(function(pt){
+    var l=pt.l;
+    var r=4+(l.avgReps/maxAvg)*8;
+    var color=(l.prLoad&&l.prRep)?'#00C896':l.prRep?'#FFB800':'#00B4D8';
+    var stroke=(l.prLoad&&!l.prRep)?'#FFB800':'none';
+    var c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r',r);
+    c.setAttribute('fill',color);c.setAttribute('opacity','0.9');
+    if(stroke!=='none'){c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','2');}
+    svg.appendChild(c);
+    var dl=document.createElementNS(ns,'text');
+    dl.setAttribute('x',pt.x);dl.setAttribute('y',H-pad.b+14);
+    dl.setAttribute('fill','#555');dl.setAttribute('font-size','8');dl.setAttribute('text-anchor','middle');
+    dl.textContent=(l.date||'').slice(5);
+    svg.appendChild(dl);
+  });
+}
+
+document.getElementById('modal-close-btn').addEventListener('click',function(){ document.getElementById('prog-modal').classList.remove('open'); });
+document.getElementById('prog-modal').addEventListener('click',function(e){ if(e.target===document.getElementById('prog-modal')) document.getElementById('prog-modal').classList.remove('open'); });
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+// ── INIT ───────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>

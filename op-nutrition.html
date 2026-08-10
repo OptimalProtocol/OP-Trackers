@@ -353,9 +353,9 @@ document.getElementById('op-logo').src = 'data:image/png;base64,' + LOGO_B64;
 
 // ── GOAL CONFIG ──
 var GOAL_CONFIG = {
-  aggressive_cut: {label:'Aggressive Fat Loss',multiplier:0.75,cycle:200,protein:2.4},
+  aggressive_cut: {label:'Aggressive Fat Loss',multiplier:0.75,cycle:200,protein:2.2},
   moderate_cut:   {label:'Moderate Fat Loss',  multiplier:0.80,cycle:150,protein:2.2},
-  slow_cut:       {label:'Slow Fat Loss / Recomp',multiplier:0.90,cycle:100,protein:2.0},
+  slow_cut:       {label:'Slow Fat Loss / Recomp',multiplier:0.90,cycle:100,protein:2.2},
   maintain:       {label:'Maintain',           multiplier:1.00,cycle:100,protein:2.0},
   lean_gain:      {label:'Lean Gain',          multiplier:1.05,cycle:75, protein:1.8},
   moderate_gain:  {label:'Moderate Muscle Gain',multiplier:1.10,cycle:50, protein:1.6},
@@ -417,10 +417,10 @@ function calcTargets(){
   var restCal=calTarget-swing;
 
   // Protein — uses LBM, goal-specific multiplier
-  var protein=Math.round(lbmKg*gc.protein);
+  var protein=Math.round(weightKg*gc.protein);
 
-  // Fat floor: 0.8g/kg LBM minimum
-  var fat=Math.round(Math.max(lbmKg*0.8, lbmKg*1.0));
+  // Fat floor: 1g/kg bodyweight
+  var fat=Math.round(weightKg*1.0);
 
   // Carbs fill remainder
   var carbCals=calTarget-(protein*4)-(fat*9);

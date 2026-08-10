@@ -76,6 +76,16 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .ex-card-header{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);}
 .ex-num{font-size:10px;font-weight:700;color:var(--cyan);min-width:22px;}
 .ex-select{flex:1;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center;padding-right:16px;}
+.ex-search-wrap{flex:1;position:relative;}
+.ex-search-input{background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;width:100%;padding:0;}
+.ex-search-input::placeholder{color:var(--muted);font-weight:400;}
+.ex-dropdown{position:absolute;top:calc(100% + 8px);left:-14px;right:-44px;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:10px;max-height:220px;overflow-y:auto;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.ex-dropdown-item{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;}
+.ex-dropdown-item:last-child{border-bottom:none;}
+.ex-dropdown-item:active{background:var(--cyan-dim);}
+.ex-dropdown-item.selected{color:var(--cyan);font-weight:600;}
+.ex-dropdown-group{padding:6px 14px 4px;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);background:var(--surface);}
+.ex-dropdown-empty{padding:12px 14px;font-size:12px;color:var(--muted);}
 .del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:4px;transition:color 0.15s;}
 .del-btn:active{color:var(--red);}
 .ex-table{width:100%;}
@@ -159,7 +169,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
       <div class="field-row">
         <div class="field">
           <label class="field-label">Block Start Date</label>
-          <input type="date" class="field-input" id="s-start">
+          <input type="date" class="field-input" id="s-start" placeholder="dd/mm/yyyy">
         </div>
         <div class="field">
           <label class="field-label">Block Length</label>
@@ -258,7 +268,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <div class="session-meta">
     <div class="field">
       <label class="field-label">Date</label>
-      <input type="date" class="field-input" id="sess-date">
+      <input type="date" class="field-input" id="sess-date" placeholder="dd/mm/yyyy">
     </div>
     <div class="field">
       <label class="field-label">Workout</label>
@@ -618,16 +628,77 @@ function renderLibrary(){
 
 // ── SESSION LOG ────────────────────────────────────────
 function buildExOptions(selected){
-  var groups=['Quads','Hamstrings','Glutes','Calves','Back \u2013 Lats','Back \u2013 Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
-  var html='<option value="">Select exercise\u2026</option>';
-  groups.forEach(function(g){
-    var exs=allExercises().filter(function(e){return e.group===g;});
-    if(!exs.length) return;
-    html+='<optgroup label="'+g+'">';
-    exs.forEach(function(e){ html+='<option value="'+e.name+'"'+(e.name===selected?' selected':'')+'>'+e.name+'</option>'; });
-    html+='</optgroup>';
+  // kept for compatibility but not used in session log
+  return '';
+}
+
+function createSearchableDropdown(card, selectedName){
+  var wrap = card.querySelector('.ex-search-wrap');
+  var input = card.querySelector('.ex-search-input');
+  var dropdown = null;
+  var currentValue = selectedName || '';
+
+  input.value = currentValue;
+
+  function getFiltered(q){
+    var groups=['Quads','Hamstrings','Glutes','Calves','Back \u2013 Lats','Back \u2013 Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
+    var results=[];
+    groups.forEach(function(g){
+      var exs=allExercises().filter(function(e){
+        return e.group===g && (!q || e.name.toLowerCase().indexOf(q.toLowerCase())>-1);
+      });
+      if(exs.length) results.push({group:g,exs:exs});
+    });
+    return results;
+  }
+
+  function showDropdown(q){
+    closeDropdown();
+    dropdown=document.createElement('div');
+    dropdown.className='ex-dropdown';
+    var groups=getFiltered(q||'');
+    if(!groups.length){
+      dropdown.innerHTML='<div class="ex-dropdown-empty">No exercises found</div>';
+    } else {
+      groups.forEach(function(g){
+        var grpDiv=document.createElement('div');
+        grpDiv.className='ex-dropdown-group';
+        grpDiv.textContent=g.group;
+        dropdown.appendChild(grpDiv);
+        g.exs.forEach(function(e){
+          var item=document.createElement('div');
+          item.className='ex-dropdown-item'+(e.name===currentValue?' selected':'');
+          item.textContent=e.name;
+          item.addEventListener('mousedown',function(ev){ev.preventDefault();});
+          item.addEventListener('click',function(){
+            currentValue=e.name;
+            input.value=e.name;
+            card.setAttribute('data-ex-name',e.name);
+            closeDropdown();
+            saveCurrentSession();
+          });
+          dropdown.appendChild(item);
+        });
+      });
+    }
+    wrap.appendChild(dropdown);
+  }
+
+  function closeDropdown(){
+    if(dropdown){dropdown.remove();dropdown=null;}
+  }
+
+  input.addEventListener('focus',function(){showDropdown(input.value);});
+  input.addEventListener('input',function(){showDropdown(input.value);});
+  input.addEventListener('blur',function(){
+    setTimeout(function(){
+      // If user typed something that doesn't match, restore last valid value
+      if(input.value !== currentValue) input.value = currentValue;
+      closeDropdown();
+    },200);
   });
-  return html;
+
+  card.getExName = function(){ return currentValue; };
 }
 
 function initSession(){
@@ -659,11 +730,11 @@ function addExRow(data){
 
   var html='<div class="ex-card-header">';
   html+='<span class="ex-num">'+String(n).padStart(2,'0')+'</span>';
-  html+='<select class="ex-select">'+buildExOptions(data.name||'')+'</select>';
+  html+='<div class="ex-search-wrap"><input type="text" class="ex-search-input" placeholder="Search exercise…" autocomplete="off"></div>';
   html+='<button class="del-btn" data-id="'+id+'">&#215;</button>';
   html+='</div>';
   html+='<div class="ex-table">';
-  html+='<div class="tbl-head"><div class="th"></div><div class="th">Load('+unit+')</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>';
+  html+='<div class="tbl-head"><div class="th"></div><div class="th">kg</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>';
   // Last row
   html+='<div class="ex-row last-row"><span class="row-tag last">Last</span>';
   html+='<input type="number" class="cell-in" placeholder="\u2014" value="'+(last.load||'')+'" inputmode="decimal">';
@@ -692,6 +763,8 @@ function addExRow(data){
   });
 
   document.getElementById('ex-list').appendChild(div);
+  createSearchableDropdown(div, data.name||'');
+  if(data.name) div.setAttribute('data-ex-name', data.name);
 }
 
 function saveCurrentSession(){
@@ -700,7 +773,7 @@ function saveCurrentSession(){
   currentSession.notes=document.getElementById('sess-notes').value;
   currentSession.exercises=[];
   document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
-    var name=card.querySelector('.ex-select').value;
+    var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||card.querySelector('.ex-search-input').value);
     var rows=card.querySelectorAll('.ex-row');
     var li=rows[0].querySelectorAll('input');
     var ti=rows[1].querySelectorAll('input');

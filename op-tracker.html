@@ -111,6 +111,12 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .add-ex-btn:active{border-color:var(--cyan-border);color:var(--cyan);}
 .save-bar{padding:10px 16px;display:flex;gap:10px;margin-top:12px;}
 .prog-list{padding:12px 16px 0;}
+.sess-hist-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.sess-hist-info{flex:1;}
+.sess-hist-date{font-size:12px;font-weight:600;color:var(--text);}
+.sess-hist-meta{font-size:11px;color:var(--dim);margin-top:3px;}
+.del-sess-btn{background:none;border:1px solid rgba(255,77,77,0.3);border-radius:6px;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 10px;transition:background 0.15s;}
+.del-sess-btn:active{background:rgba(255,77,77,0.1);}
 .prog-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:13px 14px;cursor:pointer;transition:border-color 0.15s;}
 .prog-item:active{border-color:var(--cyan-border);}
 .prog-item-name{font-size:13px;font-weight:600;margin-bottom:4px;}
@@ -274,17 +280,24 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <div class="field">
       <label class="field-label">Workout</label>
       <select class="field-input" id="sess-workout">
-        <option value="" disabled selected>Select</option>
+        <option value="" disabled selected>Select or type below</option>
         <option>Push</option><option>Pull</option><option>Legs</option>
-        <option>Upper Body</option><option>Lower Body</option><option>Full Body</option>
+        <option>Upper Body</option><option>Full Body</option>
+        <option disabled style="color:var(--muted)">──────────</option>
+        <option id="custom-workout-opt" disabled>+ Add custom workout type</option>
       </select>
+    </div>
+    <div class="field meta-full" id="custom-workout-wrap" style="display:none;">
+      <label class="field-label">Custom Workout Name</label>
+      <input type="text" class="field-input" id="custom-workout-input" placeholder="e.g. Chest & Back, Arms & Shoulders…">
     </div>
     <div class="field meta-full">
       <label class="field-label">Session Notes</label>
       <input type="text" class="field-input" id="sess-notes" placeholder="Energy, sleep, anything relevant…">
     </div>
   </div>
-  <button class="copy-last-btn" id="copy-last-btn">↩ Copy exercises from last session of this type</button>
+  <button class="copy-last-btn" id="copy-last-btn">↻ Reload last session of this type</button>
+  <button class="copy-last-btn" id="add-workout-type-btn" style="margin-top:8px;color:var(--dim);border-color:var(--border);">+ Add custom workout type</button>
   <div class="ex-list" id="ex-list"></div>
   <button class="add-ex-btn" id="add-ex-btn">+ Add Exercise</button>
   <div class="save-bar">
@@ -295,6 +308,10 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 <!-- TAB 4: PROGRESSION -->
 <div class="page" id="page-progress">
+  <div class="section">
+    <div class="section-title">Session History</div>
+    <div id="sess-history-list"></div>
+  </div>
   <div class="section"><div class="section-title">Exercise Progression</div></div>
   <div class="prog-list" id="prog-list"></div>
 </div>
@@ -789,13 +806,61 @@ function saveCurrentSession(){
 }
 
 // Wire up session meta fields
-['sess-date','sess-workout','sess-notes'].forEach(function(id){
+['sess-date','sess-notes'].forEach(function(id){
   var el=document.getElementById(id);
   el.addEventListener('change',saveCurrentSession);
   el.addEventListener('input',saveCurrentSession);
 });
 
+// Workout type change: auto-load last session of that type
+document.getElementById('sess-workout').addEventListener('change',function(){
+  var raw=this.value;
+  // Show custom input if needed - but for standard options just use value
+  document.getElementById('custom-workout-wrap').style.display='none';
+  var workout=raw;
+  saveCurrentSession();
+  // Find last session of this workout type
+  var prev=null;
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    if(sessionHistory[i].workout===workout){prev=sessionHistory[i];break;}
+  }
+  // Clear exercise list and reload
+  document.getElementById('ex-list').innerHTML='';
+  exCount=0;
+  if(prev){
+    prev.exercises.forEach(function(ex){
+      addExRow({name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}});
+    });
+    showToast('Last '+workout+' session loaded ✓');
+  } else {
+    addExRow();addExRow();addExRow();
+  }
+  saveCurrentSession();
+});
+
 document.getElementById('add-ex-btn').addEventListener('click',function(){ addExRow(); });
+
+document.getElementById('add-workout-type-btn').addEventListener('click',function(){
+  var wrap=document.getElementById('custom-workout-wrap');
+  wrap.style.display=wrap.style.display==='none'?'block':'none';
+  if(wrap.style.display==='block') document.getElementById('custom-workout-input').focus();
+});
+
+// Load any previously saved custom workout types into dropdown
+(function(){
+  var customs=lsGet('op-custom-workouts')||[];
+  var sel=document.getElementById('sess-workout');
+  var divider=sel.querySelector('option[disabled][style]');
+  customs.forEach(function(c){
+    var exists=false;
+    for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===c){exists=true;break;}}
+    if(!exists){
+      var opt=document.createElement('option');
+      opt.value=c;opt.textContent=c;
+      sel.insertBefore(opt,divider);
+    }
+  });
+})();
 
 document.getElementById('copy-last-btn').addEventListener('click',function(){
   var workout=document.getElementById('sess-workout').value;
@@ -846,6 +911,42 @@ document.getElementById('clear-btn').addEventListener('click',function(){
 });
 
 // ── PROGRESSION ────────────────────────────────────────
+function renderSessionHistory(){
+  var container=document.getElementById('sess-history-list');
+  if(!container) return;
+  if(!sessionHistory.length){
+    container.innerHTML='<div style="font-size:12px;color:var(--muted);padding:0 0 8px;">No sessions saved yet.</div>';
+    return;
+  }
+  var sorted=sessionHistory.slice().reverse();
+  container.innerHTML=sorted.map(function(s,i){
+    var realIdx=sessionHistory.length-1-i;
+    var exNames=s.exercises.filter(function(e){return e.name;}).map(function(e){return e.name;}).slice(0,3).join(', ');
+    if(s.exercises.filter(function(e){return e.name;}).length>3) exNames+='…';
+    return '<div class="sess-hist-item">'+
+      '<div class="sess-hist-info">'+
+        '<div class="sess-hist-date">'+(s.date||'No date')+' &nbsp;·&nbsp; <span style="color:var(--cyan)">'+s.workout+'</span></div>'+
+        '<div class="sess-hist-meta">'+s.exercises.filter(function(e){return e.name;}).length+' exercises &nbsp;·&nbsp; '+exNames+'</div>'+
+      '</div>'+
+      '<button class="del-sess-btn" data-idx="'+realIdx+'">Delete</button>'+
+    '</div>';
+  }).join('');
+
+  container.querySelectorAll('.del-sess-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=parseInt(btn.getAttribute('data-idx'));
+      var sess=sessionHistory[idx];
+      if(confirm('Delete '+sess.workout+' session on '+(sess.date||'unknown date')+'?')){
+        sessionHistory.splice(idx,1);
+        lsSet('op-history',sessionHistory);
+        renderSessionHistory();
+        renderProgression();
+        showToast('Session deleted');
+      }
+    });
+  });
+}
+
 function renderProgression(){
   var container=document.getElementById('prog-list');
   var exMap={};

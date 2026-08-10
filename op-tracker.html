@@ -135,6 +135,14 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .chart-title{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
 .chart-svg{width:100%;overflow:visible;}
 .hist-table{width:100%;border-collapse:collapse;}
+.edit-entry-btn{background:none;border:1px solid var(--cyan-border);border-radius:5px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;margin-right:4px;}
+.del-entry-btn{background:none;border:1px solid rgba(255,77,77,0.3);border-radius:5px;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;}
+.edit-form-row{background:var(--surface2);padding:10px 14px;display:grid;grid-template-columns:56px repeat(5,1fr) 44px;gap:4px;border-bottom:1px solid var(--border);}
+.edit-cell{display:flex;flex-direction:column;gap:3px;}
+.edit-cell-label{font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+.edit-cell-input{background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 4px;text-align:center;width:100%;outline:none;-webkit-appearance:none;appearance:none;}
+.edit-cell-input:focus{border-color:var(--cyan-border);}
+.edit-form-actions{padding:8px 14px 10px;display:flex;gap:8px;border-bottom:1px solid var(--border);}
 .hist-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
 .hist-table td{font-size:12px;padding:8px 8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
 .hist-table td:first-child{font-family:'Inter',sans-serif;color:var(--dim);}
@@ -650,6 +658,36 @@ function buildExOptions(selected){
   return '';
 }
 
+function getLastEntryForExercise(name){
+  // Search all session history for most recent entry of this exercise
+  if(!name) return null;
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    var sess=sessionHistory[i];
+    for(var j=0;j<sess.exercises.length;j++){
+      var ex=sess.exercises[j];
+      if(ex.name===name && ex.curr && (ex.curr.load||ex.curr.reps.some(function(r){return r;}))){
+        return {load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,date:sess.date,workout:sess.workout};
+      }
+    }
+  }
+  return null;
+}
+
+function populateLastRow(card, exName){
+  var last=getLastEntryForExercise(exName);
+  var lastRow=card.querySelector('.ex-row.last-row');
+  if(!lastRow) return;
+  var inputs=lastRow.querySelectorAll('input');
+  if(last){
+    inputs[0].value=last.load||'';
+    for(var i=0;i<5;i++) inputs[i+1].value=last.reps[i]||'';
+    inputs[6].value=last.rpe||'';
+  } else {
+    // Clear last row if no history found
+    inputs.forEach(function(inp){inp.value='';});
+  }
+}
+
 function createSearchableDropdown(card, selectedName){
   var wrap = card.querySelector('.ex-search-wrap');
   var input = card.querySelector('.ex-search-input');
@@ -693,6 +731,7 @@ function createSearchableDropdown(card, selectedName){
             input.value=e.name;
             card.setAttribute('data-ex-name',e.name);
             closeDropdown();
+            populateLastRow(card, e.name);
             saveCurrentSession();
           });
           dropdown.appendChild(item);
@@ -783,6 +822,11 @@ function addExRow(data){
   document.getElementById('ex-list').appendChild(div);
   createSearchableDropdown(div, data.name||'');
   if(data.name) div.setAttribute('data-ex-name', data.name);
+  // If this row was loaded from copy-last-session, last row already has data
+  // But if it's a fresh card with a name, look up from history
+  if(data.name && !data.last.load && !data.last.reps.some(function(r){return r;})){
+    populateLastRow(div, data.name);
+  }
 }
 
 function saveCurrentSession(){
@@ -972,13 +1016,21 @@ function renderProgression(){
     var div=document.createElement('div');
     div.className='prog-item';
     div.innerHTML='<div class="prog-item-name">'+name+'</div><div class="prog-item-meta"><span class="prog-stat"><span>'+logs.length+'</span> sessions</span><span class="prog-stat">Best: <span>'+maxLoad+(settings.unit||'kg')+'</span></span>'+(latest.load?'<span class="prog-stat">Last: <span>'+latest.load+(settings.unit||'kg')+'</span></span>':'')+'</div>';
-    div.addEventListener('click',function(){ openProgDetail(name,logs); });
+    div.addEventListener('click',function(){ openProgDetail(name,getLogsForExercise(name)); });
     container.appendChild(div);
   });
 }
 
+var currentProgExName = '';
+
 function openProgDetail(name,logs){
+  currentProgExName = name;
   document.getElementById('modal-ex-name').textContent=name;
+  renderProgModal(name, logs);
+  document.getElementById('prog-modal').classList.add('open');
+}
+
+function renderProgModal(name, logs){
   var maxLoad=0,maxAvg=0;
   var enriched=logs.map(function(l){
     var repsArr=l.reps.map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
@@ -987,20 +1039,137 @@ function openProgDetail(name,logs){
     var prLoad=false,prRep=false;
     if(load>maxLoad){maxLoad=load;prLoad=true;}
     if(avg>maxAvg){maxAvg=avg;prRep=true;}
-    return {date:l.date,reps:l.reps,rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep};
+    return {date:l.date,workout:l.workout,reps:l.reps,rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,sessId:l.sessId,exIdx:l.exIdx};
   });
 
   drawChart(enriched);
 
   var tbody=document.getElementById('hist-body');
-  tbody.innerHTML=enriched.map(function(l){
+  tbody.innerHTML='';
+
+  enriched.forEach(function(l, rowIdx){
     var pr=l.prLoad&&l.prRep?'both':l.prLoad?'load':l.prRep?'rep':'';
     var cls=pr==='both'?'pr-both-cell':pr==='load'?'pr-load-cell':pr==='rep'?'pr-rep-cell':'';
     var badge=pr==='both'?'<span class="pr-badge pr-badge-load">Load PR</span><span class="pr-badge pr-badge-rep">Rep PR</span>':pr==='load'?'<span class="pr-badge pr-badge-load">Load PR</span>':pr==='rep'?'<span class="pr-badge pr-badge-rep">Rep PR</span>':'—';
-    return '<tr><td>'+(l.date||'—')+'</td><td class="'+cls+'">'+(l.load||'—')+(l.load?settings.unit||'kg':'')+'</td>'+l.reps.map(function(r){return '<td>'+(r||'—')+'</td>';}).join('')+'<td>'+(l.rpe||'—')+'</td><td>'+badge+'</td></tr>';
-  }).join('');
 
-  document.getElementById('prog-modal').classList.add('open');
+    // Data row
+    var tr=document.createElement('tr');
+    tr.setAttribute('data-row',rowIdx);
+    tr.innerHTML='<td>'+(l.date||'—')+'<br><span style="font-size:9px;color:var(--muted)">'+(l.workout||'')+'</span></td>'+
+      '<td class="'+cls+'">'+(l.load||'—')+(l.load?settings.unit||'kg':'')+'</td>'+
+      l.reps.map(function(r){return '<td>'+(r||'—')+'</td>';}).join('')+
+      '<td>'+(l.rpe||'—')+'</td>'+
+      '<td><button class="edit-entry-btn" data-row="'+rowIdx+'">Edit</button><button class="del-entry-btn" data-row="'+rowIdx+'">Del</button></td>';
+    tbody.appendChild(tr);
+
+    // Edit form row (hidden by default)
+    var editTr=document.createElement('tr');
+    editTr.setAttribute('data-edit-row',rowIdx);
+    editTr.style.display='none';
+    editTr.innerHTML='<td colspan="9" style="padding:0;">'+
+      '<div class="edit-form-row">'+
+        '<div class="edit-cell"><div class="edit-cell-label">Load</div><input type="number" class="edit-cell-input" value="'+(l.load||'')+'" data-field="load" inputmode="decimal"></div>'+
+        [0,1,2,3,4].map(function(i){return '<div class="edit-cell"><div class="edit-cell-label">S'+(i+1)+'</div><input type="number" class="edit-cell-input" value="'+(l.reps[i]||'')+'" data-field="rep'+i+'" inputmode="numeric"></div>';}).join('')+
+        '<div class="edit-cell"><div class="edit-cell-label">RPE</div><input type="number" class="edit-cell-input" value="'+(l.rpe||'')+'" data-field="rpe" inputmode="decimal" min="1" max="10" step="0.5"></div>'+
+      '</div>'+
+      '<div class="edit-form-actions">'+
+        '<button class="btn btn-primary btn-sm save-edit-btn" data-row="'+rowIdx+'">Save</button>'+
+        '<button class="btn btn-secondary btn-sm cancel-edit-btn" data-row="'+rowIdx+'">Cancel</button>'+
+      '</div>'+
+    '</td>';
+    tbody.appendChild(editTr);
+  });
+
+  // Wire edit/delete buttons
+  tbody.querySelectorAll('.edit-entry-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var row=btn.getAttribute('data-row');
+      // Toggle edit form
+      var editRow=tbody.querySelector('[data-edit-row="'+row+'"]');
+      var isOpen=editRow.style.display!=='none';
+      // Close all edit rows first
+      tbody.querySelectorAll('tr[data-edit-row]').forEach(function(r){r.style.display='none';});
+      if(!isOpen) editRow.style.display='table-row';
+    });
+  });
+
+  tbody.querySelectorAll('.cancel-edit-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var row=btn.getAttribute('data-row');
+      tbody.querySelector('[data-edit-row="'+row+'"]').style.display='none';
+    });
+  });
+
+  tbody.querySelectorAll('.save-edit-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var rowIdx=parseInt(btn.getAttribute('data-row'));
+      var editRow=tbody.querySelector('[data-edit-row="'+rowIdx+'"]');
+      var l=enriched[rowIdx];
+      // Get updated values
+      var newLoad=editRow.querySelector('[data-field="load"]').value;
+      var newReps=[0,1,2,3,4].map(function(i){return editRow.querySelector('[data-field="rep'+i+'"]').value;});
+      var newRpe=editRow.querySelector('[data-field="rpe"]').value;
+      // Find and update in sessionHistory
+      sessionHistory.forEach(function(sess){
+        if(sess.date===l.date&&sess.workout===l.workout){
+          sess.exercises.forEach(function(ex){
+            if(ex.name===name){
+              ex.curr.load=newLoad;
+              ex.curr.reps=newReps;
+              ex.curr.rpe=newRpe;
+            }
+          });
+        }
+      });
+      lsSet('op-history',sessionHistory);
+      // Re-render modal with updated data
+      var updated=getLogsForExercise(name);
+      renderProgModal(name,updated);
+      showToast('Entry updated ✓');
+    });
+  });
+
+  tbody.querySelectorAll('.del-entry-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var rowIdx=parseInt(btn.getAttribute('data-row'));
+      var l=enriched[rowIdx];
+      if(!confirm('Delete this entry for '+name+' on '+(l.date||'unknown date')+'?')) return;
+      // Find session and remove this exercise entry
+      sessionHistory.forEach(function(sess){
+        if(sess.date===l.date&&sess.workout===l.workout){
+          sess.exercises=sess.exercises.filter(function(ex,i){
+            return !(ex.name===name && i===sess.exercises.findIndex(function(e){return e.name===name;}));
+          });
+        }
+      });
+      // Remove empty sessions
+      sessionHistory=sessionHistory.filter(function(sess){
+        return sess.exercises.some(function(ex){return ex.name;});
+      });
+      lsSet('op-history',sessionHistory);
+      var updated=getLogsForExercise(name);
+      if(!updated.length){
+        closeModal();
+        renderProgression();
+        renderSessionHistory();
+      } else {
+        renderProgModal(name,updated);
+      }
+      showToast('Entry deleted');
+    });
+  });
+}
+
+function getLogsForExercise(name){
+  var logs=[];
+  sessionHistory.forEach(function(sess){
+    sess.exercises.forEach(function(ex){
+      if(ex.name===name&&ex.curr&&(ex.curr.load||ex.curr.reps.some(function(r){return r;}))){
+        logs.push({date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe});
+      }
+    });
+  });
+  return logs;
 }
 
 function drawChart(logs){

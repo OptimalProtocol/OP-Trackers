@@ -1109,16 +1109,14 @@ function renderProgModal(name, logs){
       var newLoad=editRow.querySelector('[data-field="load"]').value;
       var newReps=[0,1,2,3,4].map(function(i){return editRow.querySelector('[data-field="rep'+i+'"]').value;});
       var newRpe=editRow.querySelector('[data-field="rpe"]').value;
-      // Find and update in sessionHistory
+      // Find and update in sessionHistory using unique session ID
       sessionHistory.forEach(function(sess){
-        if(sess.date===l.date&&sess.workout===l.workout){
-          sess.exercises.forEach(function(ex){
-            if(ex.name===name){
-              ex.curr.load=newLoad;
-              ex.curr.reps=newReps;
-              ex.curr.rpe=newRpe;
-            }
-          });
+        if(sess.id===l.sessId){
+          if(sess.exercises[l.exIdx]&&sess.exercises[l.exIdx].name===name){
+            sess.exercises[l.exIdx].curr.load=newLoad;
+            sess.exercises[l.exIdx].curr.reps=newReps;
+            sess.exercises[l.exIdx].curr.rpe=newRpe;
+          }
         }
       });
       lsSet('op-history',sessionHistory);
@@ -1134,11 +1132,11 @@ function renderProgModal(name, logs){
       var rowIdx=parseInt(btn.getAttribute('data-row'));
       var l=enriched[rowIdx];
       if(!confirm('Delete this entry for '+name+' on '+(l.date||'unknown date')+'?')) return;
-      // Find session and remove this exercise entry
+      // Find and remove only this specific exercise entry using session ID + index
       sessionHistory.forEach(function(sess){
-        if(sess.date===l.date&&sess.workout===l.workout){
+        if(sess.id===l.sessId){
           sess.exercises=sess.exercises.filter(function(ex,i){
-            return !(ex.name===name && i===sess.exercises.findIndex(function(e){return e.name===name;}));
+            return i!==l.exIdx;
           });
         }
       });
@@ -1163,9 +1161,17 @@ function renderProgModal(name, logs){
 function getLogsForExercise(name){
   var logs=[];
   sessionHistory.forEach(function(sess){
-    sess.exercises.forEach(function(ex){
+    sess.exercises.forEach(function(ex,exIdx){
       if(ex.name===name&&ex.curr&&(ex.curr.load||ex.curr.reps.some(function(r){return r;}))){
-        logs.push({date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe});
+        logs.push({
+          sessId:sess.id,
+          exIdx:exIdx,
+          date:sess.date,
+          workout:sess.workout,
+          load:ex.curr.load,
+          reps:ex.curr.reps,
+          rpe:ex.curr.rpe
+        });
       }
     });
   });

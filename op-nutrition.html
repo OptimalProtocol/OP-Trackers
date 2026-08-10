@@ -12,9 +12,10 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.4;min-height:100vh;overflow-x:hidden;}
 .nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,27,42,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
-.nav-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.1em;padding:10px 4px 8px;text-align:center;text-transform:uppercase;transition:color 0.15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.nav-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.1em;padding:10px 4px 8px;text-align:center;text-transform:uppercase;transition:color 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px;}
 .nav-btn.active{color:var(--cyan);}
-.nav-icon{font-size:18px;line-height:1;}
+.nav-icon{display:flex;align-items:center;justify-content:center;transition:filter 0.2s;}
+.nav-btn.active .nav-icon{filter:drop-shadow(0 0 6px rgba(0,180,216,0.8)) drop-shadow(0 0 12px rgba(0,180,216,0.4));}
 .app-header{position:sticky;top:0;z-index:50;background:rgba(13,27,42,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
 .header-sub{font-size:11px;color:var(--muted);}
 .page{display:none;padding-bottom:90px;min-height:100vh;}
@@ -338,10 +339,10 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 </div>
 
 <nav class="nav">
-  <button class="nav-btn active" data-page="settings"><span class="nav-icon">⚙️</span>Settings</button>
-  <button class="nav-btn" data-page="daily"><span class="nav-icon">📅</span>Daily</button>
-  <button class="nav-btn" data-page="weekly"><span class="nav-icon">📊</span>Weekly</button>
-  <button class="nav-btn" data-page="progress"><span class="nav-icon">📈</span>Progress</button>
+  <button class="nav-btn active" data-page="settings"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
+  <button class="nav-btn" data-page="daily"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Daily</button>
+  <button class="nav-btn" data-page="weekly"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>Weekly</button>
+  <button class="nav-btn" data-page="progress"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Progress</button>
 </nav>
 
 <div class="toast" id="toast"></div>

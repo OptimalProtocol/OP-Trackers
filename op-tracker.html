@@ -75,12 +75,16 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .ex-list{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px;}
 .ex-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
 .ex-card-header{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);}
+.drag-handle{color:var(--muted);cursor:grab;font-size:16px;line-height:1;padding:2px 4px;touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;}
+.drag-handle:active{cursor:grabbing;color:var(--cyan);}
+.ex-card.dragging{opacity:0.4;border-color:var(--cyan-border);}
+.ex-card.drag-over{border-color:var(--cyan);border-style:dashed;background:var(--cyan-dim);}
 .ex-num{font-size:10px;font-weight:700;color:var(--cyan);min-width:22px;}
 .ex-select{flex:1;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center;padding-right:16px;}
 .ex-search-wrap{flex:1;position:relative;}
 .ex-search-input{background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;width:100%;padding:0;}
 .ex-search-input::placeholder{color:var(--muted);font-weight:400;}
-.ex-dropdown{position:absolute;top:calc(100% + 8px);left:-14px;right:-44px;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:10px;max-height:220px;overflow-y:auto;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.ex-dropdown{position:fixed;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:10px;max-height:50vh;overflow-y:auto;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.6);-webkit-overflow-scrolling:touch;}
 .ex-dropdown-item{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;}
 .ex-dropdown-item:last-child{border-bottom:none;}
 .ex-dropdown-item:active{background:var(--cyan-dim);}
@@ -738,11 +742,26 @@ function createSearchableDropdown(card, selectedName){
         });
       });
     }
-    wrap.appendChild(dropdown);
+    // Position fixed relative to viewport so keyboard/scroll don't clip it
+    var rect=input.getBoundingClientRect();
+    var spaceBelow=window.innerHeight-rect.bottom-8;
+    var spaceAbove=rect.top-8;
+    var maxH=Math.min(Math.max(spaceBelow,spaceAbove)*0.9,window.innerHeight*0.5);
+    dropdown.style.maxHeight=Math.round(maxH)+'px';
+    dropdown.style.width=Math.round(window.innerWidth-32)+'px';
+    dropdown.style.left='16px';
+    if(spaceBelow>=spaceAbove){
+      dropdown.style.top=(rect.bottom+4)+'px';
+    } else {
+      // Position above the input
+      dropdown.style.bottom=(window.innerHeight-rect.top+4)+'px';
+      dropdown.style.top='auto';
+    }
+    document.body.appendChild(dropdown);
   }
 
   function closeDropdown(){
-    if(dropdown){dropdown.remove();dropdown=null;}
+    if(dropdown){try{dropdown.remove();}catch(e){}dropdown=null;}
   }
 
   input.addEventListener('focus',function(){showDropdown(input.value);});
@@ -822,12 +841,114 @@ function addExRow(data){
   document.getElementById('ex-list').appendChild(div);
   createSearchableDropdown(div, data.name||'');
   if(data.name) div.setAttribute('data-ex-name', data.name);
-  // If this row was loaded from copy-last-session, last row already has data
-  // But if it's a fresh card with a name, look up from history
   if(data.name && !data.last.load && !data.last.reps.some(function(r){return r;})){
     populateLastRow(div, data.name);
   }
+  initDragHandle(div);
 }
+
+// ── DRAG TO REORDER ──
+var dragSrc = null;
+
+function initDragHandle(card){
+  var handle = card.querySelector('.drag-handle');
+  if(!handle) return;
+
+  // Touch events for mobile
+  handle.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    dragSrc = card;
+    card.classList.add('dragging');
+  }, {passive:false});
+
+  handle.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if(!dragSrc) return;
+    var touch = e.touches[0];
+    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if(!el) return;
+    var target = el.closest('.ex-card');
+    if(target && target !== dragSrc){
+      // Remove drag-over from all
+      document.querySelectorAll('.ex-card').forEach(function(c){ c.classList.remove('drag-over'); });
+      target.classList.add('drag-over');
+    }
+  }, {passive:false});
+
+  handle.addEventListener('touchend', function(e){
+    e.preventDefault();
+    if(!dragSrc) return;
+    var touch = e.changedTouches[0];
+    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+    var target = el ? el.closest('.ex-card') : null;
+    document.querySelectorAll('.ex-card').forEach(function(c){
+      c.classList.remove('dragging');
+      c.classList.remove('drag-over');
+    });
+    if(target && target !== dragSrc){
+      var list = document.getElementById('ex-list');
+      var cards = Array.from(list.querySelectorAll('.ex-card'));
+      var srcIdx = cards.indexOf(dragSrc);
+      var tgtIdx = cards.indexOf(target);
+      if(srcIdx > tgtIdx){
+        list.insertBefore(dragSrc, target);
+      } else {
+        list.insertBefore(dragSrc, target.nextSibling);
+      }
+      renumberCards();
+      saveCurrentSession();
+    }
+    dragSrc = null;
+  }, {passive:false});
+
+  // Mouse events for desktop
+  handle.addEventListener('mousedown', function(e){
+    dragSrc = card;
+    card.classList.add('dragging');
+    card.setAttribute('draggable','true');
+  });
+}
+
+function renumberCards(){
+  document.querySelectorAll('#ex-list .ex-card').forEach(function(card, i){
+    var num = card.querySelector('.ex-num');
+    if(num) num.textContent = String(i+1).padStart(2,'0');
+  });
+}
+
+// Desktop drag events on the list container
+document.getElementById('ex-list').addEventListener('dragover', function(e){
+  e.preventDefault();
+  var target = e.target.closest('.ex-card');
+  if(target && target !== dragSrc){
+    document.querySelectorAll('.ex-card').forEach(function(c){ c.classList.remove('drag-over'); });
+    target.classList.add('drag-over');
+  }
+});
+
+document.getElementById('ex-list').addEventListener('drop', function(e){
+  e.preventDefault();
+  var target = e.target.closest('.ex-card');
+  document.querySelectorAll('.ex-card').forEach(function(c){
+    c.classList.remove('dragging');
+    c.classList.remove('drag-over');
+  });
+  if(target && dragSrc && target !== dragSrc){
+    var list = document.getElementById('ex-list');
+    var cards = Array.from(list.querySelectorAll('.ex-card'));
+    var srcIdx = cards.indexOf(dragSrc);
+    var tgtIdx = cards.indexOf(target);
+    if(srcIdx > tgtIdx){
+      list.insertBefore(dragSrc, target);
+    } else {
+      list.insertBefore(dragSrc, target.nextSibling);
+    }
+    renumberCards();
+    saveCurrentSession();
+  }
+  if(dragSrc) dragSrc.removeAttribute('draggable');
+  dragSrc = null;
+});
 
 function saveCurrentSession(){
   currentSession.date=document.getElementById('sess-date').value;

@@ -694,14 +694,19 @@ function populateLastRow(card, exName){
 
 function createSearchableDropdown(card, selectedName){
   var wrap = card.querySelector('.ex-search-wrap');
-  var input = card.querySelector('.ex-search-input');
+  var display = card.querySelector('.ex-selected-display');
   var dropdown = null;
   var currentValue = selectedName || '';
 
-  input.value = currentValue;
+  // Update display text
+  function updateDisplay(){
+    display.textContent = currentValue || 'Select exercise…';
+    display.style.color = currentValue ? 'var(--text)' : 'var(--muted)';
+  }
+  updateDisplay();
 
   function getFiltered(q){
-    var groups=['Quads','Hamstrings','Glutes','Calves','Back \u2013 Lats','Back \u2013 Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
+    var groups=['Quads','Hamstrings','Glutes','Calves','Back – Lats','Back – Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
     var results=[];
     groups.forEach(function(g){
       var exs=allExercises().filter(function(e){
@@ -712,66 +717,99 @@ function createSearchableDropdown(card, selectedName){
     return results;
   }
 
-  function showDropdown(q){
+  function buildList(q){
+    var listEl=dropdown.querySelector('.ex-dropdown-list');
+    listEl.innerHTML='';
+    var groups=getFiltered(q||'');
+    if(!groups.length){
+      listEl.innerHTML='<div class="ex-dropdown-empty">No exercises found</div>';
+      return;
+    }
+    groups.forEach(function(g){
+      var grpDiv=document.createElement('div');
+      grpDiv.className='ex-dropdown-group';
+      grpDiv.textContent=g.group;
+      listEl.appendChild(grpDiv);
+      g.exs.forEach(function(e){
+        var item=document.createElement('div');
+        item.className='ex-dropdown-item'+(e.name===currentValue?' selected':'');
+        item.textContent=e.name;
+        item.addEventListener('mousedown',function(ev){ev.preventDefault();});
+        item.addEventListener('click',function(){
+          currentValue=e.name;
+          card.setAttribute('data-ex-name',e.name);
+          updateDisplay();
+          closeDropdown();
+          populateLastRow(card, e.name);
+          saveCurrentSession();
+        });
+        listEl.appendChild(item);
+      });
+    });
+  }
+
+  function showDropdown(){
     closeDropdown();
     dropdown=document.createElement('div');
     dropdown.className='ex-dropdown';
-    var groups=getFiltered(q||'');
-    if(!groups.length){
-      dropdown.innerHTML='<div class="ex-dropdown-empty">No exercises found</div>';
-    } else {
-      groups.forEach(function(g){
-        var grpDiv=document.createElement('div');
-        grpDiv.className='ex-dropdown-group';
-        grpDiv.textContent=g.group;
-        dropdown.appendChild(grpDiv);
-        g.exs.forEach(function(e){
-          var item=document.createElement('div');
-          item.className='ex-dropdown-item'+(e.name===currentValue?' selected':'');
-          item.textContent=e.name;
-          item.addEventListener('mousedown',function(ev){ev.preventDefault();});
-          item.addEventListener('click',function(){
-            currentValue=e.name;
-            input.value=e.name;
-            card.setAttribute('data-ex-name',e.name);
-            closeDropdown();
-            populateLastRow(card, e.name);
-            saveCurrentSession();
-          });
-          dropdown.appendChild(item);
-        });
-      });
-    }
-    // Position fixed relative to viewport so keyboard/scroll don't clip it
-    var rect=input.getBoundingClientRect();
+    dropdown.style.display='flex';
+    dropdown.style.flexDirection='column';
+
+    // Sticky search bar inside dropdown
+    var searchWrap=document.createElement('div');
+    searchWrap.style.cssText='padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface2);position:sticky;top:0;z-index:1;flex-shrink:0;';
+    var searchIn=document.createElement('input');
+    searchIn.type='text';
+    searchIn.placeholder='Search exercises…';
+    searchIn.autocomplete='off';
+    searchIn.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter,sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none;-webkit-appearance:none;';
+    searchIn.addEventListener('input',function(){ buildList(searchIn.value); });
+    // Prevent blur closing dropdown when typing in search
+    searchIn.addEventListener('mousedown',function(e){ e.stopPropagation(); });
+    searchWrap.appendChild(searchIn);
+    dropdown.appendChild(searchWrap);
+
+    // Scrollable list
+    var listEl=document.createElement('div');
+    listEl.className='ex-dropdown-list';
+    listEl.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;';
+    dropdown.appendChild(listEl);
+    buildList('');
+
+    // Position fixed to viewport
+    var rect=display.getBoundingClientRect();
     var spaceBelow=window.innerHeight-rect.bottom-8;
     var spaceAbove=rect.top-8;
-    var maxH=Math.min(Math.max(spaceBelow,spaceAbove)*0.9,window.innerHeight*0.5);
+    var maxH=Math.min(Math.max(spaceBelow,120),window.innerHeight*0.55);
     dropdown.style.maxHeight=Math.round(maxH)+'px';
     dropdown.style.width=Math.round(window.innerWidth-32)+'px';
     dropdown.style.left='16px';
-    if(spaceBelow>=spaceAbove){
+    dropdown.style.position='fixed';
+    dropdown.style.zIndex='9999';
+    dropdown.style.boxShadow='0 8px 32px rgba(0,0,0,0.6)';
+    if(spaceBelow>=120){
       dropdown.style.top=(rect.bottom+4)+'px';
     } else {
-      // Position above the input
       dropdown.style.bottom=(window.innerHeight-rect.top+4)+'px';
       dropdown.style.top='auto';
     }
     document.body.appendChild(dropdown);
+
+    // Focus search after short delay so keyboard opens
+    setTimeout(function(){ searchIn.focus(); }, 80);
   }
 
   function closeDropdown(){
     if(dropdown){try{dropdown.remove();}catch(e){}dropdown=null;}
   }
 
-  input.addEventListener('focus',function(){showDropdown(input.value);});
-  input.addEventListener('input',function(){showDropdown(input.value);});
-  input.addEventListener('blur',function(){
-    setTimeout(function(){
-      // If user typed something that doesn't match, restore last valid value
-      if(input.value !== currentValue) input.value = currentValue;
+  display.addEventListener('click',function(){ showDropdown(); });
+
+  // Close on outside tap
+  document.addEventListener('click',function(e){
+    if(dropdown && !dropdown.contains(e.target) && e.target!==display){
       closeDropdown();
-    },200);
+    }
   });
 
   card.getExName = function(){ return currentValue; };
@@ -805,8 +843,9 @@ function addExRow(data){
   div.id=id;
 
   var html='<div class="ex-card-header">';
+  html+='<span class="drag-handle" title="Hold to reorder">&#9776;</span>';
   html+='<span class="ex-num">'+String(n).padStart(2,'0')+'</span>';
-  html+='<div class="ex-search-wrap"><input type="text" class="ex-search-input" placeholder="Search exercise…" autocomplete="off"></div>';
+  html+='<div class="ex-search-wrap"><div class="ex-selected-display" style="flex:1;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;padding:2px 0;">Select exercise…</div></div>';
   html+='<button class="del-btn" data-id="'+id+'">&#215;</button>';
   html+='</div>';
   html+='<div class="ex-table">';

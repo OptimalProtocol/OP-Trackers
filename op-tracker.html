@@ -114,7 +114,25 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .add-ex-btn{margin:10px 16px 0;width:calc(100% - 32px);background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:12px;text-align:center;transition:border-color 0.15s,color 0.15s;display:block;}
 .add-ex-btn:active{border-color:var(--cyan-border);color:var(--cyan);}
 .save-bar{padding:10px 16px;display:flex;gap:10px;margin-top:12px;}
-.prog-list{padding:12px 16px 0;}
+.prog-list{padding:8px 0 0;}
+.prog-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 8px;}
+.prog-table{border-collapse:collapse;width:100%;min-width:700px;}
+.prog-table th{background:var(--surface);border-bottom:2px solid var(--cyan-border);color:var(--muted);cursor:pointer;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:10px 12px;text-align:left;text-transform:uppercase;white-space:nowrap;user-select:none;-webkit-user-select:none;}
+.prog-table th:hover{color:var(--cyan);}
+.prog-table th.sort-asc::after{content:" ▲";color:var(--cyan);}
+.prog-table th.sort-desc::after{content:" ▼";color:var(--cyan);}
+.prog-table td{border-bottom:1px solid var(--border);font-size:12px;padding:10px 12px;vertical-align:middle;white-space:nowrap;}
+.prog-table tr:active td{background:var(--cyan-dim);}
+.prog-table .td-name{font-weight:600;color:var(--text);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prog-table .td-muscle{color:var(--dim);font-size:11px;}
+.prog-table .td-num{font-family:'JetBrains Mono',monospace;text-align:center;}
+.prog-table .td-since{font-family:'JetBrains Mono',monospace;text-align:center;font-weight:700;}
+.since-fresh{color:var(--green);}
+.since-ok{color:var(--gold);}
+.since-stale{color:var(--red);}
+.prog-table .td-load{font-family:'JetBrains Mono',monospace;text-align:center;color:var(--cyan);font-weight:700;}
+.prog-table .td-date{color:var(--dim);font-size:11px;}
+.prog-table .td-reps{font-family:'JetBrains Mono',monospace;text-align:center;}
 .sess-hist-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .sess-hist-info{flex:1;}
 .sess-hist-date{font-size:12px;font-weight:600;color:var(--text);}
@@ -325,6 +343,15 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <div id="sess-history-list"></div>
   </div>
   <div class="section"><div class="section-title">Exercise Progression</div></div>
+  <div style="padding:8px 16px 4px;">
+    <input type="text" id="prog-search" placeholder="Search exercises…" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:Inter,sans-serif;font-size:14px;padding:10px 14px 10px 38px;width:100%;outline:none;-webkit-appearance:none;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:12px center;">
+  </div>
+  <div style="display:flex;gap:6px;overflow-x:auto;padding:8px 16px 0;scrollbar-width:none;-webkit-overflow-scrolling:touch;" id="prog-muscle-chips"></div>
+  <div style="display:flex;gap:6px;overflow-x:auto;padding:6px 16px 0;scrollbar-width:none;-webkit-overflow-scrolling:touch;" id="prog-workout-chips"></div>
+  <div style="padding:6px 16px 0;display:flex;align-items:center;gap:8px;">
+    <button id="prog-pr-toggle" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px 12px;transition:all 0.15s;white-space:nowrap;">&#11088; PRs Only</button>
+    <button id="prog-clear-filters" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px 8px;display:none;">Clear all filters</button>
+  </div>
   <div class="prog-list" id="prog-list"></div>
 </div>
 
@@ -527,7 +554,35 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
     btn.classList.add('active');
     document.getElementById('header-sub').textContent = PAGE_LABELS[page] || page;
     if(page==='library') renderLibrary();
-    if(page==='progress') renderProgression();
+    if(page==='progress'){
+      renderSessionHistory();
+      renderProgression();
+      var ps=document.getElementById('prog-search');
+      if(ps&&!ps._wired){
+        ps.addEventListener('input',renderProgression);
+        ps._wired=true;
+      }
+      var prBtn=document.getElementById('prog-pr-toggle');
+      if(prBtn&&!prBtn._wired){
+        prBtn.addEventListener('click',function(){
+          progFilters.prOnly=!progFilters.prOnly;
+          renderProgression();
+        });
+        prBtn._wired=true;
+      }
+      var clearBtn=document.getElementById('prog-clear-filters');
+      if(clearBtn&&!clearBtn._wired){
+        clearBtn.addEventListener('click',function(){
+          progFilters.muscle='All';
+          progFilters.workout='All';
+          progFilters.prOnly=false;
+          var ps=document.getElementById('prog-search');
+          if(ps) ps.value='';
+          renderProgression();
+        });
+        clearBtn._wired=true;
+      }
+    }
   });
 });
 
@@ -1151,33 +1206,251 @@ function renderSessionHistory(){
   });
 }
 
-function renderProgression(){
-  var container=document.getElementById('prog-list');
-  var exMap={};
+// ── PROGRESSION FILTER STATE ──
+var progFilters = {muscle:'All', workout:'All', prOnly:false};
+
+function buildProgFilterChips(){
+  // Muscle groups — only show groups that have been logged
+  var loggedGroups = {};
   sessionHistory.forEach(function(sess){
     sess.exercises.forEach(function(ex){
       if(!ex.name) return;
-      if(!exMap[ex.name]) exMap[ex.name]=[];
-      exMap[ex.name].push({date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe});
+      var lib = allExercises().find(function(e){return e.name===ex.name;});
+      if(lib) loggedGroups[lib.group] = true;
+    });
+  });
+  var muscleGroups = ['All'].concat(Object.keys(loggedGroups).sort());
+  var mc = document.getElementById('prog-muscle-chips');
+  if(mc){
+    mc.innerHTML = muscleGroups.map(function(g){
+      return '<button class="filter-chip'+(progFilters.muscle===g?' active':'')+'" data-muscle="'+g+'">'+g+'</button>';
+    }).join('');
+    mc.querySelectorAll('.filter-chip').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        progFilters.muscle = btn.getAttribute('data-muscle');
+        renderProgression();
+      });
+    });
+  }
+
+  // Workout types — only those actually logged
+  var loggedWorkouts = {};
+  sessionHistory.forEach(function(sess){ if(sess.workout) loggedWorkouts[sess.workout]=true; });
+  var workoutTypes = ['All'].concat(Object.keys(loggedWorkouts).sort());
+  var wc = document.getElementById('prog-workout-chips');
+  if(wc){
+    wc.innerHTML = workoutTypes.map(function(w){
+      return '<button class="filter-chip'+(progFilters.workout===w?' active':'')+'" data-workout="'+w+'">'+w+'</button>';
+    }).join('');
+    wc.querySelectorAll('.filter-chip').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        progFilters.workout = btn.getAttribute('data-workout');
+        renderProgression();
+      });
+    });
+  }
+
+  // PR toggle
+  var prBtn = document.getElementById('prog-pr-toggle');
+  if(prBtn){
+    prBtn.style.background = progFilters.prOnly ? 'rgba(255,184,0,0.15)' : 'var(--surface)';
+    prBtn.style.borderColor = progFilters.prOnly ? '#FFB800' : 'var(--border)';
+    prBtn.style.color = progFilters.prOnly ? '#FFB800' : 'var(--dim)';
+  }
+
+  // Clear button visibility
+  var clearBtn = document.getElementById('prog-clear-filters');
+  var hasFilter = progFilters.muscle!=='All'||progFilters.workout!=='All'||progFilters.prOnly||
+    (document.getElementById('prog-search')&&document.getElementById('prog-search').value);
+  if(clearBtn) clearBtn.style.display = hasFilter ? 'block' : 'none';
+}
+
+// ── SORT STATE ──
+var progSort = {col:'sincePR', dir:'desc'};
+
+function computeExStats(name, logs){
+  // Compute all metrics for an exercise
+  var lib = allExercises().find(function(e){return e.name===name;});
+  var muscle = lib ? lib.group : '—';
+  var totalSessions = logs.length;
+
+  // Find best load PR and its date
+  var bestLoad = 0, bestLoadDate = null, bestAvgReps = 0;
+  var maxAvgAtBest = 0;
+
+  // Walk through chronologically to detect PRs
+  var runMaxLoad = 0, runMaxAvg = 0;
+  var prLoadSessIdx = -1; // session index (chronological) of last load PR
+
+  logs.forEach(function(l, i){
+    var load = parseFloat(l.load)||0;
+    var repsArr = (l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var avg = repsArr.length ? repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length : 0;
+
+    if(load > runMaxLoad){
+      runMaxLoad = load;
+      bestLoad = load;
+      bestLoadDate = l.date;
+      maxAvgAtBest = avg;
+      prLoadSessIdx = i;
+    }
+    if(avg > runMaxAvg){
+      runMaxAvg = avg;
+      bestAvgReps = avg;
+    }
+  });
+
+  // Sessions since last PR (load or rep)
+  var runLoad2 = 0, runAvg2 = 0, lastPRIdx = -1;
+  logs.forEach(function(l, i){
+    var load = parseFloat(l.load)||0;
+    var repsArr = (l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var avg = repsArr.length ? repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length : 0;
+    if(load > runLoad2 || avg > runAvg2){
+      lastPRIdx = i;
+      if(load > runLoad2) runLoad2 = load;
+      if(avg > runAvg2) runAvg2 = avg;
+    }
+  });
+
+  var sincePR = lastPRIdx === -1 ? totalSessions : (totalSessions - 1 - lastPRIdx);
+  var lastLoad = logs.length ? (parseFloat(logs[logs.length-1].load)||0) : 0;
+
+  return {
+    name: name,
+    muscle: muscle,
+    totalSessions: totalSessions,
+    sincePR: sincePR,
+    bestLoad: bestLoad,
+    bestLoadDate: bestLoadDate,
+    lastLoad: lastLoad,
+    bestAvgReps: Math.round(maxAvgAtBest*10)/10
+  };
+}
+
+function renderProgression(){
+  var container = document.getElementById('prog-list');
+
+  // Build exMap
+  var exMap = {};
+  sessionHistory.forEach(function(sess){
+    sess.exercises.forEach(function(ex){
+      if(!ex.name) return;
+      if(!exMap[ex.name]) exMap[ex.name] = {logs:[], workouts:{}};
+      exMap[ex.name].logs.push({
+        date:sess.date, workout:sess.workout,
+        load:ex.curr.load, reps:ex.curr.reps, rpe:ex.curr.rpe,
+        sessId:sess.id
+      });
+      if(sess.workout) exMap[ex.name].workouts[sess.workout] = true;
     });
   });
 
-  if(!Object.keys(exMap).length){
-    container.innerHTML='<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">No sessions logged yet.<br>Save a session to see progression here.</div></div>';
+  buildProgFilterChips();
+
+  // Filters
+  var progQ = (document.getElementById('prog-search')||{}).value||'';
+  progQ = progQ.toLowerCase();
+
+  var filteredKeys = Object.keys(exMap).filter(function(name){
+    if(progQ && name.toLowerCase().indexOf(progQ)===-1) return false;
+    if(progFilters.muscle!=='All'){
+      var lib = allExercises().find(function(e){return e.name===name;});
+      if(!lib||lib.group!==progFilters.muscle) return false;
+    }
+    if(progFilters.workout!=='All'){
+      if(!exMap[name].workouts[progFilters.workout]) return false;
+    }
+    return true;
+  });
+
+  // Compute stats for all filtered exercises
+  var rows = filteredKeys.map(function(name){
+    var logs = exMap[name].logs.filter(function(l){
+      return l.load || (l.reps&&l.reps.some(function(r){return r;}));
+    });
+    return computeExStats(name, logs);
+  }).filter(function(r){return r.totalSessions>0;});
+
+  // PR only filter
+  if(progFilters.prOnly){
+    rows = rows.filter(function(r){return r.sincePR===0;});
+  }
+
+  if(!rows.length){
+    var msg = progQ||progFilters.muscle!=='All'||progFilters.workout!=='All'||progFilters.prOnly
+      ? 'No exercises match your filters.'
+      : 'No sessions logged yet.<br>Save a session to see progression here.';
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">'+msg+'</div></div>';
     return;
   }
 
-  container.innerHTML='';
-  Object.keys(exMap).sort().forEach(function(name){
-    var logs=exMap[name].filter(function(l){ return l.load||l.reps.some(function(r){return r;}); });
-    if(!logs.length) return;
-    var maxLoad=Math.max.apply(null,logs.map(function(l){return parseFloat(l.load)||0;}));
-    var latest=logs[logs.length-1];
-    var div=document.createElement('div');
-    div.className='prog-item';
-    div.innerHTML='<div class="prog-item-name">'+name+'</div><div class="prog-item-meta"><span class="prog-stat"><span>'+logs.length+'</span> sessions</span><span class="prog-stat">Best: <span>'+maxLoad+(settings.unit||'kg')+'</span></span>'+(latest.load?'<span class="prog-stat">Last: <span>'+latest.load+(settings.unit||'kg')+'</span></span>':'')+'</div>';
-    div.addEventListener('click',function(){ openProgDetail(name,getLogsForExercise(name)); });
-    container.appendChild(div);
+  // Sort
+  rows.sort(function(a,b){
+    var av = a[progSort.col], bv = b[progSort.col];
+    if(typeof av==='string') return progSort.dir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    return progSort.dir==='asc'?av-bv:bv-av;
+  });
+
+  var unit = settings.unit||'kg';
+
+  // Build table
+  var cols = [
+    {key:'name',    label:'Exercise',      cls:'td-name'},
+    {key:'muscle',  label:'Muscle',        cls:'td-muscle'},
+    {key:'sincePR', label:'Since PR',      cls:'td-since'},
+    {key:'totalSessions',label:'Sessions', cls:'td-num'},
+    {key:'bestLoad',label:'Best Load',     cls:'td-load'},
+    {key:'bestLoadDate',label:'PR Date',   cls:'td-date'},
+    {key:'lastLoad',label:'Last Load',     cls:'td-load'},
+    {key:'bestAvgReps',label:'Best Avg Reps',cls:'td-reps'}
+  ];
+
+  var html = '<div class="prog-table-wrap"><table class="prog-table"><thead><tr>';
+  cols.forEach(function(c){
+    var sortCls = progSort.col===c.key ? (progSort.dir==='asc'?'sort-asc':'sort-desc') : '';
+    html += '<th class="'+sortCls+'" data-col="'+c.key+'">'+c.label+'</th>';
+  });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(function(r){
+    var sinceCls = r.sincePR===0?'since-fresh':r.sincePR<=3?'since-ok':'since-stale';
+    var sinceLabel = r.sincePR===0?'PR ✓':r.sincePR+' sess';
+    html += '<tr data-name="'+r.name.replace(/"/g,"&quot;")+'">'+
+      '<td class="td-name">'+r.name+'</td>'+
+      '<td class="td-muscle">'+r.muscle+'</td>'+
+      '<td class="td-since '+sinceCls+'">'+sinceLabel+'</td>'+
+      '<td class="td-num">'+r.totalSessions+'</td>'+
+      '<td class="td-load">'+(r.bestLoad||'—')+(r.bestLoad?unit:'')+'</td>'+
+      '<td class="td-date">'+(r.bestLoadDate?r.bestLoadDate.slice(5):'—')+'</td>'+
+      '<td class="td-load">'+(r.lastLoad||'—')+(r.lastLoad?unit:'')+'</td>'+
+      '<td class="td-reps">'+(r.bestAvgReps||'—')+'</td>'+
+    '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+
+  // Sort on header click
+  container.querySelectorAll('th[data-col]').forEach(function(th){
+    th.addEventListener('click',function(){
+      var col = th.getAttribute('data-col');
+      if(progSort.col===col){
+        progSort.dir = progSort.dir==='asc'?'desc':'asc';
+      } else {
+        progSort.col = col;
+        progSort.dir = col==='name'||col==='muscle'||col==='bestLoadDate'?'asc':'desc';
+      }
+      renderProgression();
+    });
+  });
+
+  // Tap row to open detail
+  container.querySelectorAll('tr[data-name]').forEach(function(tr){
+    tr.addEventListener('click',function(){
+      var name = tr.getAttribute('data-name');
+      openProgDetail(name, getLogsForExercise(name));
+    });
   });
 }
 
@@ -1283,7 +1556,12 @@ function renderProgModal(name, logs){
       // Re-render modal with updated data
       var updated=getLogsForExercise(name);
       renderProgModal(name,updated);
-      showToast('Entry updated ✓');
+      // Refresh Last row on any matching exercise card in the Session tab
+      document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
+        var cardName=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+        if(cardName===name) populateLastRow(card, name);
+      });
+      showToast('Entry updated \u2713');
     });
   });
 

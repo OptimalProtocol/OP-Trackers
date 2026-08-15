@@ -1656,7 +1656,9 @@ function computeExStats(name,logs){
     var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
     if(load>runMaxLoad){runMaxLoad=load;bestLoad=load;bestLoadDate=l.date;maxAvgAtBest=avg;}
     if(avg>runMaxAvg){runMaxAvg=avg;bestAvgReps=avg;}
-    if(load>runL2||avg>runA2){lastPRIdx=i;if(load>runL2)runL2=load;if(avg>runA2)runA2=avg;}
+    // First entry (i===0) is base load — not counted as a PR for since-PR tracking
+    if(i>0&&(load>runL2||avg>runA2)){lastPRIdx=i;if(load>runL2)runL2=load;if(avg>runA2)runA2=avg;}
+    else if(i===0){runL2=load;runA2=avg;} // seed the baseline
   });
   var sincePR=lastPRIdx===-1?totalSessions:(totalSessions-1-lastPRIdx);
   var lastLoad=logs.length?(parseFloat(logs[logs.length-1].load)||0):0;
@@ -1757,12 +1759,14 @@ function openProgDetail(name,logs){
 function renderProgModal(name,logs){
   var unit=settings.unit||'kg';
   var maxLoad=0,maxAvg=0;
-  var enriched=logs.map(function(l){
+  var enriched=logs.map(function(l,idx){
     var repsArr=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
     var avg=repsArr.length?repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length:0;
     var load=parseFloat(l.load)||0;var prLoad=false,prRep=false;
-    if(load>maxLoad){maxLoad=load;prLoad=true;}if(avg>maxAvg){maxAvg=avg;prRep=true;}
-    return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,sessId:l.sessId,exIdx:l.exIdx};
+    var isBase=idx===0; // First entry is base load, not a PR
+    if(!isBase&&load>maxLoad){maxLoad=load;prLoad=true;}else if(load>maxLoad){maxLoad=load;}
+    if(!isBase&&avg>maxAvg){maxAvg=avg;prRep=true;}else if(avg>maxAvg){maxAvg=avg;}
+    return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,isBase:isBase,sessId:l.sessId,exIdx:l.exIdx};
   });
   var chartEl=document.getElementById('prog-chart');
   var chartH=Math.round(window.innerHeight*0.32);chartEl.style.height=chartH+'px';
@@ -1786,9 +1790,9 @@ function renderProgModal(name,logs){
   var tbody=document.getElementById('hist-body');tbody.innerHTML='';
   enriched.slice().reverse().forEach(function(l,rowIdx){
     var origIdx=enriched.length-1-rowIdx;
-    var pr=l.prLoad&&l.prRep?'both':l.prLoad?'load':l.prRep?'rep':'';
+    var pr=l.isBase?'base':(l.prLoad&&l.prRep?'both':l.prLoad?'load':l.prRep?'rep':'');
     var cls=pr==='both'?'pr-both-cell':pr==='load'?'pr-load-cell':pr==='rep'?'pr-rep-cell':'';
-    var badge=pr==='both'?'<span class="pr-badge pr-badge-load">L</span><span class="pr-badge pr-badge-rep">R</span>':pr==='load'?'<span class="pr-badge pr-badge-load">Load PR</span>':pr==='rep'?'<span class="pr-badge pr-badge-rep">Rep PR</span>':'&mdash;';
+    var badge=pr==='base'?'<span class="pr-badge" style="background:rgba(255,255,255,0.08);color:var(--dim);">Base Load</span>':pr==='both'?'<span class="pr-badge pr-badge-load">L</span><span class="pr-badge pr-badge-rep">R</span>':pr==='load'?'<span class="pr-badge pr-badge-load">Load PR</span>':pr==='rep'?'<span class="pr-badge pr-badge-rep">Rep PR</span>':'&mdash;';
     var tr=document.createElement('tr');tr.setAttribute('data-row',origIdx);
     tr.innerHTML='<td style="font-size:11px;color:var(--dim);white-space:nowrap;">'+(l.date||'&mdash;')+'</td>'+
       '<td style="font-size:10px;color:var(--muted);white-space:nowrap;">'+(l.workout||'&mdash;')+'</td>'+

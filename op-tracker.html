@@ -461,8 +461,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 <!-- TAB 4: PROGRESS -->
 <div class="page" id="page-progress">
   <div class="vol-toggle">
-    <button class="vol-toggle-btn active" id="prog-tab-exercises" onclick="switchProgTab('exercises')">Exercise Progression</button>
-    <button class="vol-toggle-btn" id="prog-tab-volume" onclick="switchProgTab('volume')">Weekly Volume</button>
+    <button class="vol-toggle-btn active" id="prog-tab-exercises" onclick="switchProgTab('exercises')">Progression</button>
+    <button class="vol-toggle-btn" id="prog-tab-volume" onclick="switchProgTab('volume')">Volume</button>
   </div>
 
   <!-- Exercise progression view -->
@@ -490,7 +490,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <button class="nav-btn active" data-page="settings"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
   <button class="nav-btn" data-page="library"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></span>Library</button>
   <button class="nav-btn" data-page="session"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/></svg></span>Session</button>
-  <button class="nav-btn" data-page="progress"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Progress</button>
+  <button class="nav-btn" data-page="progress"><span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Insights</button>
 </nav>
 
 <!-- PROGRESS DETAIL MODAL -->
@@ -781,7 +781,7 @@ document.getElementById('ob-lbs').addEventListener('click',function(){
 });
 
 // ── NAVIGATION ──
-var PAGE_LABELS={settings:'Settings',library:'Exercise Library',session:'Session Log',progress:'Exercise Progression'};
+var PAGE_LABELS={settings:'Settings',library:'Exercise Library',session:'Session Log',progress:'Insights'};
 document.querySelectorAll('.nav-btn').forEach(function(btn){
   btn.addEventListener('click',function(){
     var page=btn.getAttribute('data-page');
@@ -1431,16 +1431,14 @@ function getWeekStartDate(wkKey){
 }
 function renderVolumeTab(){
   var container=document.getElementById('vol-list');
+  var MEV=10;
 
   // ── Build full data structure ──
-  // weekMap[wk][grp] = {sets, exercises:{name:{sets,totalReps}}, sessions, totalSets}
   var weekMap={};
-  var MEV=10; // Minimum Effective Volume sets per muscle per week
-
   sessionHistory.forEach(function(sess){
     if(!sess.date||sess.status==='draft') return;
     var wk=getISOWeek(sess.date);
-    if(!weekMap[wk]) weekMap[wk]={groups:{},sessions:0,totalSets:0,totalExercises:0};
+    if(!weekMap[wk]) weekMap[wk]={groups:{},sessions:0,totalSets:0};
     weekMap[wk].sessions++;
     sess.exercises.forEach(function(ex){
       if(!ex.name) return;
@@ -1454,139 +1452,236 @@ function renderVolumeTab(){
       weekMap[wk].groups[grp].exercises[ex.name].sets+=sets;
       weekMap[wk].groups[grp].exercises[ex.name].totalReps+=totalReps;
       weekMap[wk].totalSets+=sets;
-      weekMap[wk].totalExercises++;
     });
   });
 
-  var weeks=Object.keys(weekMap).sort().reverse().slice(0,10);
+  var weeks=Object.keys(weekMap).sort().reverse().slice(0,12);
   if(!weeks.length){
     container.innerHTML='<div class="empty-state"><div class="empty-icon">&#128200;</div><div class="empty-text">No sessions logged yet.<br>Log sessions to see weekly volume breakdown.</div></div>';
     return;
   }
 
-  // ── Best volume week ──
+  var currentWk=getISOWeek(new Date().toISOString().split('T')[0]);
   var bestWk=weeks.reduce(function(best,wk){return weekMap[wk].totalSets>weekMap[best].totalSets?wk:best;},weeks[0]);
 
-  // ── Push vs Pull balance data ──
+  // ── Push/Pull + Quad/Posterior groupings ──
   var pushGroups=['Chest','Shoulders','Triceps'];
-  var pullGroups=['Back – Lats','Back – Mid','Biceps'];
+  var pullGroups=['Back \u2013 Lats','Back \u2013 Mid','Biceps'];
   var quadGroups=['Quads','Glutes'];
   var hamGroups=['Hamstrings','Calves'];
 
-  // ── Render ──
+  // ── MEV consistency (item 6) ──
+  var mevConsistency={};
+  MUSCLE_GROUPS.forEach(function(g){
+    var hitsArr=weeks.map(function(wk){return (weekMap[wk].groups[g]||{sets:0}).sets>=MEV;});
+    var hits=hitsArr.filter(Boolean).length;
+    mevConsistency[g]={hits:hits,total:weeks.length,pct:weeks.length?Math.round(hits/weeks.length*100):0};
+  });
+
   container.innerHTML='';
 
-  // Balance chart if enough weeks
-  if(weeks.length>=2){
-    var balanceCard=document.createElement('div');
-    balanceCard.className='vol-week-card';
-    balanceCard.style.margin='10px 16px 0';
-    var balHtml='<div class="vol-week-header" style="color:var(--cyan)">&#9878; Volume Patterns</div>';
-
-    // Push vs Pull
-    var pushTotal=0,pullTotal=0,quadTotal=0,hamTotal=0;
-    weeks.forEach(function(wk){
-      pushGroups.forEach(function(g){pushTotal+=(weekMap[wk].groups[g]||{sets:0}).sets;});
-      pullGroups.forEach(function(g){pullTotal+=(weekMap[wk].groups[g]||{sets:0}).sets;});
-      quadGroups.forEach(function(g){quadTotal+=(weekMap[wk].groups[g]||{sets:0}).sets;});
-      hamGroups.forEach(function(g){hamTotal+=(weekMap[wk].groups[g]||{sets:0}).sets;});
+  // ── VOLUME PATTERNS (item 3 drill-down + item 5 recommendations) ──
+  var pushTotal=0,pullTotal=0,quadTotal=0,hamTotal=0;
+  var pushEx={},pullEx={},quadEx={},hamEx={};
+  weeks.forEach(function(wk){
+    var wkGroups=weekMap[wk].groups;
+    pushGroups.forEach(function(g){
+      pushTotal+=(wkGroups[g]||{sets:0}).sets;
+      if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
+        pushEx[ex]=(pushEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+      });
     });
-    var pushPullRatio=pullTotal>0?Math.round((pushTotal/pullTotal)*100)/100:null;
-    var quadHamRatio=hamTotal>0?Math.round((quadTotal/hamTotal)*100)/100:null;
+    pullGroups.forEach(function(g){
+      pullTotal+=(wkGroups[g]||{sets:0}).sets;
+      if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
+        pullEx[ex]=(pullEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+      });
+    });
+    quadGroups.forEach(function(g){
+      quadTotal+=(wkGroups[g]||{sets:0}).sets;
+      if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
+        quadEx[ex]=(quadEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+      });
+    });
+    hamGroups.forEach(function(g){
+      hamTotal+=(wkGroups[g]||{sets:0}).sets;
+      if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
+        hamEx[ex]=(hamEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+      });
+    });
+  });
 
-    function ratioBar(label,aLabel,bLabel,aVal,bVal){
-      var total=aVal+bVal||1;var aPct=Math.round(aVal/total*100);var bPct=100-aPct;
-      var aColor='var(--cyan)';var bColor='rgba(0,180,216,0.3)';
-      var warning=(aPct>65||aPct<35)?'<span style="color:var(--gold);font-size:10px;margin-left:6px;">&#9888; Imbalance</span>':'';
-      return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">'+
-        '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">'+
-          '<span style="font-weight:600;">'+label+'</span>'+warning+
-        '</div>'+
-        '<div style="height:8px;border-radius:4px;overflow:hidden;display:flex;background:var(--surface3);">'+
-          '<div style="width:'+aPct+'%;background:'+aColor+';border-radius:4px 0 0 4px;"></div>'+
-          '<div style="width:'+bPct+'%;background:'+bColor+';border-radius:0 4px 4px 0;"></div>'+
-        '</div>'+
-        '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px;">'+
-          '<span style="color:var(--cyan)">'+aLabel+' '+aPct+'%</span>'+
-          '<span style="color:var(--dim)">'+bLabel+' '+bPct+'%</span>'+
+  if(pushTotal>0||pullTotal>0||quadTotal>0||hamTotal>0){
+    var patternCard=document.createElement('div');
+    patternCard.className='vol-week-card';
+    patternCard.style.margin='10px 16px 0';
+
+    function exListHtml(exMap,color){
+      var sorted=Object.keys(exMap).sort(function(a,b){return exMap[b]-exMap[a];});
+      if(!sorted.length) return '<div style="padding:6px 0;font-size:11px;color:var(--muted);">No exercises logged</div>';
+      return sorted.map(function(ex){
+        return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;">'+
+          '<span>'+ex+'</span><span style="font-weight:700;font-family:JetBrains Mono,monospace;color:'+color+';">'+exMap[ex]+' sets</span>'+
+        '</div>';
+      }).join('');
+    }
+
+    function balanceSection(label,aLabel,bLabel,aVal,bVal,aEx,bEx,aColor,bColor,recommendation,drillId){
+      var total=aVal+bVal||1;
+      var aPct=Math.round(aVal/total*100);var bPct=100-aPct;
+      var isImbalance=aPct>65||aPct<35;
+      var html='<div style="padding:10px 14px;border-bottom:1px solid var(--border);">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+        '<span style="font-size:12px;font-weight:600;">'+label+'</span>'+
+        (isImbalance?'<span style="color:var(--gold);font-size:10px;font-weight:700;">&#9888; Imbalance</span>':
+                     '<span style="color:var(--green);font-size:10px;font-weight:700;">&#10003; Balanced</span>')+
+      '</div>';
+      html+='<div style="height:8px;border-radius:4px;overflow:hidden;display:flex;background:var(--surface3);margin-bottom:6px;">'+
+        '<div style="width:'+aPct+'%;background:'+aColor+';border-radius:4px 0 0 4px;"></div>'+
+        '<div style="width:'+bPct+'%;background:'+bColor+';border-radius:0 4px 4px 0;"></div>'+
+      '</div>';
+      html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:8px;">'+
+        '<span style="color:'+aColor+';">'+aLabel+' '+aPct+'%</span>'+
+        '<span style="color:'+bColor+';">'+bLabel+' '+bPct+'%</span>'+
+      '</div>';
+      if(isImbalance&&recommendation){
+        html+='<div style="background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:8px;">'+
+          '<span style="color:var(--gold);font-weight:700;">OP Recommendation: </span>'+recommendation+'</div>';
+      }
+      html+='<button style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--dim);cursor:pointer;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:5px 10px;width:100%;text-align:left;" data-drill="'+drillId+'">'+
+        '&#9660; View exercise breakdown</button>';
+      html+='<div id="'+drillId+'" style="display:none;margin-top:8px;">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+          '<div><div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:'+aColor+';margin-bottom:6px;">'+aLabel+'</div>'+exListHtml(aEx,aColor)+'</div>'+
+          '<div><div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:'+bColor+';margin-bottom:6px;">'+bLabel+'</div>'+exListHtml(bEx,bColor)+'</div>'+
         '</div>'+
       '</div>';
+      html+='</div>';
+      return html;
     }
 
-    if(pushTotal>0||pullTotal>0) balHtml+=ratioBar('Push vs Pull','Push','Pull',pushTotal,pullTotal);
-    if(quadTotal>0||hamTotal>0) balHtml+=ratioBar('Quad vs Posterior Chain','Quads/Glutes','Hams/Calves',quadTotal,hamTotal);
-
-    if(pushTotal===0&&pullTotal===0&&quadTotal===0&&hamTotal===0){
-      balHtml+='<div style="padding:12px 14px;font-size:12px;color:var(--muted);">Log more sessions across different workout types to see balance patterns.</div>';
+    var patHtml='<div class="vol-week-header" style="color:var(--cyan);">&#9878; Volume Patterns <span style="font-size:10px;color:var(--muted);font-weight:400;">All '+weeks.length+' weeks</span></div>';
+    if(pushTotal>0||pullTotal>0){
+      patHtml+=balanceSection('Push vs Pull','Push','Pull',pushTotal,pullTotal,pushEx,pullEx,'var(--cyan)','rgba(0,180,216,0.4)','Add one additional pull session or replace a push accessory with a pull movement to reduce imbalance.','drill-pushpull');
     }
-    balHtml+='<div style="padding:8px 14px;font-size:10px;color:var(--muted);">Based on all '+weeks.length+' weeks of data. Aim for pull ≥ push volume for shoulder health.</div>';
-    balanceCard.innerHTML=balHtml;
-    container.appendChild(balanceCard);
+    if(quadTotal>0||hamTotal>0){
+      patHtml+=balanceSection('Quad vs Posterior Chain','Quads/Glutes','Hams/Calves',quadTotal,hamTotal,quadEx,hamEx,'var(--cyan)','rgba(0,180,216,0.4)','Add one RDL, hip thrust, or Nordic curl session to balance posterior chain volume.','drill-quadham');
+    }
+    patHtml+='<div style="padding:8px 14px;font-size:10px;color:var(--muted);">Aim for pull volume \u2265 push. Posterior chain imbalances are a primary driver of knee and hip injury.</div>';
+    patternCard.innerHTML=patHtml;
+    container.appendChild(patternCard);
   }
 
-  // Weekly cards
-  weeks.forEach(function(wk){
+  // ── MEV CONSISTENCY CARD (item 6) ──
+  if(weeks.length>=2){
+    var mevCard=document.createElement('div');mevCard.className='vol-week-card';mevCard.style.margin='10px 16px 0';
+    var mevHtml='<div class="vol-week-header" style="color:var(--cyan);">&#128200; MEV Consistency <span style="font-size:10px;color:var(--muted);font-weight:400;">'+weeks.length+' weeks tracked</span></div>';
+    var loggedGroups=Object.keys(Object.assign.apply(Object,[{}].concat(weeks.map(function(wk){return weekMap[wk].groups;})))).sort();
+    loggedGroups.forEach(function(g){
+      var mc=mevConsistency[g]||{hits:0,total:weeks.length,pct:0};
+      var color=mc.pct>=75?'var(--green)':mc.pct>=50?'var(--gold)':'var(--red)';
+      mevHtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);">'+
+        '<div style="font-size:12px;font-weight:500;min-width:110px;">'+g+'</div>'+
+        '<div style="flex:1;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;">'+
+          '<div style="width:'+mc.pct+'%;height:100%;background:'+color+';border-radius:4px;"></div>'+
+        '</div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+color+';min-width:80px;text-align:right;">'+mc.hits+'/'+mc.total+' weeks</div>'+
+      '</div>';
+    });
+    mevHtml+='<div style="padding:8px 14px;font-size:10px;color:var(--muted);">MEV = 10+ sets per muscle per week. Green \u2265 75% consistency, amber \u2265 50%, red below 50%.</div>';
+    mevCard.innerHTML=mevHtml;
+    container.appendChild(mevCard);
+  }
+
+  // ── WEEKLY CARDS (items 2, 4, 7) ──
+  weeks.forEach(function(wk,wkIdx){
     var wkData=weekMap[wk];
     var groups=wkData.groups;
     var maxSets=Math.max.apply(null,Object.values(groups).map(function(g){return g.sets;}).concat([1]));
     var startDate=getWeekStartDate(wk);
     var isBest=wk===bestWk&&weeks.length>1;
-    var prevWk=weeks[weeks.indexOf(wk)+1];
+    var isCurrentWk=wk===currentWk;
+    var prevWk=weeks[wkIdx+1];
     var prevGroups=prevWk?weekMap[prevWk].groups:{};
+    var prevTotalSets=prevWk?weekMap[prevWk].totalSets:null;
+    var setsDiff=prevTotalSets!==null?wkData.totalSets-prevTotalSets:null;
+    var setsDiffHtml='';
+    if(setsDiff!==null){
+      var diffColor=setsDiff>0?'var(--green)':setsDiff<0?'var(--red)':'var(--muted)';
+      var diffSign=setsDiff>0?'+':'';
+      setsDiffHtml='<span style="font-size:10px;font-weight:700;color:'+diffColor+';margin-left:6px;">'+diffSign+setsDiff+' vs prev</span>';
+    }
+
+    // Item 7: projected sets for current week
+    var projectedHtml='';
+    if(isCurrentWk&&wkData.sessions>0){
+      var avgSetsPerSess=Math.round(wkData.totalSets/wkData.sessions);
+      var dayOfWeek=new Date().getDay()||7; // 1=Mon 7=Sun
+      var daysLeft=7-dayOfWeek;
+      var avgSessionsPerDay=wkData.sessions/dayOfWeek;
+      var projectedExtra=Math.round(avgSessionsPerDay*daysLeft*avgSetsPerSess);
+      var projected=wkData.totalSets+projectedExtra;
+      projectedHtml='<div style="padding:6px 14px;font-size:10px;color:var(--dim);background:rgba(0,180,216,0.04);border-bottom:1px solid var(--border);">'+
+        '&#128337; Week in progress &nbsp;&middot;&nbsp; Est. <strong style="color:var(--cyan);">'+projected+' sets</strong> by end of week at current pace</div>';
+    }
 
     var card=document.createElement('div');card.className='vol-week-card';card.style.margin='10px 16px 0';
+    var weekDrillId='wk-drill-'+wk.replace('-','_');
 
+    // Header
     var html='<div class="vol-week-header" style="display:flex;align-items:center;justify-content:space-between;">'+
       '<span>'+wk+' &nbsp;&middot;&nbsp; w/c '+formatDate(startDate)+'</span>'+
-      (isBest?'<span style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:0.08em;">&#11088; BEST WEEK</span>':'')+
+      (isBest?'<span style="font-size:10px;font-weight:700;color:var(--gold);">&#11088; BEST WEEK</span>':'')+
+      (isCurrentWk?'<span style="font-size:10px;font-weight:700;color:var(--cyan);">CURRENT</span>':'')+
     '</div>';
 
-    // Summary strip
+    // Summary strip (always visible) — item 4: set diff
     html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--border);">'+
       '<div style="padding:8px 14px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+wkData.sessions+'</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Sessions</div></div>'+
       '<div style="padding:8px 14px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+Object.keys(groups).length+'</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Muscles</div></div>'+
-      '<div style="padding:8px 14px;text-align:center;"><div style="font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+wkData.totalSets+'</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Total Sets</div></div>'+
+      '<div style="padding:8px 14px;text-align:center;"><div style="font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+wkData.totalSets+setsDiffHtml+'</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Total Sets</div></div>'+
     '</div>';
 
-    // Muscle group rows with trend + MEV + drill-down
+    // Item 7 projected
+    html+=projectedHtml;
+
+    // Expand/collapse toggle (item 2)
+    html+='<div data-drill="'+weekDrillId+'" style="padding:8px 14px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:'+(isCurrentWk?'1px solid var(--border)':'none')+';">'+
+      '<span id="'+weekDrillId+'-arrow">'+(isCurrentWk?'&#9650;':'&#9660;')+'</span> '+(isCurrentWk?'Collapse':'Expand')+' muscle detail</div>';
+
+    // Muscle detail (expanded for current week, collapsed for prior)
+    html+='<div id="'+weekDrillId+'" style="display:'+(isCurrentWk?'block':'none')+';">';
     Object.keys(groups).sort().forEach(function(grp){
-      var gData=groups[grp];
-      var sets=gData.sets;
-      var pct=Math.round(sets/maxSets*100);
+      var gData=groups[grp];var sets=gData.sets;var pct=Math.round(sets/maxSets*100);
       var prevSets=prevGroups[grp]?prevGroups[grp].sets:null;
       var trend='';
       if(prevSets!==null){
-        if(sets>prevSets) trend='<span style="color:var(--green);font-size:12px;margin-left:4px;">&#9650;</span>';
-        else if(sets<prevSets) trend='<span style="color:var(--red);font-size:12px;margin-left:4px;">&#9660;</span>';
-        else trend='<span style="color:var(--muted);font-size:10px;margin-left:4px;">&mdash;</span>';
+        if(sets>prevSets) trend='<span style="color:var(--green);font-size:11px;margin-left:3px;">&#9650;</span>';
+        else if(sets<prevSets) trend='<span style="color:var(--red);font-size:11px;margin-left:3px;">&#9660;</span>';
+        else trend='<span style="color:var(--muted);font-size:10px;margin-left:3px;">&mdash;</span>';
       }
       var mevColor=sets>=MEV?'var(--cyan)':'var(--muted)';
-      var mevTip=sets<MEV?'<span style="font-size:9px;color:var(--muted);margin-left:4px;">'+(MEV-sets)+' sets to MEV</span>':'';
-      var drillId='drill-'+wk.replace('-','_')+'-'+grp.replace(/[^a-z0-9]/gi,'_');
-      html+='<div class="vol-muscle-row" style="cursor:pointer;flex-direction:column;align-items:stretch;padding:0;" data-drill="'+drillId+'">';
-      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;">'+
-        '<div class="vol-muscle-name" style="display:flex;align-items:center;">'+grp+trend+'</div>'+
-        '<div class="vol-bar-wrap"><div class="vol-bar-fill" style="width:'+pct+'%;background:'+mevColor+'"></div></div>'+
-        '<div class="vol-sets">'+sets+' sets</div>'+
+      var mevTip=sets<MEV?'<span style="font-size:9px;color:var(--muted);margin-left:4px;">'+(MEV-sets)+' to MEV</span>':'';
+      var exDrillId='exdrill-'+wk.replace('-','_')+'-'+grp.replace(/[^a-z0-9]/gi,'_');
+      html+='<div style="border-bottom:1px solid var(--border);">';
+      html+='<div data-drill="'+exDrillId+'" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;">'+
+        '<div style="min-width:100px;font-size:12px;font-weight:500;display:flex;align-items:center;">'+grp+trend+'</div>'+
+        '<div style="flex:1;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+mevColor+';border-radius:4px;"></div></div>'+
+        '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+sets+' sets</div>'+
         mevTip+
-        '<span style="font-size:11px;color:var(--muted);flex-shrink:0;">&#9660;</span>'+
+        '<span style="color:var(--muted);font-size:10px;">&#9660;</span>'+
       '</div>';
-      // Drill-down (hidden by default)
-      html+='<div id="'+drillId+'" style="display:none;background:var(--surface2);border-top:1px solid var(--border);padding:8px 14px 10px;">';
-      var exList=gData.exercises;
-      Object.keys(exList).sort(function(a,b){return exList[b].sets-exList[a].sets;}).forEach(function(exName){
-        var exData=exList[exName];
-        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'+
-          '<span style="font-size:12px;font-weight:500;">'+exName+'</span>'+
-          '<div style="display:flex;gap:12px;align-items:center;">'+
-            '<span style="font-size:11px;color:var(--dim);">'+exData.totalReps+' reps</span>'+
-            '<span style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+exData.sets+' sets</span>'+
-          '</div>'+
+      html+='<div id="'+exDrillId+'" style="display:none;background:var(--surface2);padding:4px 14px 10px;">';
+      Object.keys(gData.exercises).sort(function(a,b){return gData.exercises[b].sets-gData.exercises[a].sets;}).forEach(function(exName){
+        var exData=gData.exercises[exName];
+        html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">'+
+          '<span>'+exName+'</span>'+
+          '<div style="display:flex;gap:10px;"><span style="color:var(--dim);">'+exData.totalReps+' reps</span><span style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+exData.sets+' sets</span></div>'+
         '</div>';
       });
-      html+='<div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:right;">'+Object.keys(exList).length+' exercise'+(Object.keys(exList).length!==1?'s':'')+' &middot; tap to collapse</div>';
       html+='</div></div>';
     });
+    html+='</div>';
 
     card.innerHTML=html;
     container.appendChild(card);
@@ -1595,7 +1690,7 @@ function renderVolumeTab(){
   // MEV legend
   var legend=document.createElement('div');
   legend.style.cssText='padding:12px 16px;font-size:10px;color:var(--muted);line-height:1.6;';
-  legend.innerHTML='<strong style="color:var(--dim);">MEV = Minimum Effective Volume.</strong> Bars turn cyan at 10+ sets/week per muscle group &mdash; the evidence-based threshold for hypertrophy stimulus. Below 10 sets shows remaining sets to reach MEV.';
+  legend.innerHTML='<strong style="color:var(--dim);">MEV = Minimum Effective Volume.</strong> 10+ sets/week per muscle is the evidence-based threshold for hypertrophy stimulus.';
   container.appendChild(legend);
 }
 

@@ -1744,16 +1744,20 @@ function computeExStats(name,logs){
   var muscle=lib?lib.group:'&mdash;';
   var totalSessions=logs.length;
   var bestLoad=0,bestLoadDate=null,maxAvgAtBest=0,bestAvgReps=0;
-  var runMaxLoad=0,runMaxAvg=0,lastPRIdx=-1,runL2=0,runA2=0;
+  var runMaxLoad=0,runMaxAvg=0,lastPRIdx=-1,runL2=0,runA2=0,runMaxLoad2=0;
   logs.forEach(function(l,i){
     var load=parseFloat(l.load)||0;
     var reps=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
     var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
     if(load>runMaxLoad){runMaxLoad=load;bestLoad=load;bestLoadDate=l.date;maxAvgAtBest=avg;}
     if(avg>runMaxAvg){runMaxAvg=avg;bestAvgReps=avg;}
-    // First entry (i===0) is base load — not counted as a PR for since-PR tracking
-    if(i>0&&(load>runL2||avg>runA2)){lastPRIdx=i;if(load>runL2)runL2=load;if(avg>runA2)runA2=avg;}
+    // First entry is base load — not a PR
+    // Rep PR only fires at the best load, not at lower weights
+    var isRepPRCandidate=load===runMaxLoad2; // only compare reps at current best load
+    if(i>0&&load>runL2){lastPRIdx=i;runL2=load;runA2=0;} // new best load resets rep baseline
+    else if(i>0&&isRepPRCandidate&&avg>runA2){lastPRIdx=i;runA2=avg;}
     else if(i===0){runL2=load;runA2=avg;} // seed the baseline
+    if(load>runMaxLoad2) runMaxLoad2=load;
   });
   var sincePR=lastPRIdx===-1?totalSessions:(totalSessions-1-lastPRIdx);
   var lastLoad=logs.length?(parseFloat(logs[logs.length-1].load)||0):0;
@@ -1854,13 +1858,30 @@ function openProgDetail(name,logs){
 function renderProgModal(name,logs){
   var unit=settings.unit||'kg';
   var maxLoad=0,maxAvg=0;
+  // First pass: find overall best load
+  var overallBestLoad=0;
+  logs.forEach(function(l){var load=parseFloat(l.load)||0;if(load>overallBestLoad)overallBestLoad=load;});
+
+  // Second pass: detect PRs correctly
+  // Load PR = new highest load ever
+  // Rep PR = more reps than any previous session AT the current best load only
+  var runMaxLoad=0;
+  var maxRepsAtBestLoad=0; // tracks best reps seen so far at the overall best load
   var enriched=logs.map(function(l,idx){
     var repsArr=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
     var avg=repsArr.length?repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length:0;
     var load=parseFloat(l.load)||0;var prLoad=false,prRep=false;
-    var isBase=idx===0; // First entry is base load, not a PR
-    if(!isBase&&load>maxLoad){maxLoad=load;prLoad=true;}else if(load>maxLoad){maxLoad=load;}
-    if(!isBase&&avg>maxAvg){maxAvg=avg;prRep=true;}else if(avg>maxAvg){maxAvg=avg;}
+    var isBase=idx===0;
+    // Load PR: new highest load
+    if(!isBase&&load>runMaxLoad){runMaxLoad=load;prLoad=true;}
+    else if(load>runMaxLoad){runMaxLoad=load;}
+    // Rep PR: more reps than any prior session — but ONLY at the current best load
+    // This means rep PRs only fire when the user is lifting at their top weight
+    if(!isBase&&load===overallBestLoad&&avg>maxRepsAtBestLoad){maxRepsAtBestLoad=avg;prRep=true;}
+    else if(load===overallBestLoad&&avg>maxRepsAtBestLoad){maxRepsAtBestLoad=avg;}
+    // Keep maxLoad updated for return value
+    if(load>maxLoad) maxLoad=load;
+    if(avg>maxAvg) maxAvg=avg;
     return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,isBase:isBase,sessId:l.sessId,exIdx:l.exIdx};
   });
   var chartEl=document.getElementById('prog-chart');

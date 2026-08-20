@@ -116,6 +116,19 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .empty-icon{font-size:36px;margin-bottom:12px;}
 .empty-text{font-size:13px;line-height:1.6;}
 .info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--dim);line-height:1.6;margin-top:8px;}
+.toggle-2{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.toggle-2-btn{flex:1;background:none;border:none;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:8px;text-align:center;transition:all 0.15s;}
+.toggle-2-btn.active{background:var(--cyan);color:#000;}
+.toggle-2-btn.active-warn{background:rgba(255,77,77,0.2);color:var(--red);}
+.confidence-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.06em;}
+.badge-confirmed{background:rgba(0,200,150,0.15);color:var(--green);}
+.badge-estimated{background:rgba(255,184,0,0.15);color:var(--gold);}
+.badge-processed{background:rgba(255,77,77,0.12);color:var(--red);margin-left:4px;}
+.weight-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;}
+.streak-display{background:var(--cyan-dim);border:1px solid var(--cyan-border);border-radius:10px;padding:12px 14px;text-align:center;margin-bottom:8px;}
+.streak-num{font-size:32px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--cyan);line-height:1;}
+.streak-label{font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.1em;}
+.working-weight-note{font-size:11px;color:var(--dim);margin-top:6px;padding:6px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--cyan);}
 .ref-link{color:var(--cyan);text-decoration:none;font-weight:600;}
 .ref-link:hover{text-decoration:underline;}
 .cumulative-bar{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
@@ -217,6 +230,16 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   </div>
 
   <div class="section">
+    <div class="section-title">Optional Tracking</div>
+    <div class="card"><div class="card-body">
+      <div class="field">
+        <label class="field-label">Fibre Tracking <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— enable to log daily fibre intake</span></label>
+        <div class="toggle-group"><button class="toggle-opt" id="fibre-off" data-fibre="off">Off</button><button class="toggle-opt active" id="fibre-on" data-fibre="on">Off</button></div>
+        <div class="info-box" style="margin-top:6px;">Note: MyFitnessPal free tier does not display fibre totals. Enable only if you track fibre separately or use a paid app.</div>
+      </div>
+    </div></div>
+  </div>
+  <div class="section">
     <div class="section-title">Custom Targets <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(leave blank to use calculated)</span></div>
     <div class="card"><div class="card-body">
       <div class="field-row">
@@ -281,6 +304,10 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     </div>
     <div class="field-row" style="margin-bottom:10px;">
       <div class="field" style="margin-bottom:0">
+        <label class="field-label">Bodyweight</label>
+        <input type="number" class="field-input" id="log-weight" placeholder="optional" inputmode="decimal">
+      </div>
+      <div class="field" style="margin-bottom:0">
         <label class="field-label">Calories (kcal)</label>
         <input type="number" class="field-input" id="log-cal" placeholder="0" inputmode="numeric">
       </div>
@@ -295,6 +322,26 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
       <div class="field" style="margin-bottom:0">
         <label class="field-label">Fat (g)</label>
         <input type="number" class="field-input" id="log-fat" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="field fibre-field" style="margin-bottom:0;display:none;">
+        <label class="field-label">Fibre (g)</label>
+        <input type="number" class="field-input" id="log-fibre" placeholder="0" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field-row" style="margin-bottom:10px;">
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">Processed Food?</label>
+        <div class="toggle-2">
+          <button class="toggle-2-btn active" id="log-proc-no" data-proc="no">No</button>
+          <button class="toggle-2-btn" id="log-proc-yes" data-proc="yes">Yes</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">Data Confidence</label>
+        <div class="toggle-2">
+          <button class="toggle-2-btn active" id="log-conf-confirmed" data-conf="confirmed">Confirmed</button>
+          <button class="toggle-2-btn" id="log-conf-estimated" data-conf="estimated">Estimated</button>
+        </div>
       </div>
     </div>
     <div class="info-box" id="log-preview">Set your profile targets to see vs target here.</div>
@@ -364,7 +411,7 @@ var GOAL_CONFIG = {
 };
 
 // ── STATE ──
-var settings = {name:'',age:'',sex:'male',height:'',weight:'',unit:'kg',bf:'',goal:'maintain',trainingDays:4,activity:1.5,customCal:'',customProtein:'',customCarbs:'',customFat:''};
+var settings = {name:'',age:'',sex:'male',height:'',weight:'',unit:'kg',bf:'',goal:'maintain',trainingDays:4,activity:1.5,customCal:'',customProtein:'',customCarbs:'',customFat:'',fibre:false};
 var dailyLog = [];
 var weeklyLog = [];
 var editingDate = null;
@@ -380,11 +427,25 @@ function loadAll(){
 }
 
 // ── TDEE & MACRO CALCULATIONS ──
+function get7DayAvgWeight(){
+  // Get average of bodyweight entries logged in last 7 days
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
+  var cutoffStr=cutoff.toISOString().split('T')[0];
+  var recent=dailyLog.filter(function(d){return d.date>=cutoffStr&&d.weight&&parseFloat(d.weight)>0;});
+  if(!recent.length) return null;
+  var avg=recent.reduce(function(a,d){return a+(parseFloat(d.weight)||0);},0)/recent.length;
+  var unit=settings.unit||'kg';
+  return {avg:Math.round(avg*10)/10,count:recent.length,unit:unit};
+}
+
 function calcTargets(){
   var age=parseFloat(settings.age)||0;
   var height=parseFloat(settings.height)||0;
-  var weight=parseFloat(settings.weight)||0;
   var unit=settings.unit||'kg';
+  // Use 7-day avg weight if available, else fall back to settings weight
+  var avgWeightData=get7DayAvgWeight();
+  var weight=avgWeightData?avgWeightData.avg:(parseFloat(settings.weight)||0);
+  var workingWeightSource=avgWeightData?('7-day avg ('+avgWeightData.count+' readings)'):'from profile';
   var weightKg=unit==='lbs'?weight*0.453592:weight;
   var bf=parseFloat(settings.bf)||0;
   var activity=parseFloat(settings.activity)||1.5;
@@ -437,7 +498,7 @@ function calcTargets(){
   if(settings.customCarbs) carbs=parseInt(settings.customCarbs);
   if(settings.customFat) fat=parseInt(settings.customFat);
 
-  return {tdee,calTarget,trainingCal,restCal,protein,carbs,fat,weeklyChange,bmr:Math.round(bmr),goalLabel:gc.label,swing};
+  return {tdee,calTarget,trainingCal,restCal,protein,carbs,fat,weeklyChange,bmr:Math.round(bmr),goalLabel:gc.label,swing,workingWeight:weight,workingWeightSource:workingWeightSource,unit:unit};
 }
 
 function getActiveTarget(dayType){
@@ -518,6 +579,17 @@ function setUnit(u,save){
 
 document.getElementById('sex-male').addEventListener('click',function(){setSex('male');});
 document.getElementById('sex-female').addEventListener('click',function(){setSex('female');});
+
+// Fibre toggle
+function setFibre(on){
+  settings.fibre=on;
+  document.getElementById('fibre-on').classList.toggle('active',on);
+  document.getElementById('fibre-off').classList.toggle('active',!on);
+  document.querySelectorAll('.fibre-field').forEach(function(el){el.style.display=on?'block':'none';});
+  saveSettings();
+}
+document.getElementById('fibre-on').addEventListener('click',function(){setFibre(true);});
+document.getElementById('fibre-off').addEventListener('click',function(){setFibre(false);});
 document.getElementById('unit-kg').addEventListener('click',function(){setUnit('kg');});
 document.getElementById('unit-lbs').addEventListener('click',function(){setUnit('lbs');});
 ['s-name','s-age','s-height','s-weight','s-bf','s-custom-cal','s-custom-protein','s-custom-carbs','s-custom-fat'].forEach(function(id){
@@ -542,7 +614,7 @@ function renderTargets(){
     '<div class="target-cell"><div class="target-label">Fat</div><div class="target-value">'+t.fat+'</div><div class="target-unit">g / day</div></div>'+
     '<div class="target-cell"><div class="target-label">Est. TDEE</div><div class="target-value">'+t.tdee+'</div><div class="target-unit">kcal / day</div></div>'+
     '<div class="target-cell"><div class="target-label">Weekly Change</div><div class="target-value" style="font-size:16px;">'+wcSign+wc+' kg</div><div class="target-unit">'+wcNote+'</div></div>'+
-  '</div>';
+  '</div>'+wwNote;
 }
 
 // ── EXPORT / IMPORT ──
@@ -591,6 +663,26 @@ function updateLogPreview(){
 ['log-cal','log-protein','log-carbs','log-fat'].forEach(function(id){document.getElementById(id).addEventListener('input',updateLogPreview);});
 document.getElementById('log-type').addEventListener('change',updateLogPreview);
 
+// Processed food toggle
+document.getElementById('log-proc-no').addEventListener('click',function(){
+  document.getElementById('log-proc-no').classList.add('active');
+  document.getElementById('log-proc-yes').classList.remove('active');
+});
+document.getElementById('log-proc-yes').addEventListener('click',function(){
+  document.getElementById('log-proc-yes').classList.add('active');
+  document.getElementById('log-proc-no').classList.remove('active');
+});
+
+// Confidence toggle
+document.getElementById('log-conf-confirmed').addEventListener('click',function(){
+  document.getElementById('log-conf-confirmed').classList.add('active');
+  document.getElementById('log-conf-estimated').classList.remove('active');
+});
+document.getElementById('log-conf-estimated').addEventListener('click',function(){
+  document.getElementById('log-conf-estimated').classList.add('active');
+  document.getElementById('log-conf-confirmed').classList.remove('active');
+});
+
 function setEditMode(entry){
   editingDate=entry.date;
   document.getElementById('form-title').textContent='✏️ Editing '+formatDate(entry.date);
@@ -610,6 +702,10 @@ function clearForm(){
   document.getElementById('form-title').textContent='+ Log Today';
   document.getElementById('log-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('log-type').value='training';
+  document.getElementById('log-weight').value='';
+  document.getElementById('log-fibre').value='';
+  document.getElementById('log-proc-no').classList.add('active');document.getElementById('log-proc-yes').classList.remove('active');
+  document.getElementById('log-conf-confirmed').classList.add('active');document.getElementById('log-conf-estimated').classList.remove('active');
   document.getElementById('log-cal').value='';
   document.getElementById('log-protein').value='';
   document.getElementById('log-carbs').value='';
@@ -629,7 +725,11 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
   var fat=parseFloat(document.getElementById('log-fat').value)||0;
   if(!date){showToast('Set a date');return;}
   if(!cal&&!protein){showToast('Enter at least calories');return;}
-  var entry={date:date,type:type,cal:cal,protein:protein,carbs:carbs,fat:fat};
+  var processed=document.getElementById('log-proc-yes').classList.contains('active');
+  var confidence=document.getElementById('log-conf-estimated').classList.contains('active')?'estimated':'confirmed';
+  var logWeight=parseFloat(document.getElementById('log-weight').value)||null;
+  var fibre=settings.fibre?(parseFloat(document.getElementById('log-fibre').value)||0):null;
+  var entry={date:date,type:type,cal:cal,protein:protein,carbs:carbs,fat:fat,weight:logWeight,processed:processed,confidence:confidence,fibre:fibre};
   var existing=dailyLog.findIndex(function(d){return d.date===date;});
   if(existing>-1){dailyLog[existing]=entry;showToast('Entry updated ✓');}
   else{dailyLog.push(entry);dailyLog.sort(function(a,b){return b.date.localeCompare(a.date);});showToast('Entry saved ✓');}
@@ -638,10 +738,39 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
   renderDaily();
 });
 
+function calcStreak(){
+  var today=new Date().toISOString().split('T')[0];
+  var sorted=dailyLog.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  if(!sorted.length) return 0;
+  var streak=0;var d=new Date();
+  // Allow today or yesterday as start
+  var startDate=sorted[0].date===today||sorted[0].date===new Date(Date.now()-86400000).toISOString().split('T')[0]?sorted[0].date:null;
+  if(!startDate) return 0;
+  var check=new Date(startDate);
+  for(var i=0;i<sorted.length;i++){
+    var expected=check.toISOString().split('T')[0];
+    if(sorted[i].date===expected){streak++;check.setDate(check.getDate()-1);}
+    else break;
+  }
+  return streak;
+}
+
 function renderDaily(){
   var container=document.getElementById('daily-list');
-  if(!dailyLog.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">No entries yet.<br>Log your first day above.</div></div>';return;}
-  container.innerHTML=dailyLog.map(function(d,i){
+  var streak=calcStreak();
+  var unit=settings.unit||'kg';
+
+  // Streak display
+  var streakHtml='';
+  if(streak>0){
+    streakHtml='<div class="streak-display"><div class="streak-num">'+streak+'</div><div class="streak-label">Day Logging Streak &#128293;</div></div>';
+  }
+
+  if(!dailyLog.length){
+    container.innerHTML=streakHtml+'<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">No entries yet.<br>Log your first day above.</div></div>';
+    return;
+  }
+  container.innerHTML=streakHtml+dailyLog.map(function(d,i){
     var tgt=getActiveTarget(d.type);
     var diff=tgt?Math.round(d.cal-tgt.cal):null;
     var diffHTML='';
@@ -650,17 +779,23 @@ function renderDaily(){
       diffHTML='<span class="vs-label">vs target</span><span class="vs-value '+cls+'">'+(diff>0?'+':'')+diff+' kcal</span>';
     }
     var typeBadge=d.type==='training'?'<span class="day-type-badge badge-training">Training</span>':'<span class="day-type-badge badge-rest">Rest</span>';
+    var confBadge=d.confidence==='estimated'?'<span class="confidence-badge badge-estimated">Estimated</span>':'<span class="confidence-badge badge-confirmed">Confirmed</span>';
+    var procBadge=d.processed?'<span class="confidence-badge badge-processed">Processed</span>':'';
+    var weightHtml=d.weight?'<div style="font-size:11px;color:var(--dim);padding:0 14px 8px;"><span class="weight-dot"></span>'+d.weight+unit+'</div>':'';
+    var fibreHtml=d.fibre!=null&&settings.fibre?'<div class="macro-cell"><div class="macro-label">Fibre</div><div style="font-size:15px;font-weight:700;padding:4px 0;">'+d.fibre+'g</div></div>':'';
     return '<div class="day-entry">'+
       '<div class="day-header"><span class="day-date">'+formatDate(d.date)+'</span>'+typeBadge+
       '<button class="edit-day-btn" data-idx="'+i+'">Edit</button>'+
       '<button class="del-day-btn" data-idx="'+i+'">×</button></div>'+
+      weightHtml+
       '<div class="day-macros">'+
         '<div class="macro-cell"><div class="macro-label">Calories</div><div style="font-size:15px;font-weight:700;padding:4px 0;">'+d.cal+'</div></div>'+
         '<div class="macro-cell"><div class="macro-label">Protein</div><div style="font-size:15px;font-weight:700;padding:4px 0;">'+d.protein+'g</div></div>'+
         '<div class="macro-cell"><div class="macro-label">Carbs</div><div style="font-size:15px;font-weight:700;padding:4px 0;">'+d.carbs+'g</div></div>'+
         '<div class="macro-cell"><div class="macro-label">Fat</div><div style="font-size:15px;font-weight:700;padding:4px 0;">'+d.fat+'g</div></div>'+
+        fibreHtml+
       '</div>'+
-      (diffHTML?'<div class="day-vs">'+diffHTML+'</div>':'')+
+      '<div class="day-vs">'+confBadge+procBadge+(diffHTML?diffHTML:'')+'</div>'+
     '</div>';
   }).join('');
 
@@ -719,9 +854,12 @@ function renderWeekly(){
   var t=calcTargets();
 
   // Cumulative surplus/deficit
-  var cumEl=document.getElementById('cumulative-display');
+  // Item G: deficit reset
+var resetDate=lsGet('opn-deficit-reset')||null;
+var filteredDaily=resetDate?dailyLog.filter(function(d){return d.date>=resetDate;}):dailyLog;
+var cumEl=document.getElementById('cumulative-display');
   if(dailyLog.length&&t){
-    var totalDiff=dailyLog.reduce(function(sum,d){
+    var totalDiff=filteredDaily.reduce(function(sum,d){
       var tgt=getActiveTarget(d.type);
       return sum+(tgt?d.cal-tgt.cal:0);
     },0);
@@ -747,6 +885,16 @@ function renderWeekly(){
     var avgFat=days.length?Math.round(days.reduce(function(a,d){return a+d.fat;},0)/days.length):null;
     var calTarget=t?t.calTarget:null;
     var compliance=avgCal&&calTarget?Math.round((1-Math.abs(avgCal-calTarget)/calTarget)*100):null;
+    // Training vs rest day calorie split (item J)
+    var trainDays=days.filter(function(d){return d.type==='training';});
+    var restDays=days.filter(function(d){return d.type==='rest';});
+    var avgTrainCal=trainDays.length?Math.round(trainDays.reduce(function(a,d){return a+d.cal;},0)/trainDays.length):null;
+    var avgRestCal=restDays.length?Math.round(restDays.reduce(function(a,d){return a+d.cal;},0)/restDays.length):null;
+    // Confidence score (item K)
+    var confirmedDays=days.filter(function(d){return d.confidence!=='estimated';}).length;
+    var confidencePct=days.length?Math.round(confirmedDays/days.length*100):null;
+    // Processed food count
+    var processedCount=days.filter(function(d){return d.processed;}).length;
     var complianceHTML='';
     if(compliance!==null){
       var cls=compliance>=95?'pill-good':compliance>=85?'pill-ok':'pill-miss';
@@ -754,6 +902,13 @@ function renderWeekly(){
     }
     var startDate=getWeekStartDate(w.key);
     var noWeighIn=!w.weigh&&days.length>0;
+    var confHtml=confidencePct!==null?'<span style="font-size:10px;color:'+(confidencePct>=80?'var(--green)':'var(--gold)')+';">'+confidencePct+'% confirmed</span>':'';
+    var procHtml=processedCount>0?'<span style="font-size:10px;color:var(--red);margin-left:8px;">'+processedCount+' processed day'+(processedCount>1?'s':'')+'</span>':'';
+    var splitHtml=(avgTrainCal||avgRestCal)?
+      '<div style="display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--border);font-size:11px;">'+
+        (avgTrainCal?'<span style="color:var(--cyan);">Training: <strong>'+avgTrainCal+' kcal</strong></span>':'')+(t&&t.trainingCal?'<span style="color:var(--muted);">/ target '+t.trainingCal+'</span>':'')+
+        (avgRestCal?'<span style="color:var(--dim);margin-left:8px;">Rest: <strong>'+avgRestCal+' kcal</strong></span>':'')+(t&&t.restCal?'<span style="color:var(--muted);">/ target '+t.restCal+'</span>':'')+
+      '</div>':'';
     var div=document.createElement('div');
     div.className='week-card';
     div.innerHTML='<div class="week-header"><div><div class="week-num">'+w.key+'</div><div class="week-dates">w/c '+formatDate(startDate)+'</div></div>'+complianceHTML+'</div>'+
@@ -764,7 +919,8 @@ function renderWeekly(){
         (avgFat!==null?'<div class="week-stat"><div class="week-stat-label">Avg Fat</div><div class="week-stat-value">'+avgFat+'g</div></div>':'<div class="week-stat"><div class="week-stat-label">Avg Fat</div><div class="week-stat-value" style="color:var(--muted)">—</div></div>')+
         '<div class="week-stat"><div class="week-stat-label">Days Logged</div><div class="week-stat-value">'+days.length+' <span style="font-size:11px;color:var(--muted)">/ 7</span></div></div>'+
       '</div>'+
-      '<div class="week-weigh"><span class="weigh-label">Weigh-in</span><input type="number" class="weigh-input" placeholder="—" value="'+(w.weigh||'')+'" inputmode="decimal" data-wk="'+w.key+'"><span class="weigh-unit">'+settings.unit+'</span>'+(noWeighIn?'<span class="no-weighin">⚠ Missing</span>':'')+'</div>';
+      '<div style="padding:6px 14px 4px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">'+confHtml+procHtml+'</div>'+
+      splitHtml+
     container.appendChild(div);
     div.querySelector('.weigh-input').addEventListener('change',function(e){
       var wkKey=e.target.getAttribute('data-wk');
@@ -794,15 +950,22 @@ function renderProgress(){
   var startWeight=weighins.length>1?weighins[weighins.length-1].weigh:null;
   var weightChange=latestWeight&&startWeight?Math.round((latestWeight-startWeight)*10)/10:null;
 
+  // Streak and this-week compliance
+  var streakCount=calcStreak();
+  var thisWeek=weeks[0];
+  var thisWeekDays=thisWeek?thisWeek.days:[];
+  var thisWeekAvgCal=thisWeekDays.length?Math.round(thisWeekDays.reduce(function(a,d){return a+d.cal;},0)/thisWeekDays.length):null;
+  var thisWeekCompliance=thisWeekAvgCal&&t?Math.round((1-Math.abs(thisWeekAvgCal-t.calTarget)/t.calTarget)*100):null;
+  var complianceColor=thisWeekCompliance===null?'var(--muted)':thisWeekCompliance>=95?'var(--green)':thisWeekCompliance>=80?'var(--gold)':'var(--red)';
   var dash=document.getElementById('dash-grid');
   dash.innerHTML=
-    '<div class="dash-cell cyan"><div class="dash-label">Avg Daily Calories</div><div class="dash-value">'+(avgCal||'—')+'</div><div class="dash-unit">'+(t?'Target: '+t.calTarget+' kcal':'Set profile in Settings')+'</div></div>'+
-    '<div class="dash-cell"><div class="dash-label">Avg Protein</div><div class="dash-value">'+(avgProt||'—')+'</div><div class="dash-unit">'+(t?'Target: '+t.protein+'g':'—')+'</div></div>'+
-    '<div class="dash-cell"><div class="dash-label">Current Weight</div><div class="dash-value">'+(latestWeight||'—')+'</div><div class="dash-unit">'+(settings.unit)+(weightChange!==null?' · '+(weightChange>0?'+':'')+weightChange+' '+settings.unit+' total':'')+'</div></div>'+
-    '<div class="dash-cell"><div class="dash-label">Weeks Tracked</div><div class="dash-value">'+weeks.length+'</div><div class="dash-unit">weeks of data</div></div>';
-
+    (thisWeekCompliance!==null?'<div class="dash-cell full" style="border-color:'+complianceColor+';text-align:center;padding:16px;"><div style="font-size:40px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+complianceColor+';">'+thisWeekCompliance+'%</div><div style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.1em;">This Week On Target</div></div>':'')+
+    '<div class="dash-cell cyan"><div class="dash-label">Avg Daily Calories</div><div class="dash-value">'+(avgCal||'\u2014')+'</div><div class="dash-unit">'+(t?'Target: '+t.calTarget+' kcal':'Set profile in Settings')+'</div></div>'+
+    '<div class="dash-cell"><div class="dash-label">Avg Protein</div><div class="dash-value">'+(avgProt||'\u2014')+'</div><div class="dash-unit">'+(t?'Target: '+t.protein+'g':'\u2014')+'</div></div>'+
+    '<div class="dash-cell"><div class="dash-label">Current Weight</div><div class="dash-value">'+(latestWeight||'\u2014')+'</div><div class="dash-unit">'+(settings.unit)+(weightChange!==null?' \u00b7 '+(weightChange>0?'+':'')+weightChange+' '+settings.unit+' total':'')+'</div></div>'+
+    (streakCount>0?'<div class="dash-cell"><div class="dash-label">Logging Streak</div><div class="dash-value">'+streakCount+'</div><div class="dash-unit">consecutive days \ud83d\udd25</div></div>':'<div class="dash-cell"><div class="dash-label">Weeks Tracked</div><div class="dash-value">'+weeks.length+'</div><div class="dash-unit">weeks of data</div></div>');
   drawCalChart(weeks,t);
-  drawWeightChart(weeks);
+  drawSmartWeightChart();
 
   var macroEl=document.getElementById('macro-status');
   if(!t||!avgCal){macroEl.innerHTML='<div class="card-body"><p style="font-size:12px;color:var(--muted)">Log daily entries to see macro status.</p></div>';return;}
@@ -817,6 +980,76 @@ function renderProgress(){
     '<div class="macro-row"><span class="macro-name">Carbs</span><div class="macro-nums"><span class="macro-target">Target '+t.carbs+'g</span><span class="macro-actual">'+(avgCarbs||'—')+'g</span><span class="status-dot '+dotClass(avgCarbs,t.carbs)+'"></span></div></div>'+
     '<div class="macro-row"><span class="macro-name">Fat</span><div class="macro-nums"><span class="macro-target">Target '+t.fat+'g</span><span class="macro-actual">'+(avgFat||'—')+'g</span><span class="status-dot '+dotClass(avgFat,t.fat)+'"></span></div></div>'+
   '</div>';
+}
+
+function drawSmartWeightChart(){
+  var svg=document.getElementById('weight-chart');
+  var W=svg.parentElement.clientWidth-32;var H=150;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML='';
+  var ns='http://www.w3.org/2000/svg';
+  var unit=settings.unit||'kg';
+  var today=new Date();
+  var sevenDaysAgo=new Date(today);sevenDaysAgo.setDate(sevenDaysAgo.getDate()-6);
+  var sevenDaysAgoStr=sevenDaysAgo.toISOString().split('T')[0];
+
+  // Daily points for last 7 days
+  var dailyPts=dailyLog.filter(function(d){return d.date>=sevenDaysAgoStr&&d.weight&&parseFloat(d.weight)>0;})
+    .map(function(d){return {date:d.date,val:parseFloat(d.weight),type:'daily'};})
+    .sort(function(a,b){return a.date.localeCompare(b.date);});
+
+  // Weekly averages for everything before last 7 days
+  var weekMap={};
+  dailyLog.filter(function(d){return d.date<sevenDaysAgoStr&&d.weight&&parseFloat(d.weight)>0;}).forEach(function(d){
+    var wk=getISOWeek(d.date);
+    if(!weekMap[wk]) weekMap[wk]=[];
+    weekMap[wk].push(parseFloat(d.weight));
+  });
+  var weeklyPts=Object.keys(weekMap).sort().map(function(wk){
+    var vals=weekMap[wk];var avg=Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length*10)/10;
+    return {date:getWeekStartDate(wk),label:wk.slice(5),val:avg,type:'weekly'};
+  });
+
+  var allPts=weeklyPts.concat(dailyPts);
+  if(allPts.length<2){
+    svg.innerHTML='<text x="50%" y="50%" fill="#555" font-size="12" text-anchor="middle">Log bodyweight daily to see trend</text>';
+    return;
+  }
+
+  var vals=allPts.map(function(p){return p.val;});
+  var minV=Math.min.apply(null,vals)*0.995,maxV=Math.max.apply(null,vals)*1.005;
+  if(minV===maxV){minV=minV*0.995;maxV=maxV*1.005;}
+  var pad={l:36,r:8,t:10,b:24};var n=allPts.length;
+  function xp(i){return pad.l+i*(W-pad.l-pad.r)/(n-1);}
+  function yp(v){return pad.t+(1-(v-minV)/(maxV-minV))*(H-pad.t-pad.b);}
+
+  // Grid
+  [0,0.5,1].forEach(function(t2){
+    var yy=pad.t+(1-t2)*(H-pad.t-pad.b);
+    var line=document.createElementNS(ns,'line');line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);line.setAttribute('y1',yy);line.setAttribute('y2',yy);line.setAttribute('stroke','rgba(255,255,255,0.05)');line.setAttribute('stroke-width','1');svg.appendChild(line);
+    var txt=document.createElementNS(ns,'text');txt.setAttribute('x',pad.l-4);txt.setAttribute('y',yy+4);txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');txt.setAttribute('text-anchor','end');txt.textContent=(minV+(maxV-minV)*t2).toFixed(1);svg.appendChild(txt);
+  });
+
+  // Divider between weekly and daily zones
+  if(weeklyPts.length>0&&dailyPts.length>0){
+    var divX=xp(weeklyPts.length-0.5);
+    var dLine=document.createElementNS(ns,'line');dLine.setAttribute('x1',divX);dLine.setAttribute('x2',divX);dLine.setAttribute('y1',pad.t);dLine.setAttribute('y2',H-pad.b);dLine.setAttribute('stroke','rgba(255,255,255,0.1)');dLine.setAttribute('stroke-width','1');dLine.setAttribute('stroke-dasharray','3,3');svg.appendChild(dLine);
+    var wkLabel=document.createElementNS(ns,'text');wkLabel.setAttribute('x',pad.l+4);wkLabel.setAttribute('y',pad.t+12);wkLabel.setAttribute('fill','#555');wkLabel.setAttribute('font-size','8');wkLabel.textContent='Wk avg';svg.appendChild(wkLabel);
+    var dayLabel=document.createElementNS(ns,'text');dayLabel.setAttribute('x',divX+4);dayLabel.setAttribute('y',pad.t+12);dayLabel.setAttribute('fill','#555');dayLabel.setAttribute('font-size','8');dayLabel.textContent='Daily (7d)';svg.appendChild(dayLabel);
+  }
+
+  // Line
+  var poly=document.createElementNS(ns,'polyline');
+  poly.setAttribute('points',allPts.map(function(p,i){return xp(i)+','+yp(p.val);}).join(' '));
+  poly.setAttribute('fill','none');poly.setAttribute('stroke','#00C896');poly.setAttribute('stroke-width','2');svg.appendChild(poly);
+
+  // Dots
+  allPts.forEach(function(p,i){
+    var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(i));c.setAttribute('cy',yp(p.val));
+    c.setAttribute('r',p.type==='daily'?4:5);
+    c.setAttribute('fill',p.type==='daily'?'#00C896':'#00B4D8');c.setAttribute('opacity','0.9');svg.appendChild(c);
+    var lbl=document.createElementNS(ns,'text');lbl.setAttribute('x',xp(i));lbl.setAttribute('y',H-pad.b+14);lbl.setAttribute('fill','#555');lbl.setAttribute('font-size','8');lbl.setAttribute('text-anchor','middle');
+    lbl.textContent=p.type==='daily'?p.date.slice(8):p.label;svg.appendChild(lbl);
+  });
 }
 
 function drawCalChart(weeks,t){
@@ -894,6 +1127,13 @@ function formatDate(str){
   if(!str) return '';
   var d=new Date(str+'T00:00:00');
   return d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function resetDeficit(){
+  if(confirm('Reset cumulative counter from today? Prior entries will not be deleted, only excluded from the running total.')){
+    lsSet('opn-deficit-reset',new Date().toISOString().split('T')[0]);
+    renderWeekly();showToast('Counter reset from today');
+  }
 }
 
 function showToast(msg){

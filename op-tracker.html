@@ -253,6 +253,18 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 /* SHARE CARD */
 .share-btn-wrap{padding:12px 16px 0;text-align:right;}
+.bilat-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:0 14px 8px;}
+.bilat-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:6px 4px;text-align:center;text-transform:uppercase;transition:all 0.15s;}
+.bilat-btn.active{background:var(--cyan);color:#000;}
+.bilat-label{font-size:9px;color:var(--dim);text-align:center;padding:0 14px 6px;font-style:italic;}
+.modal-bilat-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:0 16px 12px;}
+.modal-bilat-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:8px 4px;text-align:center;transition:all 0.15s;}
+.modal-bilat-btn.active{background:var(--cyan);color:#000;}
+.modal-bilat-btn.active-gold{background:var(--gold);color:#000;}
+.range-filter{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;}
+.range-filter::-webkit-scrollbar{display:none;}
+.range-chip{background:var(--surface2);border:1px solid var(--border);border-radius:16px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:700;padding:4px 12px;white-space:nowrap;transition:all 0.15s;}
+.range-chip.active{background:var(--cyan-dim);border-color:var(--cyan-border);color:var(--cyan);}
 .share-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px 12px;}
 .share-btn:active{border-color:var(--cyan-border);color:var(--cyan);}
 
@@ -501,6 +513,17 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
       <button class="modal-close-btn" id="modal-close-btn">&#10005; Close</button>
     </div>
     <div class="share-btn-wrap"><button class="share-btn" id="share-ex-btn">&#8679; Share Progress</button></div>
+    <div class="modal-bilat-toggle" id="modal-bilat-toggle" style="display:none;">
+      <button class="modal-bilat-btn active" data-mmode="bilateral">Bilateral</button>
+      <button class="modal-bilat-btn" data-mmode="unilateral">Unilateral</button>
+      <button class="modal-bilat-btn" data-mmode="both">Both</button>
+    </div>
+    <div class="range-filter" id="modal-range-filter">
+      <button class="range-chip" data-range="5">Last 5</button>
+      <button class="range-chip active" data-range="10">Last 10</button>
+      <button class="range-chip" data-range="20">Last 20</button>
+      <button class="range-chip" data-range="all">All</button>
+    </div>
     <div class="modal-chart-section"><svg class="chart-svg" id="prog-chart"></svg>
       <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
         <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:3px;vertical-align:middle;"></span>Normal</span>
@@ -716,7 +739,33 @@ var BUILT_IN=[
   {id:113,name:"Cable Crunch",group:"Abs & Core",muscles:"Upper Abs",type:"Isolation"},
   {id:114,name:"DB Russian Twist",group:"Abs & Core",muscles:"Obliques",type:"Isolation"},
   {id:115,name:"Captain's Chair Knee Raise",group:"Abs & Core",muscles:"Abs, Hip Flexors",type:"Isolation"},
-  {id:116,name:"Bird Dog",group:"Abs & Core",muscles:"Core, Erector Spinae",type:"Stability"}
+  {id:116,name:"Bird Dog",group:"Abs & Core",muscles:"Core, Erector Spinae",type:"Stability"},
+
+  {id:117,name:"B-Stance Hip Thrust",group:"Glutes",muscles:"Glutes (unilateral emphasis)",type:"Compound"},
+  {id:118,name:"Band Lat Pulldown (door anchor)",group:"Back – Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:119,name:"Band-Assisted Pull-Up",group:"Back – Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:120,name:"Negative Pull-Up (slow eccentric)",group:"Back – Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:121,name:"Chest-Supported Band Row",group:"Back – Mid",muscles:"Mid-Back, Rhomboids, Lats",type:"Compound"},
+  {id:122,name:"Inverted Row (under table)",group:"Back – Mid",muscles:"Mid-Back, Lats, Biceps",type:"Compound"},
+  {id:123,name:"Kneeling Band Row",group:"Back – Mid",muscles:"Mid-Back, Rhomboids, Lats",type:"Compound"},
+  {id:124,name:"Single-Arm Band Row",group:"Back – Mid",muscles:"Mid-Back, Lats",type:"Compound"},
+  {id:125,name:"Single-Arm DB Row (bench-supported)",group:"Back – Mid",muscles:"Lats, Mid-Back",type:"Compound"},
+  {id:126,name:"Meadows Row (DB, bench-supported)",group:"Back – Mid",muscles:"Lats, Mid-Back, Rear Delt",type:"Compound"},
+  {id:127,name:"Band Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:128,name:"Sliding Towel Leg Curl",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:129,name:"Conventional Deadlift",group:"Quads",muscles:"Full Posterior Chain, Quads",type:"Compound"},
+  {id:130,name:"DB Step-Up",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:131,name:"Single-Leg Leg Press",group:"Quads",muscles:"Quadriceps, Glutes (unilateral)",type:"Compound"},
+  {id:132,name:"Floor Press (DB)",group:"Chest",muscles:"Pec Major, Triceps, Ant Delt",type:"Compound"},
+  {id:133,name:"Incline DB Fly",group:"Chest",muscles:"Upper Pec Major",type:"Isolation"},
+  {id:134,name:"Low-to-High Cable Fly",group:"Chest",muscles:"Lower Pec Major",type:"Isolation"},
+  {id:135,name:"Single-Arm Incline DB Press",group:"Chest",muscles:"Upper Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:136,name:"Concentration Curl",group:"Biceps",muscles:"Biceps (peak)",type:"Isolation"},
+  {id:137,name:"Cross-Body Hammer Curl",group:"Biceps",muscles:"Brachialis, Brachioradialis",type:"Isolation"},
+  {id:138,name:"Incline Curl",group:"Biceps",muscles:"Biceps (long head)",type:"Isolation"},
+  {id:139,name:"Band-Assisted Chin-Up",group:"Back – Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:140,name:"Push Press (DB)",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:141,name:"Bench Dip (feet elevated)",group:"Triceps",muscles:"Triceps, Pec Minor",type:"Compound"}
 ];
 
 // ── STATE ──
@@ -732,6 +781,9 @@ var progFilters={muscle:'All',workout:'All',prOnly:false};
 var progSort={col:'sincePR',dir:'desc'};
 var currentProgView='exercises';
 var currentProgExName='';
+var modalBilatMode='bilateral'; // current modal bilat view
+var modalRange={}; // per-exercise range preference: {exName: '5'|'10'|'20'|'all'}
+var currentModalRange='10'; // active range for current modal
 
 function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -745,6 +797,7 @@ function loadAll(){
   var cs=lsGet('op-current');if(cs) currentSession=cs;
   var draft=sessionHistory.find(function(s){return s.status==='draft';});
   if(draft) draftSessionId=draft.id;
+  var mr=lsGet('op-modal-range');if(mr) modalRange=mr;
   // Check if first launch
   if(!lsGet('op-launched')){
     document.getElementById('onboard-overlay').style.display='flex';
@@ -1017,6 +1070,20 @@ function updateLoadTypeLabel(card,ltl){
   var th=card.querySelector('.tbl-head .th:nth-child(2)');
   if(th){if(type==='bw-added') th.textContent='+kg';else if(type==='assisted') th.textContent='-kg';else th.textContent=settings.unit||'kg';}
 }
+function initBilatToggle(card){
+  var bt=document.getElementById('bt-'+card.id);if(!bt) return;
+  var bl=document.getElementById('bl-'+card.id);
+  bt.querySelectorAll('.bilat-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      bt.querySelectorAll('.bilat-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      card.setAttribute('data-bilat',btn.getAttribute('data-mode'));
+      if(bl) bl.textContent=btn.getAttribute('data-mode')==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
+      saveCurrentSession();
+    });
+  });
+}
+
 function initLoadTypeToggle(card){
   var ltt=document.getElementById('ltt-'+card.id);if(!ltt) return;
   var ltl=document.getElementById('ltl-'+card.id);
@@ -1138,6 +1205,8 @@ function addExRow(data){
   html+='<button class="del-btn" data-id="'+id+'">&#215;</button></div>';
   html+='<div class="load-type-toggle" id="ltt-'+id+'" style="display:none;"><button class="ltt-btn active" data-ltt="standard">Standard</button><button class="ltt-btn" data-ltt="bw-added">BW+Added</button><button class="ltt-btn" data-ltt="assisted">Assisted</button></div>';
   html+='<div class="load-type-label" id="ltl-'+id+'" style="display:none;"></div>';
+  html+='<div class="bilat-toggle" id="bt-'+id+'"><button class="bilat-btn active" data-mode="bilateral">Bilateral</button><button class="bilat-btn" data-mode="unilateral">Unilateral</button></div>';
+  html+='<div class="bilat-label" id="bl-'+id+'">Load = per limb when Unilateral</div>';
   html+='<div class="ex-table">';
   html+='<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>';
   html+='<div class="ex-row last-row"><span class="row-tag last">Last</span>';
@@ -1154,6 +1223,7 @@ function addExRow(data){
   div.querySelectorAll('input').forEach(function(el){el.addEventListener('change',saveCurrentSession);el.addEventListener('input',saveCurrentSession);});
   document.getElementById('ex-list').appendChild(div);
   initLoadTypeToggle(div);
+  initBilatToggle(div);
   initDragHandle(div);
   createSearchableDropdown(div,data.name||'');
   if(data.name){
@@ -1238,8 +1308,9 @@ function saveCurrentSession(){
     var li=rows[0].querySelectorAll('input');var ti=rows[1].querySelectorAll('input');
     var notes=card.querySelector('.notes-in').value;
     var loadType=card.getAttribute('data-load-type')||'standard';
+    var bilatMode=card.getAttribute('data-bilat')||'bilateral';
     currentSession.exercises.push({
-      name:name,notes:notes,loadType:loadType,
+      name:name,notes:notes,loadType:loadType,bilat:bilatMode,
       last:{load:li[0].value,reps:[li[1].value,li[2].value,li[3].value,li[4].value,li[5].value],rpe:li[6].value},
       curr:{load:ti[0].value,reps:[ti[1].value,ti[2].value,ti[3].value,ti[4].value,ti[5].value],rpe:ti[6].value}
     });
@@ -1827,35 +1898,73 @@ function renderProgression(){
     });
   });
   container.querySelectorAll('tr[data-name]').forEach(function(tr){
-    tr.addEventListener('click',function(){var name=tr.getAttribute('data-name');openProgDetail(name,getLogsForExercise(name));});
+    tr.addEventListener('click',function(){var name=tr.getAttribute('data-name');openProgDetail(name);});
   });
 }
 
 // ── PROGRESS MODAL ──
-function getLogsForExercise(name){
+function filterLogsByRange(logs,range){
+  if(!range||range==='all') return logs;
+  var n=parseInt(range)||10;
+  return logs.slice(-n); // take most recent n
+}
+
+function updateRangeChips(){
+  document.querySelectorAll('#modal-range-filter .range-chip').forEach(function(chip){
+    chip.classList.toggle('active',chip.getAttribute('data-range')===currentModalRange);
+  });
+}
+
+function getLogsForExercise(name,bilatFilter){
+  // bilatFilter: 'bilateral'|'unilateral'|'both'|undefined (undefined = all)
   var logs=[];
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft') return;
     sess.exercises.forEach(function(ex,exIdx){
       if(ex.name===name&&ex.curr&&(ex.curr.load||ex.curr.reps.some(function(r){return r;}))){
-        logs.push({sessId:sess.id,exIdx:exIdx,date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe});
+        var mode=ex.bilat||'bilateral';
+        if(bilatFilter&&bilatFilter!=='both'&&mode!==bilatFilter) return;
+        logs.push({sessId:sess.id,exIdx:exIdx,date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,bilat:mode});
       }
     });
   });
   return logs;
 }
 
-function openProgDetail(name,logs){
+function openProgDetail(name){
   currentProgExName=name;
   document.getElementById('modal-ex-name').textContent=name;
   var lib=allExercises().find(function(e){return e.name===name;});
   document.getElementById('modal-ex-sub').textContent=lib?(lib.group+' · '+lib.type):'';
-  renderProgModal(name,logs);
+
+  // Detect if this exercise has both bilateral and unilateral entries
+  var allLogs=getLogsForExercise(name,'both');
+  var hasBilat=allLogs.some(function(l){return (l.bilat||'bilateral')==='bilateral';});
+  var hasUni=allLogs.some(function(l){return l.bilat==='unilateral';});
+  var bilatToggle=document.getElementById('modal-bilat-toggle');
+  if(hasBilat&&hasUni){
+    bilatToggle.style.display='flex';
+    modalBilatMode='bilateral'; // default to bilateral
+    bilatToggle.querySelectorAll('.modal-bilat-btn').forEach(function(btn){
+      btn.classList.toggle('active',btn.getAttribute('data-mmode')==='bilateral');
+    });
+  } else {
+    bilatToggle.style.display='none';
+    modalBilatMode=hasUni?'unilateral':'bilateral';
+  }
+
+  // Restore range preference for this exercise
+  currentModalRange=modalRange[name]||'10';
+  updateRangeChips();
+
+  var logs=getLogsForExercise(name,modalBilatMode);
+  var filtered=filterLogsByRange(logs,currentModalRange);
+  renderProgModal(name,filtered,allLogs);
   document.getElementById('prog-modal').classList.add('open');
   document.body.style.overflow='hidden';
 }
 
-function renderProgModal(name,logs){
+function renderProgModal(name,logs,allLogs){
   var unit=settings.unit||'kg';
   var maxLoad=0,maxAvg=0;
   // First pass: find overall best load
@@ -1886,7 +1995,14 @@ function renderProgModal(name,logs){
   });
   var chartEl=document.getElementById('prog-chart');
   var chartH=Math.round(window.innerHeight*0.32);chartEl.style.height=chartH+'px';
-  drawChart(enriched);
+  if(modalBilatMode==='both'&&allLogs){
+    // Split allLogs into bilateral and unilateral for overlaid chart
+    var bilatLogs=allLogs.filter(function(l){return (l.bilat||'bilateral')==='bilateral';});
+    var uniLogs=allLogs.filter(function(l){return l.bilat==='unilateral';});
+    drawChartBoth(bilatLogs,uniLogs);
+  } else {
+    drawChart(enriched);
+  }
   var totalSess=enriched.length;var bestLoad=maxLoad;
   var prEntry=enriched.slice().reverse().find(function(l){return l.prLoad;});
   var prDate=prEntry?prEntry.date:null;
@@ -1974,6 +2090,55 @@ function renderProgModal(name,logs){
 }
 
 // ── CHART ──
+function enrichLogs(logs){
+  var maxLoad=0,maxAvg=0;
+  return logs.map(function(l,idx){
+    var repsArr=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var avg=repsArr.length?repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length:0;
+    var load=parseFloat(l.load)||0;
+    if(load>maxLoad)maxLoad=load;if(avg>maxAvg)maxAvg=avg;
+    return {load:load,avgReps:avg,date:l.date};
+  });
+}
+
+function drawChartBoth(bilatLogs,uniLogs){
+  var svg=document.getElementById('prog-chart');
+  var W=svg.parentElement.clientWidth-32;var H=parseInt(svg.style.height)||160;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML='';
+  var ns='http://www.w3.org/2000/svg';
+  var bEnriched=enrichLogs(bilatLogs);var uEnriched=enrichLogs(uniLogs);
+  var allLoads=bEnriched.concat(uEnriched).map(function(l){return l.load;});
+  if(!allLoads.length){svg.innerHTML='<text x="50%" y="50%" fill="#555" font-size="12" text-anchor="middle">No data</text>';return;}
+  var minL=Math.min.apply(null,allLoads)*0.92,maxL=Math.max.apply(null,allLoads)*1.05||1;
+  if(minL===maxL){minL*=0.9;maxL*=1.1;}
+  var allEntries=bEnriched.concat(uEnriched).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var n=allEntries.length;if(n<1) return;
+  var pad={l:32,r:8,t:8,b:22};
+  var allDates=allEntries.map(function(l){return l.date;});
+  function xp(date){var i=allDates.indexOf(date);return pad.l+i*(W-pad.l-pad.r)/(Math.max(n-1,1));}
+  function yp(v){return pad.t+(1-((v-minL)/(maxL-minL)))*(H-pad.t-pad.b);}
+  // Grid
+  [0,0.5,1].forEach(function(t){
+    var yy=pad.t+(1-t)*(H-pad.t-pad.b);
+    var line=document.createElementNS(ns,'line');line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);line.setAttribute('y1',yy);line.setAttribute('y2',yy);line.setAttribute('stroke','rgba(255,255,255,0.05)');line.setAttribute('stroke-width','1');svg.appendChild(line);
+    var txt=document.createElementNS(ns,'text');txt.setAttribute('x',pad.l-4);txt.setAttribute('y',yy+4);txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');txt.setAttribute('text-anchor','end');txt.textContent=Math.round(minL+(maxL-minL)*t);svg.appendChild(txt);
+  });
+  // Bilateral line (cyan)
+  if(bEnriched.length>1){var bp=document.createElementNS(ns,'polyline');bp.setAttribute('points',bEnriched.map(function(l){return xp(l.date)+','+yp(l.load);}).join(' '));bp.setAttribute('fill','none');bp.setAttribute('stroke','rgba(0,180,216,0.4)');bp.setAttribute('stroke-width','2');svg.appendChild(bp);}
+  // Unilateral line (gold)
+  if(uEnriched.length>1){var up=document.createElementNS(ns,'polyline');up.setAttribute('points',uEnriched.map(function(l){return xp(l.date)+','+yp(l.load);}).join(' '));up.setAttribute('fill','none');up.setAttribute('stroke','rgba(255,184,0,0.4)');up.setAttribute('stroke-width','2');svg.appendChild(up);}
+  // Dots
+  bEnriched.forEach(function(l){var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(l.date));c.setAttribute('cy',yp(l.load));c.setAttribute('r',5);c.setAttribute('fill','#00B4D8');c.setAttribute('opacity','0.9');svg.appendChild(c);});
+  uEnriched.forEach(function(l){var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(l.date));c.setAttribute('cy',yp(l.load));c.setAttribute('r',5);c.setAttribute('fill','#FFB800');c.setAttribute('opacity','0.9');svg.appendChild(c);});
+  // Date labels
+  allEntries.forEach(function(l){var dl=document.createElementNS(ns,'text');dl.setAttribute('x',xp(l.date));dl.setAttribute('y',H-pad.b+14);dl.setAttribute('fill','#555');dl.setAttribute('font-size','8');dl.setAttribute('text-anchor','middle');dl.textContent=l.date.slice(5);svg.appendChild(dl);});
+  // Legend
+  var legY=pad.t+12;
+  function leg(x,col,label){var c=document.createElementNS(ns,'circle');c.setAttribute('cx',x);c.setAttribute('cy',legY);c.setAttribute('r',4);c.setAttribute('fill',col);svg.appendChild(c);var t=document.createElementNS(ns,'text');t.setAttribute('x',x+7);t.setAttribute('y',legY+4);t.setAttribute('fill','#888');t.setAttribute('font-size','9');t.textContent=label;svg.appendChild(t);}
+  if(bEnriched.length) leg(pad.l+4,'#00B4D8','Bilateral');
+  if(uEnriched.length) leg(pad.l+(bEnriched.length?70:4),'#FFB800','Unilateral');
+}
+
 function drawChart(logs){
   var svg=document.getElementById('prog-chart');
   var W=svg.parentElement.clientWidth-32;
@@ -2028,7 +2193,39 @@ document.getElementById('share-ex-btn').addEventListener('click',function(){
   }catch(e){showToast('Share not supported on this device');}
 });
 
-document.getElementById('modal-close-btn').addEventListener('click',function(){document.getElementById('prog-modal').classList.remove('open');document.body.style.overflow='';});
+document.getElementById('modal-close-btn').addEventListener('click',function(){
+  document.getElementById('prog-modal').classList.remove('open');
+  document.body.style.overflow='';
+});
+
+// Modal bilateral toggle
+document.getElementById('modal-bilat-toggle').addEventListener('click',function(e){
+  var btn=e.target.closest('.modal-bilat-btn');if(!btn) return;
+  modalBilatMode=btn.getAttribute('data-mmode');
+  document.querySelectorAll('.modal-bilat-btn').forEach(function(b){
+    b.classList.remove('active','active-gold');
+    if(b.getAttribute('data-mmode')===modalBilatMode){
+      b.classList.add(modalBilatMode==='unilateral'?'active-gold':'active');
+    }
+  });
+  var allLogs=getLogsForExercise(currentProgExName,'both');
+  var logs=getLogsForExercise(currentProgExName,modalBilatMode);
+  var filtered=filterLogsByRange(logs,currentModalRange);
+  renderProgModal(currentProgExName,filtered,allLogs);
+});
+
+// Range filter chips
+document.getElementById('modal-range-filter').addEventListener('click',function(e){
+  var chip=e.target.closest('.range-chip');if(!chip) return;
+  currentModalRange=chip.getAttribute('data-range');
+  modalRange[currentProgExName]=currentModalRange; // persist per exercise
+  lsSet('op-modal-range',modalRange);
+  updateRangeChips();
+  var logs=getLogsForExercise(currentProgExName,modalBilatMode);
+  var filtered=filterLogsByRange(logs,currentModalRange);
+  var allLogs=getLogsForExercise(currentProgExName,'both');
+  renderProgModal(currentProgExName,filtered,allLogs);
+});
 
 // ── UTILS ──
 function formatDate(str){

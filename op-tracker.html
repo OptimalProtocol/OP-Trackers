@@ -150,6 +150,21 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .add-ex-btn{margin:10px 16px 0;width:calc(100% - 32px);background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:12px;text-align:center;transition:border-color 0.15s,color 0.15s;display:block;}
 .add-ex-btn:active{border-color:var(--cyan-border);color:var(--cyan);}
 .autosave-indicator{font-size:10px;color:var(--muted);text-align:center;padding:2px 16px 0;letter-spacing:0.05em;}
+.sess-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:12px 16px 0;}
+.sess-toggle-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:10px;text-align:center;transition:all 0.15s;}
+.sess-toggle-btn.active{background:var(--cyan);color:#000;}
+.prior-sess-list{padding:0 0 16px;}
+.prior-sess-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:10px 16px 0;overflow:hidden;cursor:pointer;transition:border-color 0.15s;}
+.prior-sess-card:active{border-color:var(--cyan-border);}
+.prior-sess-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.prior-sess-date{font-size:13px;font-weight:700;color:var(--text);}
+.prior-sess-workout{font-size:11px;font-weight:600;color:var(--cyan);}
+.prior-sess-meta{font-size:11px;color:var(--dim);}
+.prior-edit-header{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0;position:sticky;top:57px;z-index:10;}
+.prior-edit-title{font-size:14px;font-weight:700;}
+.prior-edit-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.prior-filter-row{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 0;scrollbar-width:none;}
+.prior-filter-row::-webkit-scrollbar{display:none;}
 .autosave-indicator.saved{color:var(--green);}
 .save-bar{padding:10px 16px;display:flex;gap:10px;margin-top:12px;}
 .draft-badge{background:rgba(0,180,216,0.15);border:1px solid var(--cyan-border);border-radius:4px;color:var(--cyan);font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 6px;text-transform:uppercase;margin-left:6px;vertical-align:middle;}
@@ -257,6 +272,21 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .bilat-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:6px 4px;text-align:center;text-transform:uppercase;transition:all 0.15s;}
 .bilat-btn.active{background:var(--cyan);color:#000;}
 .bilat-label{font-size:9px;color:var(--dim);text-align:center;padding:0 14px 6px;font-style:italic;}
+.card-status-line{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 0;flex-wrap:wrap;gap:6px;}
+.since-pr-chip{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;letter-spacing:0.05em;}
+.since-pr-chip.fresh{background:rgba(0,200,150,0.15);color:var(--green);}
+.since-pr-chip.amber{background:rgba(255,184,0,0.12);color:var(--gold);}
+.since-pr-chip.stale{background:rgba(255,77,77,0.1);color:var(--red);}
+.since-pr-chip.base{background:rgba(255,255,255,0.06);color:var(--muted);}
+.last-sess-summary{font-size:10px;color:var(--dim);font-style:italic;}
+.target-line{font-size:10px;color:var(--cyan);font-weight:600;padding:2px 14px 6px;}
+.last-notes-line{font-size:10px;color:var(--muted);font-style:italic;padding:0 14px 6px;border-top:1px solid var(--border);margin-top:2px;}
+.sess-timer{font-size:10px;color:var(--muted);text-align:center;padding:4px 16px 0;letter-spacing:0.05em;}
+.sess-timer.active{color:var(--cyan);}
+.draft-alert{background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.35);border-radius:10px;margin:10px 16px 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.draft-alert-text{font-size:12px;color:var(--gold);font-weight:600;line-height:1.4;}
+.draft-alert-actions{display:flex;gap:8px;flex-shrink:0;}
+.draft-alert-btn{background:none;border:1px solid var(--gold);border-radius:6px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:700;padding:4px 10px;}
 .modal-bilat-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:0 16px 12px;}
 .modal-bilat-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:8px 4px;text-align:center;transition:all 0.15s;}
 .modal-bilat-btn.active{background:var(--cyan);color:#000;}
@@ -443,6 +473,37 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 <!-- TAB 3: SESSION -->
 <div class="page" id="page-session">
+  <!-- Sub-tab toggle -->
+  <div class="sess-toggle">
+    <button class="sess-toggle-btn active" id="sess-tab-current" onclick="switchSessTab('current')">Current Session</button>
+    <button class="sess-toggle-btn" id="sess-tab-prior" onclick="switchSessTab('prior')">Prior Sessions</button>
+  </div>
+
+  <!-- CURRENT SESSION VIEW -->
+  <div id="sess-view-current">
+  <div id="draft-warning-banner" style="display:none;"></div>
+  <div class="sess-timer" id="sess-timer">Session not started</div>
+  <div id="draft-alert-wrap"></div>
+  <!-- Session header bar: duration + rest timer -->
+  <div class="sess-header-bar">
+    <div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Session</div>
+      <div class="sess-duration" id="sess-duration-display">00:00</div>
+    </div>
+    <div style="flex:1;"></div>
+    <div style="text-align:center;cursor:pointer;" id="rest-bubble-wrap" onclick="openRestTimer()">
+      <div class="rest-timer-bubble" id="rest-timer-bubble">
+        <svg class="rest-bubble-svg" id="rest-bubble-svg" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="23" fill="none" stroke="rgba(0,180,216,0.15)" stroke-width="3"/>
+          <circle cx="26" cy="26" r="23" fill="none" stroke="#00B4D8" stroke-width="3"
+            stroke-dasharray="144.5" stroke-dashoffset="144.5" id="rest-bubble-ring" stroke-linecap="round"/>
+        </svg>
+        <div class="rest-bubble-time" id="rest-bubble-time">REST</div>
+        <div class="rest-bubble-label">TIMER</div>
+      </div>
+    </div>
+  </div>
+
   <div class="session-meta">
     <div class="field"><label class="field-label">Date</label><input type="date" class="field-input" id="sess-date" placeholder="dd/mm/yyyy"></div>
     <div class="field"><label class="field-label">Workout</label>
@@ -467,6 +528,32 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <div class="save-bar">
     <button class="btn btn-secondary" style="flex:1" id="clear-btn">Clear</button>
     <button class="btn btn-primary" style="flex:2" id="save-btn">Complete Session</button>
+  </div>
+  </div><!-- end sess-view-current -->
+
+  <!-- PRIOR SESSIONS VIEW -->
+  <div id="sess-view-prior" style="display:none;">
+    <!-- Filter row -->
+    <div class="prior-filter-row" id="prior-muscle-chips" style="padding-top:12px;"></div>
+    <div class="prior-filter-row" id="prior-workout-chips"></div>
+    <!-- List or Edit view -->
+    <div id="prior-sess-list-wrap">
+      <div class="prior-sess-list" id="prior-sess-list"></div>
+    </div>
+    <div id="prior-sess-edit-wrap" style="display:none;">
+      <div class="prior-edit-header">
+        <div>
+          <div class="prior-edit-title" id="prior-edit-title">Editing Session</div>
+          <div class="prior-edit-sub" id="prior-edit-sub"></div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closePriorEdit()">&larr; Back</button>
+      </div>
+      <div id="prior-edit-ex-list" class="ex-list" style="padding-top:8px;"></div>
+      <div class="save-bar" style="flex-direction:column;gap:8px;">
+        <button class="btn btn-primary btn-full" id="prior-save-btn">Save Changes</button>
+        <button class="btn btn-secondary btn-full" style="color:var(--red);border-color:rgba(255,77,77,0.3);" id="prior-delete-btn">Delete This Session</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -614,6 +701,40 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- REST TIMER OVERLAY -->
+<div class="rest-overlay" id="rest-overlay">
+  <div style="position:absolute;top:0;left:0;right:0;padding:calc(16px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Rest Timer</div>
+    <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px;" onclick="closeRestTimer()">&#10005;</button>
+  </div>
+  <div id="rest-expired-content" style="display:none;text-align:center;margin-bottom:16px;">
+    <div class="rest-expired-msg">&#9200; Rest Complete</div>
+    <div class="rest-expired-sub">Time to get back to work.</div>
+  </div>
+  <div class="rest-ring-wrap">
+    <svg class="rest-ring-svg" viewBox="0 0 260 260" id="rest-ring-svg">
+      <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+      <circle cx="130" cy="130" r="115" fill="none" stroke="#00B4D8" stroke-width="12"
+        stroke-dasharray="722.6" stroke-dashoffset="0" id="rest-ring-circle" stroke-linecap="round"/>
+    </svg>
+    <div class="rest-ring-time">
+      <div class="rest-big-time" id="rest-big-time">2:00</div>
+      <div class="rest-big-label" id="rest-big-label">remaining</div>
+    </div>
+  </div>
+  <div class="rest-presets" id="rest-presets">
+    <button class="rest-preset-btn" data-secs="60">1 min</button>
+    <button class="rest-preset-btn" data-secs="90">90 sec</button>
+    <button class="rest-preset-btn active" data-secs="120">2 min</button>
+    <button class="rest-preset-btn" data-secs="180">3 min</button>
+  </div>
+  <div class="rest-controls">
+    <button class="rest-ctrl-btn primary" id="rest-start-btn" onclick="toggleRestTimer()">Start</button>
+    <button class="rest-ctrl-btn" id="rest-reset-btn" onclick="resetRestTimer()">Reset</button>
+  </div>
+  <div class="rest-dismiss" onclick="closeRestTimer()">Dismiss &amp; return to session</div>
+</div>
 
 <script>
 // ── BW EXERCISES LIST ──
@@ -765,7 +886,114 @@ var BUILT_IN=[
   {id:138,name:"Incline Curl",group:"Biceps",muscles:"Biceps (long head)",type:"Isolation"},
   {id:139,name:"Band-Assisted Chin-Up",group:"Back – Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
   {id:140,name:"Push Press (DB)",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
-  {id:141,name:"Bench Dip (feet elevated)",group:"Triceps",muscles:"Triceps, Pec Minor",type:"Compound"}
+  {id:141,name:"Bench Dip (feet elevated)",group:"Triceps",muscles:"Triceps, Pec Minor",type:"Compound"},
+  // ── QUADS: Additional equipment variants ──
+  {id:142,name:"Smith Machine Squat",group:"Quads",muscles:"Quadriceps, Glutes, Hamstrings",type:"Compound"},
+  {id:143,name:"Barbell Bulgarian Split Squat",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:144,name:"Smith Machine Bulgarian Split Squat",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:145,name:"Barbell Walking Lunge",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:146,name:"Smith Machine Lunge",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:147,name:"Barbell Reverse Lunge",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:148,name:"Barbell Step-Up",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:149,name:"Leg Press (Single Leg)",group:"Quads",muscles:"Quadriceps, Glutes (unilateral)",type:"Compound"},
+  {id:150,name:"Barbell Hack Squat",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:151,name:"Smith Machine Hack Squat",group:"Quads",muscles:"Quadriceps, Glutes",type:"Compound"},
+  {id:152,name:"Cable Leg Extension",group:"Quads",muscles:"Quadriceps",type:"Isolation"},
+  // ── HAMSTRINGS: Additional equipment variants ──
+  {id:153,name:"Barbell Romanian Deadlift",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:154,name:"Smith Machine Romanian Deadlift",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:155,name:"Cable Romanian Deadlift",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:156,name:"Barbell Good Morning",group:"Hamstrings",muscles:"Hamstrings, Glutes, Spinal Erectors",type:"Compound"},
+  {id:157,name:"Cable Pull-Through (Hamstring)",group:"Hamstrings",muscles:"Hamstrings, Glutes",type:"Compound"},
+  {id:158,name:"Single-Leg Cable RDL",group:"Hamstrings",muscles:"Hamstrings, Glutes (unilateral)",type:"Compound"},
+  // ── GLUTES: Additional equipment variants ──
+  {id:159,name:"Smith Machine Hip Thrust",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:160,name:"Cable Donkey Kick",group:"Glutes",muscles:"Glutes",type:"Isolation"},
+  {id:161,name:"Cable Hip Abduction",group:"Glutes",muscles:"Glutes, Hip Abductors",type:"Isolation"},
+  {id:162,name:"Machine Hip Abduction",group:"Glutes",muscles:"Glutes, Hip Abductors",type:"Isolation"},
+  {id:163,name:"Barbell Glute Bridge",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  // ── CALVES: Additional equipment variants ──
+  {id:164,name:"Smith Machine Calf Raise",group:"Calves",muscles:"Gastrocnemius",type:"Isolation"},
+  {id:165,name:"Cable Calf Raise",group:"Calves",muscles:"Gastrocnemius, Soleus",type:"Isolation"},
+  {id:166,name:"Donkey Calf Raise",group:"Calves",muscles:"Gastrocnemius",type:"Isolation"},
+  // ── BACK – LATS: Additional equipment variants ──
+  {id:167,name:"Cable Pullover",group:"Back – Lats",muscles:"Lats, Serratus",type:"Isolation"},
+  {id:168,name:"Single-Arm Cable Pullover",group:"Back – Lats",muscles:"Lats, Serratus",type:"Isolation"},
+  {id:169,name:"Underhand Lat Pulldown",group:"Back – Lats",muscles:"Lats, Mid-Back, Biceps",type:"Compound"},
+  {id:170,name:"Single-Arm Lat Pulldown",group:"Back – Lats",muscles:"Lats, Mid-Back",type:"Compound"},
+  // ── BACK – MID: Additional equipment variants ──
+  {id:171,name:"Cable Single-Arm Row",group:"Back – Mid",muscles:"Mid-Back, Lats",type:"Compound"},
+  {id:172,name:"Barbell Pendlay Row",group:"Back – Mid",muscles:"Mid-Back, Lats, Biceps",type:"Compound"},
+  {id:173,name:"Smith Machine Row",group:"Back – Mid",muscles:"Mid-Back, Lats",type:"Compound"},
+  {id:174,name:"Cable Row (Wide Grip)",group:"Back – Mid",muscles:"Mid-Back, Rhomboids",type:"Compound"},
+  {id:175,name:"Cable Row (Underhand)",group:"Back – Mid",muscles:"Mid-Back, Lats, Biceps",type:"Compound"},
+  {id:176,name:"Machine Row (Chest-Supported)",group:"Back – Mid",muscles:"Mid-Back, Rhomboids, Lats",type:"Compound"},
+  // ── SHOULDERS: Additional equipment variants ──
+  {id:177,name:"Smith Machine Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:178,name:"Cable Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:179,name:"Seated DB Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:180,name:"Seated Barbell Overhead Press",group:"Shoulders",muscles:"Ant Delt, Med Delt, Triceps",type:"Compound"},
+  {id:181,name:"Cable Lateral Raise (Single Arm)",group:"Shoulders",muscles:"Medial Delt",type:"Isolation"},
+  {id:182,name:"Cable Rear Delt Fly",group:"Shoulders",muscles:"Rear Delt, Mid Trap",type:"Isolation"},
+  {id:183,name:"Cable Rear Delt Fly (Single Arm)",group:"Shoulders",muscles:"Rear Delt, Mid Trap",type:"Isolation"},
+  {id:184,name:"DB Face Pull",group:"Shoulders",muscles:"Rear Delt, Mid Trap, Ext Rotators",type:"Isolation"},
+  {id:185,name:"Barbell Upright Row",group:"Shoulders",muscles:"Med Delt, Traps, Biceps",type:"Compound"},
+  {id:186,name:"Cable Upright Row",group:"Shoulders",muscles:"Med Delt, Traps",type:"Compound"},
+  {id:187,name:"DB Upright Row",group:"Shoulders",muscles:"Med Delt, Traps",type:"Compound"},
+  {id:188,name:"Cable Front Raise",group:"Shoulders",muscles:"Ant Delt",type:"Isolation"},
+  {id:189,name:"DB Front Raise",group:"Shoulders",muscles:"Ant Delt",type:"Isolation"},
+  {id:190,name:"Barbell Front Raise",group:"Shoulders",muscles:"Ant Delt",type:"Isolation"},
+  // ── CHEST: Additional equipment variants ──
+  {id:191,name:"Smith Machine Bench Press",group:"Chest",muscles:"Pec Major, Ant Delt, Triceps",type:"Compound"},
+  {id:192,name:"Smith Machine Incline Press",group:"Chest",muscles:"Upper Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:193,name:"Smith Machine Decline Press",group:"Chest",muscles:"Lower Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:194,name:"Barbell Incline Press",group:"Chest",muscles:"Upper Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:195,name:"Barbell Decline Press",group:"Chest",muscles:"Lower Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:196,name:"DB Decline Press",group:"Chest",muscles:"Lower Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:197,name:"Machine Incline Press",group:"Chest",muscles:"Upper Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:198,name:"Machine Decline Press",group:"Chest",muscles:"Lower Pec, Ant Delt, Triceps",type:"Compound"},
+  {id:199,name:"DB Fly",group:"Chest",muscles:"Pec Major",type:"Isolation"},
+  {id:200,name:"Decline DB Fly",group:"Chest",muscles:"Lower Pec Major",type:"Isolation"},
+  {id:201,name:"Cable Fly (Mid)",group:"Chest",muscles:"Pec Major",type:"Isolation"},
+  {id:202,name:"Cable Fly (High to Low)",group:"Chest",muscles:"Upper Pec Major",type:"Isolation"},
+  {id:203,name:"Cable Fly (Low to High)",group:"Chest",muscles:"Lower Pec Major",type:"Isolation"},
+  {id:204,name:"Cable Single-Arm Fly",group:"Chest",muscles:"Pec Major",type:"Isolation"},
+  {id:205,name:"Incline Cable Fly",group:"Chest",muscles:"Upper Pec Major",type:"Isolation"},
+  // ── BICEPS: Additional equipment variants ──
+  {id:206,name:"Barbell Curl",group:"Biceps",muscles:"Biceps, Brachialis",type:"Isolation"},
+  {id:207,name:"Cable Curl (Straight Bar)",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:208,name:"Cable Curl (EZ Bar)",group:"Biceps",muscles:"Biceps, Brachialis",type:"Isolation"},
+  {id:209,name:"Cable Curl (Single Arm)",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:210,name:"Cable Hammer Curl",group:"Biceps",muscles:"Brachialis, Brachioradialis",type:"Isolation"},
+  {id:211,name:"Preacher Curl (Cable)",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:212,name:"Reverse Curl (Barbell)",group:"Biceps",muscles:"Brachialis, Brachioradialis",type:"Isolation"},
+  {id:213,name:"Reverse Curl (Cable)",group:"Biceps",muscles:"Brachialis, Brachioradialis",type:"Isolation"},
+  {id:214,name:"Zottman Curl",group:"Biceps",muscles:"Biceps, Brachialis, Brachioradialis",type:"Isolation"},
+  // ── TRICEPS: Additional equipment variants ──
+  {id:215,name:"Cable Triceps Pushdown (Bar)",group:"Triceps",muscles:"Triceps (lateral head)",type:"Isolation"},
+  {id:216,name:"Cable Triceps Pushdown (V-Bar)",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:217,name:"Cable Triceps Kickback",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:218,name:"DB Triceps Kickback",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:219,name:"EZ Bar Overhead Triceps Ext.",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:220,name:"Cable Single-Arm Overhead Ext.",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:221,name:"Smith Machine Close-Grip Press",group:"Triceps",muscles:"Triceps, Pec Major",type:"Compound"},
+  {id:222,name:"Barbell Skull Crusher",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  {id:223,name:"DB Skull Crusher",group:"Triceps",muscles:"Triceps (long head)",type:"Isolation"},
+  // ── ABS & CORE: Additional movements ──
+  {id:224,name:"Cable Pallof Press",group:"Abs & Core",muscles:"Core (anti-rotation)",type:"Stability"},
+  {id:225,name:"Cable Woodchop",group:"Abs & Core",muscles:"Obliques, Core",type:"Compound"},
+  {id:226,name:"Ab Wheel Rollout",group:"Abs & Core",muscles:"Core, Transverse Abdominis",type:"Compound"},
+  {id:227,name:"Barbell Rollout",group:"Abs & Core",muscles:"Core, Transverse Abdominis",type:"Compound"},
+  {id:228,name:"Weighted Side Bend",group:"Abs & Core",muscles:"Obliques",type:"Isolation"},
+  {id:229,name:"Cable Side Bend",group:"Abs & Core",muscles:"Obliques",type:"Isolation"},
+  {id:230,name:"Landmine Twist",group:"Abs & Core",muscles:"Obliques, Core",type:"Compound"},
+  {id:231,name:"Decline Crunch",group:"Abs & Core",muscles:"Upper Abs",type:"Isolation"},
+  {id:232,name:"Decline Weighted Crunch",group:"Abs & Core",muscles:"Upper Abs",type:"Isolation"},
+  {id:233,name:"Hanging Windshield Wiper",group:"Abs & Core",muscles:"Obliques, Abs",type:"Isolation"},
+  {id:234,name:"Toes to Bar",group:"Abs & Core",muscles:"Abs, Hip Flexors",type:"Isolation"},
+  {id:235,name:"Dragon Flag",group:"Abs & Core",muscles:"Core, Anterior Chain",type:"Compound"},
+  {id:236,name:"V-Up",group:"Abs & Core",muscles:"Abs, Hip Flexors",type:"Isolation"},
+  {id:237,name:"Copenhagen Plank",group:"Abs & Core",muscles:"Adductors, Core",type:"Stability"}
 ];
 
 // ── STATE ──
@@ -777,6 +1005,21 @@ var activeLibFilter='All';
 var exCount=0;
 var draftSessionId=null;
 var sessionStartTime=null;
+var sessTimerInterval=null;
+
+function startSessTimer(){
+  if(sessTimerInterval) clearInterval(sessTimerInterval);
+  sessTimerInterval=setInterval(function(){
+    if(!sessionStartTime) return;
+    var elapsed=Math.floor((Date.now()-sessionStartTime)/1000);
+    var mins=Math.floor(elapsed/60);var secs=elapsed%60;
+    var el=document.getElementById('sess-timer');
+    if(el){
+      el.textContent='⏱ Session: '+mins+'m '+String(secs).padStart(2,'0')+'s';
+      el.className='sess-timer active';
+    }
+  },1000);
+}
 var progFilters={muscle:'All',workout:'All',prOnly:false};
 var progSort={col:'sincePR',dir:'desc'};
 var currentProgView='exercises';
@@ -1042,6 +1285,110 @@ function getRecentMuscles(hoursBack){
   return muscles;
 }
 
+function showExerciseStatusBar(card,exName){
+  // Remove existing status bar
+  var existing=card.querySelector('.ex-status-bar');
+  if(existing) existing.remove();
+  var existingNote=card.querySelector('.ex-last-note');
+  if(existingNote) existingNote.remove();
+
+  if(!exName) return;
+  var unit=settings.unit||'kg';
+
+  // Get all completed logs for this exercise (bilat-aware)
+  var bt=document.getElementById('bt-'+card.id);
+  var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
+  var bilatMode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
+  var logs=getLogsForExercise(exName,bilatMode);
+  if(!logs.length) return;
+
+  // ── Since PR ──
+  var sincePR=0;
+  var runL=0,runA=0,lastPRIdx=-1;
+  var allLogs=logs;
+  allLogs.forEach(function(l,i){
+    var load=parseFloat(l.load)||0;
+    var reps=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
+    if(i===0){runL=load;runA=avg;return;} // base load
+    if(load>runL){lastPRIdx=i;runL=load;runA=0;}
+    else if(load===runL&&avg>runA){lastPRIdx=i;runA=avg;}
+  });
+  var isBase=allLogs.length===1;
+  sincePR=lastPRIdx===-1?allLogs.length-1:(allLogs.length-1-lastPRIdx);
+
+  var sincePRText='',sincePRCls='pr-base';
+  if(isBase){
+    sincePRText='Base Load';sincePRCls='pr-base';
+  } else if(sincePR===0){
+    sincePRText='✓ PR last session';sincePRCls='pr-now';
+  } else if(sincePR===1){
+    sincePRText='1 session since PR';sincePRCls='pr-ok';
+  } else if(sincePR<=3){
+    sincePRText=sincePR+' sessions since PR';sincePRCls='pr-ok';
+  } else {
+    sincePRText=sincePR+' sessions since PR';sincePRCls='pr-warn';
+  }
+
+  // ── Last session summary ──
+  var last=logs[logs.length-1];
+  var lastReps=(last.reps||[]).filter(function(r){return r;});
+  var lastRpe=last.rpe?'@ RPE '+last.rpe:'';
+  var lastSummary=last.load?(last.load+unit+' × '+lastReps.join(', ')+' reps '+lastRpe).trim():'';
+
+  // ── Target for today (OP progression rules) ──
+  var targetText='';
+  if(!isBase&&last.load){
+    var lastLoad=parseFloat(last.load)||0;
+    var lastRepsNums=(last.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var lastAvg=lastRepsNums.length?lastRepsNums.reduce(function(a,b){return a+b;},0)/lastRepsNums.length:0;
+    var lastRpe2=parseFloat(last.rpe)||0;
+    // Find rep ceiling (same load, RPE 9, 2 consecutive sessions)
+    var atCeiling=lastRpe2>=9;
+    if(atCeiling){
+      // Suggest load increase — smallest common increment
+      var increment=unit==='kg'?2.5:5;
+      targetText='Target: '+(lastLoad+increment)+unit+' (load increase)';
+    } else {
+      targetText='Target: '+lastLoad+unit+' × +1 rep per set';
+    }
+  }
+
+  // ── Last session note ──
+  var lastNote='';
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    var sess=sessionHistory[i];
+    if(sess.status==='draft') continue;
+    for(var j=0;j<sess.exercises.length;j++){
+      var ex=sess.exercises[j];
+      if(ex.name===exName&&ex.notes&&ex.notes.trim()){
+        lastNote=ex.notes.trim();break;
+      }
+    }
+    if(lastNote) break;
+  }
+
+  // ── Build status bar ──
+  var bar=document.createElement('div');
+  bar.className='ex-status-bar';
+  bar.innerHTML=
+    '<span class="ex-since-pr '+sincePRCls+'">'+sincePRText+'</span>'+
+    (lastSummary?'<span class="ex-last-summary">'+lastSummary+'</span>':'')+
+    (targetText?'<span class="ex-target-line">'+targetText+'</span>':'');
+
+  // Insert after card header (before load type toggle or stall banner)
+  var hdr=card.querySelector('.ex-card-header');
+  if(hdr) hdr.after(bar);
+
+  // ── Last note ──
+  if(lastNote){
+    var noteEl=document.createElement('div');
+    noteEl.className='ex-last-note';
+    noteEl.innerHTML='&#128221; Last note: '+lastNote;
+    bar.after(noteEl);
+  }
+}
+
 function showRecoveryBanner(card,exName){
   var existing=card.querySelector('.recovery-banner');if(existing) existing.remove();
   var lib=allExercises().find(function(e){return e.name===exName;});
@@ -1079,6 +1426,9 @@ function initBilatToggle(card){
       btn.classList.add('active');
       card.setAttribute('data-bilat',btn.getAttribute('data-mode'));
       if(bl) bl.textContent=btn.getAttribute('data-mode')==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
+      // Re-populate Last row and status bar for the new bilat mode
+      var exName=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+      if(exName){populateLastRow(card,exName);showExerciseStatusBar(card,exName);}
       saveCurrentSession();
     });
   });
@@ -1112,8 +1462,69 @@ function getLastEntryForExercise(name){
   }
   return null;
 }
+function getSincePR(exName, bilatMode){
+  // Returns sessions since last PR for this exercise + bilat mode
+  var logs = [];
+  sessionHistory.forEach(function(sess){
+    if(sess.status==='draft') return;
+    sess.exercises.forEach(function(ex){
+      if(ex.name===exName && (ex.bilat||'bilateral')===bilatMode && ex.curr){
+        var load=parseFloat(ex.curr.load)||0;
+        var reps=(ex.curr.reps||[]).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
+        if(load||reps) logs.push({load:load,reps:reps});
+      }
+    });
+  });
+  if(logs.length<2) return logs.length===1?-1:-2; // -1=base load, -2=no data
+  // Find sessions since last PR (load or reps at best load)
+  var bestLoad=0,bestRepsAtBest=0,lastPRIdx=-1;
+  logs.forEach(function(l,i){
+    if(l.load>bestLoad){bestLoad=l.load;bestRepsAtBest=l.reps;if(i>0)lastPRIdx=i;}
+    else if(l.load===bestLoad&&l.reps>bestRepsAtBest){bestRepsAtBest=l.reps;if(i>0)lastPRIdx=i;}
+    if(i===0){bestLoad=l.load;bestRepsAtBest=l.reps;} // seed
+  });
+  return lastPRIdx===-1?logs.length-1:(logs.length-1-lastPRIdx);
+}
+
+function getTargetLine(exName, bilatMode){
+  // Returns a suggested target string based on OP progression rules
+  var unit=settings.unit||'kg';
+  var logs=[];
+  sessionHistory.forEach(function(sess){
+    if(sess.status==='draft') return;
+    sess.exercises.forEach(function(ex){
+      if(ex.name===exName&&(ex.bilat||'bilateral')===bilatMode&&ex.curr){
+        var load=parseFloat(ex.curr.load)||0;
+        var reps=(ex.curr.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+        var rpe=parseFloat(ex.curr.rpe)||0;
+        if(load||reps.length) logs.push({load:load,reps:reps,rpe:rpe});
+      }
+    });
+  });
+  if(!logs.length) return null;
+  var last=logs[logs.length-1];
+  var lastLoad=last.load;
+  var lastReps=last.reps;
+  var lastRpe=last.rpe;
+  var maxReps=lastReps.length?Math.max.apply(null,lastReps):0;
+  var minReps=lastReps.length?Math.min.apply(null,lastReps.filter(function(r){return r>0;})):0;
+  // Check if all sets at same reps (rep ceiling check — simplified)
+  var allSame=lastReps.length>0&&lastReps.every(function(r){return r===lastReps[0]&&r>0;});
+  if(lastRpe>=9&&allSame){
+    // Suggest load increase
+    var increment=unit==='kg'?2.5:5;
+    return 'Target: '+(lastLoad+increment)+unit+' (same reps — load increase due)';
+  } else {
+    // Suggest +1 rep on each set
+    return 'Target: '+lastLoad+unit+' × +'+(minReps+1)+' reps per set';
+  }
+}
+
 function populateLastRow(card,exName){
-  var last=getLastEntryForExercise(exName);
+  var bt=document.getElementById('bt-'+card.id);
+  var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
+  var bilatMode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
+  var last=getLastEntryForExercise(exName,bilatMode);
   var lastRow=card.querySelector('.ex-row.last-row');if(!lastRow) return;
   var inputs=lastRow.querySelectorAll('input');
   if(last){
@@ -1122,6 +1533,81 @@ function populateLastRow(card,exName){
     inputs[6].value=last.rpe||'';
   } else {
     inputs.forEach(function(inp){inp.value='';});
+  }
+
+  // ── Status line: since-PR chip + last session summary ──
+  var csl=document.getElementById('csl-'+card.id);
+  if(!csl) return;
+  csl.innerHTML='';
+
+  var sincePR=getSincePR(exName,bilatMode);
+  if(sincePR===-2){
+    // No data at all
+    csl.innerHTML='';
+    return;
+  }
+
+  // Since PR chip
+  var chip=document.createElement('span');
+  chip.className='since-pr-chip';
+  if(sincePR===-1){
+    chip.className+=' base';
+    chip.textContent='Base Load';
+  } else if(sincePR===0){
+    chip.className+=' fresh';
+    chip.textContent='PR last session ✓';
+  } else if(sincePR===1){
+    chip.className+=' amber';
+    chip.textContent='1 session since PR';
+  } else if(sincePR<=3){
+    chip.className+=' amber';
+    chip.textContent=sincePR+' sessions since PR';
+  } else {
+    chip.className+=' stale';
+    chip.textContent=sincePR+' sessions since PR';
+  }
+  csl.appendChild(chip);
+
+  // Last session summary (load × reps @ RPE)
+  if(last&&last.load){
+    var unit=settings.unit||'kg';
+    var validReps=(last.reps||[]).filter(function(r){return r;});
+    var repsStr=validReps.length?validReps.join(', '):'—';
+    var rpeStr=last.rpe?(' @ RPE '+last.rpe):'';
+    var summary=document.createElement('span');
+    summary.className='last-sess-summary';
+    summary.textContent=last.load+unit+' × ['+repsStr+']'+rpeStr;
+    csl.appendChild(summary);
+  }
+
+  // Target line
+  var target=getTargetLine(exName,bilatMode);
+  if(target){
+    var tline=card.querySelector('.target-line');
+    if(!tline){tline=document.createElement('div');tline.className='target-line';csl.after(tline);}
+    tline.textContent=target;
+  }
+
+  // Last session notes
+  var lastNote=null;
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    var sess=sessionHistory[i];
+    if(sess.status==='draft') continue;
+    for(var j=0;j<sess.exercises.length;j++){
+      var ex=sess.exercises[j];
+      if(ex.name===exName&&(ex.bilat||'bilateral')===bilatMode&&ex.notes){
+        lastNote=ex.notes;break;
+      }
+    }
+    if(lastNote) break;
+  }
+  var noteLine=card.querySelector('.last-notes-line');
+  if(lastNote){
+    if(!noteLine){noteLine=document.createElement('div');noteLine.className='last-notes-line';}
+    noteLine.textContent='“'+lastNote+'”';
+    csl.after(noteLine);
+  } else if(noteLine){
+    noteLine.remove();
   }
 }
 
@@ -1155,6 +1641,7 @@ function createSearchableDropdown(card,selectedName){
           populateLastRow(card,e.name);
           showStallBanner(card,e.name);
           showRecoveryBanner(card,e.name);
+          showExerciseStatusBar(card,e.name);
           var ltt=document.getElementById('ltt-'+card.id);var ltl=document.getElementById('ltl-'+card.id);
           if(ltt){var isBW=BW_EXERCISES.indexOf(e.name)>-1;ltt.style.display=isBW?'flex':'none';if(ltl) ltl.style.display=isBW?'block':'none';if(isBW) updateLoadTypeLabel(card,ltl);}
           saveCurrentSession();haptic('save');
@@ -1207,6 +1694,7 @@ function addExRow(data){
   html+='<div class="load-type-label" id="ltl-'+id+'" style="display:none;"></div>';
   html+='<div class="bilat-toggle" id="bt-'+id+'"><button class="bilat-btn active" data-mode="bilateral">Bilateral</button><button class="bilat-btn" data-mode="unilateral">Unilateral</button></div>';
   html+='<div class="bilat-label" id="bl-'+id+'">Load = per limb when Unilateral</div>';
+  html+='<div class="card-status-line" id="csl-'+id+'"></div>';
   html+='<div class="ex-table">';
   html+='<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>';
   html+='<div class="ex-row last-row"><span class="row-tag last">Last</span>';
@@ -1285,6 +1773,19 @@ document.getElementById('ex-list').addEventListener('drop',function(e){
 });
 
 // ── SESSION ──
+var sessDurationInterval=null;
+
+function startSessDurationTimer(){
+  clearInterval(sessDurationInterval);
+  var el=document.getElementById('sess-duration-display');
+  sessDurationInterval=setInterval(function(){
+    if(!sessionStartTime){return;}
+    var elapsed=Math.floor((Date.now()-sessionStartTime)/1000);
+    var m=Math.floor(elapsed/60),s=elapsed%60;
+    if(el) el.textContent=m+':'+(s<10?'0':'')+s;
+  },1000);
+}
+
 function initSession(){
   var today=new Date().toISOString().split('T')[0];
   document.getElementById('sess-date').value=currentSession.date||today;
@@ -1295,6 +1796,8 @@ function initSession(){
     currentSession.exercises.forEach(function(ex){addExRow(ex);});
   } else {addExRow();addExRow();addExRow();}
   sessionStartTime=Date.now();
+  startSessTimer();
+  checkDraftAlert();
 }
 
 function saveCurrentSession(){
@@ -2233,10 +2736,434 @@ function formatDate(str){
   var d=new Date(str+'T00:00:00');
   return d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
 }
+// ── PRIOR SESSIONS STATE ──
+var currentSessTab='current';
+var priorFilters={muscle:'All',workout:'All'};
+var editingSessionId=null;
+
+function checkIncompleteDraft(){
+  var banner=document.getElementById('draft-warning-banner');
+  if(!banner) return;
+  if(!draftSessionId){banner.style.display='none';return;}
+  var draft=sessionHistory.find(function(s){return s.id===draftSessionId;});
+  if(!draft){banner.style.display='none';return;}
+  var today=new Date().toISOString().split('T')[0];
+  if(draft.date===today){banner.style.display='none';return;} // today's draft — normal
+  // Draft from a previous day
+  banner.style.display='block';
+  banner.innerHTML='<div class="draft-warning">'+
+    '<div class="draft-warning-text">&#9888; Incomplete session from '+(draft.date?formatDate(draft.date):'a previous day')+
+    '. Complete it or clear it before starting a new session.</div>'+
+    '<div class="draft-warning-btns">'+
+      '<button class="draft-warning-btn" onclick="completeDraftWarning()">Complete</button>'+
+      '<button class="draft-warning-btn" style="border-color:rgba(255,77,77,0.4);color:var(--red);" onclick="clearDraftWarning()">Clear</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function completeDraftWarning(){
+  document.getElementById('draft-warning-banner').style.display='none';
+  // Scroll to complete session button
+  document.getElementById('save-btn').scrollIntoView({behavior:'smooth'});
+}
+
+function clearDraftWarning(){
+  if(!confirm('Clear the incomplete session from a previous day?')) return;
+  if(draftSessionId){
+    sessionHistory=sessionHistory.filter(function(s){return s.id!==draftSessionId;});
+    lsSet('op-history',sessionHistory);draftSessionId=null;
+  }
+  currentSession={date:'',workout:'',notes:'',exercises:[]};
+  lsSet('op-current',currentSession);
+  initSession();
+}
+
+function switchSessTab(tab){
+  currentSessTab=tab;
+  document.getElementById('sess-view-current').style.display=tab==='current'?'block':'none';
+  document.getElementById('sess-view-prior').style.display=tab==='prior'?'block':'none';
+  document.getElementById('sess-tab-current').classList.toggle('active',tab==='current');
+  document.getElementById('sess-tab-prior').classList.toggle('active',tab==='prior');
+  if(tab==='prior') renderPriorSessions();
+}
+
+function renderPriorSessions(){
+  // Build filter chips
+  buildPriorFilterChips();
+  var completed=sessionHistory.filter(function(s){return s.status!=='draft';});
+
+  // Apply filters
+  var filtered=completed.filter(function(sess){
+    if(priorFilters.workout!=='All'&&sess.workout!==priorFilters.workout) return false;
+    if(priorFilters.muscle!=='All'){
+      var hasMusc=sess.exercises.some(function(ex){
+        var lib=allExercises().find(function(e){return e.name===ex.name;});
+        return lib&&lib.group===priorFilters.muscle;
+      });
+      if(!hasMusc) return false;
+    }
+    return true;
+  }).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+
+  var container=document.getElementById('prior-sess-list');
+  if(!filtered.length){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">&#128197;</div><div class="empty-text">No sessions logged yet.</div></div>';
+    return;
+  }
+
+  container.innerHTML=filtered.map(function(sess){
+    var exCount=sess.exercises.filter(function(e){return e.name;}).length;
+    var totalSets=sess.exercises.reduce(function(a,e){return a+(e.curr.reps||[]).filter(function(r){return r;}).length;},0);
+    var muscles=[...new Set(sess.exercises.map(function(e){var lib=allExercises().find(function(l){return l.name===e.name;});return lib?lib.group:null;}).filter(Boolean))];
+    return '<div class="prior-sess-card" data-sessid="'+sess.id+'">'+
+      '<div class="prior-sess-header">'+
+        '<div><div class="prior-sess-date">'+formatDate(sess.date)+'</div>'+
+          '<div class="prior-sess-workout">'+sess.workout+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;">'+
+          '<div class="prior-sess-meta">'+exCount+' exercises &middot; '+totalSets+' sets</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px;">'+muscles.slice(0,3).join(', ')+(muscles.length>3?' +'+( muscles.length-3):'')+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  container.querySelectorAll('.prior-sess-card').forEach(function(card){
+    card.addEventListener('click',function(){
+      var id=parseInt(card.getAttribute('data-sessid'));
+      openPriorEdit(id);
+    });
+  });
+}
+
+function buildPriorFilterChips(){
+  var loggedMuscles={};var loggedWorkouts={};
+  sessionHistory.filter(function(s){return s.status!=='draft';}).forEach(function(sess){
+    if(sess.workout) loggedWorkouts[sess.workout]=true;
+    sess.exercises.forEach(function(ex){
+      var lib=allExercises().find(function(e){return e.name===ex.name;});
+      if(lib) loggedMuscles[lib.group]=true;
+    });
+  });
+  var muscles=['All'].concat(Object.keys(loggedMuscles).sort());
+  var workouts=['All'].concat(Object.keys(loggedWorkouts).sort());
+
+  var mc=document.getElementById('prior-muscle-chips');
+  if(mc){
+    mc.innerHTML=muscles.map(function(g){return '<button class="filter-chip'+(priorFilters.muscle===g?' active':'')+'" data-pmuscle="'+g+'">'+g+'</button>';}).join('');
+    mc.querySelectorAll('.filter-chip').forEach(function(btn){
+      btn.addEventListener('click',function(){priorFilters.muscle=btn.getAttribute('data-pmuscle');renderPriorSessions();});
+    });
+  }
+  var wc=document.getElementById('prior-workout-chips');
+  if(wc){
+    wc.innerHTML=workouts.map(function(w){return '<button class="filter-chip'+(priorFilters.workout===w?' active':'')+'" data-pworkout="'+w+'">'+w+'</button>';}).join('');
+    wc.querySelectorAll('.filter-chip').forEach(function(btn){
+      btn.addEventListener('click',function(){priorFilters.workout=btn.getAttribute('data-pworkout');renderPriorSessions();});
+    });
+  }
+}
+
+function openPriorEdit(sessId){
+  var sess=sessionHistory.find(function(s){return s.id===sessId;});
+  if(!sess) return;
+  editingSessionId=sessId;
+  document.getElementById('prior-edit-title').textContent=formatDate(sess.date)+' · '+sess.workout;
+  document.getElementById('prior-edit-sub').textContent=sess.exercises.filter(function(e){return e.name;}).length+' exercises';
+  document.getElementById('prior-sess-list-wrap').style.display='none';
+  document.getElementById('prior-sess-edit-wrap').style.display='block';
+
+  // Build exercise cards for this session
+  var container=document.getElementById('prior-edit-ex-list');
+  container.innerHTML='';
+
+  sess.exercises.forEach(function(ex){
+    if(!ex.name) return;
+    // Get current best (most recent across all sessions) for Last row
+    var last=getLastEntryForExercise(ex.name,ex.bilat||'bilateral');
+    var div=document.createElement('div');
+    div.className='ex-card';
+    div.setAttribute('data-ex-name',ex.name);
+    div.setAttribute('data-bilat',ex.bilat||'bilateral');
+    div.setAttribute('data-ex-idx',sess.exercises.indexOf(ex));
+
+    var unit=settings.unit||'kg';
+    var curr=ex.curr||{load:'',reps:['','','','',''],rpe:''};
+
+    div.innerHTML=
+      '<div class="ex-card-header" style="cursor:default;">'+
+        '<span class="ex-num" style="color:var(--cyan);">&#9998;</span>'+
+        '<span style="font-size:13px;font-weight:600;flex:1;">'+ex.name+'</span>'+
+        '<span style="font-size:10px;color:var(--muted);padding:2px 8px;background:var(--surface2);border-radius:4px;">'+(ex.bilat==='unilateral'?'Unilateral':'Bilateral')+'</span>'+
+      '</div>'+
+      '<div class="ex-table">'+
+        '<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>'+
+        '<div class="ex-row last-row"><span class="row-tag last">Best</span>'+
+          '<input type="number" class="cell-in" value="'+(last?last.load||'':'')+'" readonly tabindex="-1">'+
+          [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" value="'+(last&&last.reps?last.reps[i]||'':'')+'" readonly tabindex="-1">';}).join('')+
+          '<input type="number" class="cell-in" value="'+(last?last.rpe||'':'')+'" readonly tabindex="-1">'+
+        '</div>'+
+        '<div class="ex-row this-row"><span class="row-tag this">Log</span>'+
+          '<input type="number" class="cell-in" data-field="load" value="'+(curr.load||'')+'" inputmode="decimal" placeholder="—">'+
+          [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" data-field="rep'+i+'" value="'+(curr.reps[i]||'')+'" inputmode="numeric" placeholder="—">';}).join('')+
+          '<input type="number" class="cell-in" data-field="rpe" value="'+(curr.rpe||'')+'" inputmode="decimal" placeholder="—">'+
+        '</div>'+
+      '</div>'+
+      '<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes…" value="'+(ex.notes||'')+'"></div>';
+    container.appendChild(div);
+  });
+}
+
+function closePriorEdit(){
+  editingSessionId=null;
+  document.getElementById('prior-sess-list-wrap').style.display='block';
+  document.getElementById('prior-sess-edit-wrap').style.display='none';
+  // Scroll filter chips back into view
+  document.getElementById('prior-muscle-chips').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+document.getElementById('prior-save-btn').addEventListener('click',function(){
+  if(!editingSessionId) return;
+  var sessIdx=sessionHistory.findIndex(function(s){return s.id===editingSessionId;});
+  if(sessIdx===-1) return;
+  var sess=sessionHistory[sessIdx];
+  var cards=document.querySelectorAll('#prior-edit-ex-list .ex-card');
+  var newExercises=[];
+  cards.forEach(function(card){
+    var name=card.getAttribute('data-ex-name');
+    var bilat=card.getAttribute('data-bilat')||'bilateral';
+    var exIdx=parseInt(card.getAttribute('data-ex-idx'));
+    var orig=sess.exercises[exIdx]||{};
+    var thisRow=card.querySelector('.this-row');
+    var inputs=thisRow.querySelectorAll('input');
+    var load=inputs[0].value;
+    var reps=[1,2,3,4,5].map(function(i){return inputs[i].value;});
+    var rpe=inputs[6].value;
+    var notes=card.querySelector('.notes-in').value;
+    newExercises.push({name:name,bilat:bilat,loadType:orig.loadType||'standard',notes:notes,
+      last:orig.last||{load:'',reps:['','','','',''],rpe:''},
+      curr:{load:load,reps:reps,rpe:rpe}});
+  });
+  sess.exercises=newExercises;
+  lsSet('op-history',sessionHistory);
+  showToast('Session updated ✓');haptic('save');
+  closePriorEdit();
+  renderPriorSessions();
+  // Refresh Last row in active session if any matching exercise
+  newExercises.forEach(function(ex){
+    document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
+      if((card.getExName?card.getExName():card.getAttribute('data-ex-name'))===ex.name){
+        var bt=document.getElementById('bt-'+card.id);
+        var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
+        var mode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
+        populateLastRow(card,ex.name);
+      }
+    });
+  });
+});
+
+document.getElementById('prior-delete-btn').addEventListener('click',function(){
+  if(!editingSessionId) return;
+  if(!confirm('Delete this entire session? This cannot be undone.')) return;
+  sessionHistory=sessionHistory.filter(function(s){return s.id!==editingSessionId;});
+  lsSet('op-history',sessionHistory);
+  showToast('Session deleted');
+  closePriorEdit();
+  renderPriorSessions();
+});
+
+function checkDraftAlert(){
+  var wrap=document.getElementById('draft-alert-wrap');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  if(!draftSessionId) return;
+  var draft=sessionHistory.find(function(s){return s.id===draftSessionId;});
+  if(!draft||!draft.date) return;
+  var today=new Date().toISOString().split('T')[0];
+  if(draft.date===today) return; // today's draft is fine — no alert
+  var div=document.createElement('div');div.className='draft-alert';
+  var exCount=draft.exercises.filter(function(e){return e.name;}).length;
+  div.innerHTML=
+    '<div class="draft-alert-text">&#9888; Incomplete session from '+formatDate(draft.date)+
+    ' ('+draft.workout+', '+exCount+' exercises). Complete it or clear it.</div>'+
+    '<div class="draft-alert-actions">'+
+      '<button class="draft-alert-btn" onclick="resumeDraftSession()">Resume</button>'+
+      '<button class="draft-alert-btn" style="border-color:var(--red);color:var(--red);" onclick="clearDraftSession()">Clear</button>'+
+    '</div>';
+  wrap.appendChild(div);
+}
+
+function resumeDraftSession(){
+  // Already loaded — just scroll to top of session
+  document.getElementById('draft-alert-wrap').innerHTML='';
+  document.getElementById('page-session').scrollTop=0;
+}
+
+function clearDraftSession(){
+  if(!confirm('Clear the incomplete session from '+
+    (sessionHistory.find(function(s){return s.id===draftSessionId;})||{}).date+'?')) return;
+  sessionHistory=sessionHistory.filter(function(s){return s.id!==draftSessionId;});
+  lsSet('op-history',sessionHistory);
+  draftSessionId=null;
+  currentSession={date:'',workout:'',notes:'',exercises:[]};
+  lsSet('op-current',currentSession);
+  initSession();
+  showToast('Incomplete session cleared');
+}
+
 function showToast(msg){
   var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},2200);
 }
+// ── REST TIMER ──────────────────────────────────────────────────
+var restSecs=120;
+var restRemaining=120;
+var restRunning=false;
+var restInterval=null;
+var restExpired=false;
+var REST_CIRCUMFERENCE=722.6;
+var BUBBLE_CIRCUMFERENCE=144.5;
+
+function openRestTimer(){
+  document.getElementById('rest-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  updateRestDisplay();
+}
+
+function closeRestTimer(){
+  document.getElementById('rest-overlay').classList.remove('open');
+  document.getElementById('rest-overlay').classList.remove('expired');
+  document.body.style.overflow='';
+  if(restExpired){
+    restExpired=false;
+    document.getElementById('rest-expired-content').style.display='none';
+    document.getElementById('rest-big-label').textContent='remaining';
+    document.getElementById('rest-ring-circle').setAttribute('stroke','#00B4D8');
+    document.getElementById('rest-overlay').style.background='';
+  }
+}
+
+function setRestPreset(secs){
+  restSecs=secs;restRemaining=secs;restRunning=false;restExpired=false;
+  clearInterval(restInterval);
+  document.querySelectorAll('.rest-preset-btn').forEach(function(b){
+    b.classList.toggle('active',parseInt(b.getAttribute('data-secs'))===secs);
+  });
+  document.getElementById('rest-start-btn').textContent='Start';
+  document.getElementById('rest-overlay').classList.remove('expired');
+  document.getElementById('rest-expired-content').style.display='none';
+  document.getElementById('rest-big-label').textContent='remaining';
+  document.getElementById('rest-ring-circle').setAttribute('stroke','#00B4D8');
+  document.getElementById('rest-overlay').style.background='';
+  updateRestDisplay();
+}
+
+function toggleRestTimer(){
+  if(restExpired){setRestPreset(restSecs);return;}
+  restRunning=!restRunning;
+  document.getElementById('rest-start-btn').textContent=restRunning?'Pause':'Resume';
+  if(restRunning){
+    restInterval=setInterval(function(){
+      restRemaining--;
+      updateRestDisplay();
+      updateBubble();
+      if(restRemaining<=0){
+        clearInterval(restInterval);
+        restRunning=false;
+        restExpired=true;
+        onRestExpired();
+      }
+    },1000);
+  } else {
+    clearInterval(restInterval);
+  }
+}
+
+function resetRestTimer(){
+  clearInterval(restInterval);
+  restRunning=false;restExpired=false;restRemaining=restSecs;
+  document.getElementById('rest-start-btn').textContent='Start';
+  document.getElementById('rest-overlay').classList.remove('expired');
+  document.getElementById('rest-expired-content').style.display='none';
+  document.getElementById('rest-big-label').textContent='remaining';
+  document.getElementById('rest-ring-circle').setAttribute('stroke','#00B4D8');
+  document.getElementById('rest-overlay').style.background='';
+  updateRestDisplay();updateBubble();
+}
+
+function onRestExpired(){
+  haptic('complete');
+  playRestBeep();
+  document.getElementById('rest-overlay').classList.add('open');
+  document.getElementById('rest-overlay').classList.add('expired');
+  document.getElementById('rest-overlay').style.background='#1a0505';
+  document.getElementById('rest-expired-content').style.display='block';
+  document.getElementById('rest-big-time').textContent='0:00';
+  document.getElementById('rest-big-label').textContent='REST COMPLETE';
+  document.getElementById('rest-ring-circle').setAttribute('stroke','#ff4d4d');
+  document.getElementById('rest-start-btn').textContent='New Timer';
+  document.body.style.overflow='hidden';
+  updateBubble();
+  // Notification if supported
+  if(window.Notification&&Notification.permission==='granted'){
+    new Notification('Rest Complete',{body:'Time to hit your next set.',icon:''});
+  }
+}
+
+function playRestBeep(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,0.15,0.3].forEach(function(delay){
+      var osc=ctx.createOscillator();var gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.type='sine';osc.frequency.value=880;
+      gain.gain.setValueAtTime(0,ctx.currentTime+delay);
+      gain.gain.linearRampToValueAtTime(0.4,ctx.currentTime+delay+0.01);
+      gain.gain.linearRampToValueAtTime(0,ctx.currentTime+delay+0.18);
+      osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+0.2);
+    });
+  }catch(e){}
+}
+
+function updateRestDisplay(){
+  var m=Math.floor(Math.abs(restRemaining)/60);
+  var s=Math.abs(restRemaining)%60;
+  var str=m+':'+(s<10?'0':'')+s;
+  document.getElementById('rest-big-time').textContent=str;
+  // Ring progress
+  var pct=restSecs>0?Math.max(0,restRemaining/restSecs):0;
+  var offset=REST_CIRCUMFERENCE*(1-pct);
+  document.getElementById('rest-ring-circle').setAttribute('stroke-dashoffset',offset.toFixed(1));
+}
+
+function updateBubble(){
+  var m=Math.floor(Math.abs(restRemaining)/60);
+  var s=Math.abs(restRemaining)%60;
+  var str=restExpired?'DONE':(restRemaining<=0?'0:00':m+':'+(s<10?'0':'')+s);
+  var el=document.getElementById('rest-bubble-time');if(el) el.textContent=str;
+  var bubble=document.getElementById('rest-timer-bubble');
+  if(bubble){bubble.classList.toggle('running',restRunning);bubble.classList.toggle('expired',restExpired);}
+  var ring=document.getElementById('rest-bubble-ring');
+  if(ring){
+    var pct=restSecs>0?Math.max(0,restRemaining/restSecs):0;
+    var off=BUBBLE_CIRCUMFERENCE*(1-pct);
+    ring.setAttribute('stroke-dashoffset',off.toFixed(1));
+    ring.setAttribute('stroke',restExpired?'#ff4d4d':'#00B4D8');
+  }
+}
+
+// Wire preset buttons
+document.getElementById('rest-presets').querySelectorAll('.rest-preset-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){setRestPreset(parseInt(btn.getAttribute('data-secs')));});
+});
+
+// Request notification permission on session tab open
+function requestNotifPermission(){
+  if(window.Notification&&Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+
 function haptic(type){
   if(!navigator.vibrate) return;
   if(type==='save') navigator.vibrate(50);

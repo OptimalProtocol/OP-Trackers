@@ -268,6 +268,18 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 /* SHARE CARD */
 .share-btn-wrap{padding:12px 16px 0;text-align:right;}
+.equip-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:350;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.equip-picker-overlay.open{opacity:1;pointer-events:all;}
+.equip-picker-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:70vh;overflow-y:auto;padding:20px 16px 40px;transform:translateY(20px);transition:transform 0.2s;}
+.equip-picker-overlay.open .equip-picker-sheet{transform:translateY(0);}
+.equip-picker-title{font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px;}
+.equip-picker-ex{font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;}
+.equip-category-label{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px;}
+.equip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+.equip-opt{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:11px 10px;text-align:center;transition:all 0.15s;}
+.equip-opt:active{background:var(--cyan-dim);border-color:var(--cyan-border);}
+.equip-opt.selected{background:var(--cyan);border-color:var(--cyan);color:#000;}
+.equip-label-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--dim);font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 6px;margin-left:6px;vertical-align:middle;text-transform:uppercase;}
 .bilat-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:0 14px 8px;}
 .bilat-btn{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:6px 4px;text-align:center;text-transform:uppercase;transition:all 0.15s;}
 .bilat-btn.active{background:var(--cyan);color:#000;}
@@ -332,6 +344,27 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .empty-state{text-align:center;padding:48px 24px;color:var(--muted);}
 .empty-icon{font-size:36px;margin-bottom:12px;}
 .empty-text{font-size:13px;line-height:1.6;}
+
+/* ── REST TIMER ── */
+.rest-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:600;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.rest-overlay.open{opacity:1;pointer-events:all;}
+.rest-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;padding:20px 16px 40px;display:flex;flex-direction:column;align-items:center;transform:translateY(30px);transition:transform 0.2s;}
+.rest-overlay.open .rest-sheet{transform:translateY(0);}
+.rest-overlay.expired .rest-sheet{background:#1a0505;}
+.rest-ring-wrap{position:relative;width:200px;height:200px;margin-bottom:20px;}
+.rest-ring-svg{width:100%;height:100%;transform:rotate(-90deg);}
+.rest-ring-time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.rest-big-time{font-size:42px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);line-height:1;}
+.rest-big-label{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase;}
+.rest-presets{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;}
+.rest-preset-btn{background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;padding:7px 16px;transition:all 0.15s;}
+.rest-preset-btn.active{background:var(--cyan);border-color:var(--cyan);color:#000;}
+.rest-controls{display:flex;gap:10px;}
+.rest-ctrl-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:11px 24px;transition:all 0.15s;}
+.rest-ctrl-btn.primary{background:var(--cyan);border-color:var(--cyan);color:#000;}
+.rest-dismiss{margin-top:16px;font-size:11px;color:var(--muted);cursor:pointer;padding:8px;}
+.rest-expired-msg{font-size:20px;font-weight:700;color:var(--red);margin-bottom:6px;text-align:center;}
+.rest-expired-sub{font-size:12px;color:var(--dim);margin-bottom:20px;text-align:center;}
 </style>
 </head>
 <body>
@@ -484,24 +517,13 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <div id="draft-warning-banner" style="display:none;"></div>
   <div class="sess-timer" id="sess-timer">Session not started</div>
   <div id="draft-alert-wrap"></div>
-  <!-- Session header bar: duration + rest timer -->
-  <div class="sess-header-bar">
-    <div>
-      <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Session</div>
-      <div class="sess-duration" id="sess-duration-display">00:00</div>
-    </div>
-    <div style="flex:1;"></div>
-    <div style="text-align:center;cursor:pointer;" id="rest-bubble-wrap" onclick="openRestTimer()">
-      <div class="rest-timer-bubble" id="rest-timer-bubble">
-        <svg class="rest-bubble-svg" id="rest-bubble-svg" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="23" fill="none" stroke="rgba(0,180,216,0.15)" stroke-width="3"/>
-          <circle cx="26" cy="26" r="23" fill="none" stroke="#00B4D8" stroke-width="3"
-            stroke-dasharray="144.5" stroke-dashoffset="144.5" id="rest-bubble-ring" stroke-linecap="round"/>
-        </svg>
-        <div class="rest-bubble-time" id="rest-bubble-time">REST</div>
-        <div class="rest-bubble-label">TIMER</div>
-      </div>
-    </div>
+  <!-- Session controls: duration + rest timer icon -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 0;">
+    <div class="sess-duration" id="sess-duration-display" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;">00:00</div>
+    <button onclick="openRestTimer()" id="rest-timer-btn" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;padding:5px 12px;display:flex;align-items:center;gap:5px;transition:all 0.15s;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="rest-bubble-time">REST</span>
+    </button>
   </div>
 
   <div class="session-meta">
@@ -702,13 +724,24 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 <div class="toast" id="toast"></div>
 
-<!-- REST TIMER OVERLAY -->
-<div class="rest-overlay" id="rest-overlay">
-  <div style="position:absolute;top:0;left:0;right:0;padding:calc(16px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Rest Timer</div>
-    <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px;" onclick="closeRestTimer()">&#10005;</button>
+<!-- EQUIPMENT PICKER -->
+<div class="equip-picker-overlay" id="equip-picker-overlay">
+  <div class="equip-picker-sheet">
+    <div class="equip-picker-title">Select Equipment</div>
+    <div class="equip-picker-ex" id="equip-picker-exname"></div>
+    <div id="equip-picker-options"></div>
+    <button class="btn btn-secondary btn-full" style="margin-top:16px;" onclick="closeEquipPicker()">Cancel</button>
   </div>
-  <div id="rest-expired-content" style="display:none;text-align:center;margin-bottom:16px;">
+</div>
+
+<!-- REST TIMER OVERLAY -->
+<div class="rest-overlay" id="rest-overlay" onclick="handleRestOverlayClick(event)">
+  <div class="rest-sheet">
+  <div style="width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Rest Timer</div>
+    <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;" onclick="closeRestTimer()">&#10005;</button>
+  </div>
+  <div id="rest-expired-content" style="display:none;text-align:center;margin-bottom:12px;">
     <div class="rest-expired-msg">&#9200; Rest Complete</div>
     <div class="rest-expired-sub">Time to get back to work.</div>
   </div>
@@ -734,10 +767,593 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <button class="rest-ctrl-btn" id="rest-reset-btn" onclick="resetRestTimer()">Reset</button>
   </div>
   <div class="rest-dismiss" onclick="closeRestTimer()">Dismiss &amp; return to session</div>
+  </div><!-- end rest-sheet -->
 </div>
 
 <script>
 // ── BW EXERCISES LIST ──
+var BW_EXERCISES=["Pull-Up / Chin-Up", "Inverted Row", "Push-Up", "Nordic Curl / Nordic Hamstring Curl", "Reverse Nordic Curl", "Glute Ham Raise", "Sliding Leg Curl", "Stability Ball Leg Curl", "Plank", "Side Plank", "Dead Bug", "Bird Dog", "Hollow Body Hold", "Hanging Knee / Leg Raise", "Toes to Bar", "Windshield Wiper", "Bicycle Crunch", "Mountain Climber", "Copenhagen Plank", "Captain's Chair Raise", "Dragon Flag", "Ab Wheel Rollout", "Dip", "Squat", "Wall Sit", "Sissy Squat", "Donkey Kick", "Terminal Knee Extension", "Box Squat", "Curtsy Lunge", "Farmer Carry", "L-Sit Hold"];
+
+var EQUIPMENT_MAP = {
+  "Squat": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Bodyweight","Band","Other"],
+  "Hack Squat": ["Pin-Select Machine","Plate-Loaded Machine"],
+  "Leg Press": ["Pin-Select Machine","Plate-Loaded Machine"],
+  "Leg Extension": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Bulgarian Split Squat": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Bodyweight","Band","Other"],
+  "Goblet Squat": ["Dumbbell","Kettlebell","Cable","Band"],
+  "Walking Lunge": ["Barbell","Dumbbell","Kettlebell","Bodyweight"],
+  "Reverse Lunge": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Bodyweight","Band"],
+  "Step-Up": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Bodyweight","Band"],
+  "Reverse Nordic Curl": ["Dumbbell","Kettlebell","Bodyweight","Band","Other"],
+  "Sissy Squat": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Plate-Loaded Machine","Bodyweight","Band"],
+  "Wall Sit": ["Dumbbell","Kettlebell","Bodyweight","Band"],
+  "Terminal Knee Extension": ["Bodyweight","Band"],
+  "Conventional Deadlift": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Band","Other"],
+  "Nordic Curl / Nordic Hamstring Curl": ["Dumbbell","Kettlebell","Bodyweight","Band","Other"],
+  "Romanian Deadlift (RDL)": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Band"],
+  "Seated Leg Curl": ["Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Lying Leg Curl": ["Cable","Dumbbell","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Stiff-Leg Deadlift": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Band"],
+  "Stability Ball Leg Curl": ["Bodyweight","Band","Other"],
+  "Good Morning": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Band"],
+  "Glute Ham Raise": ["Dumbbell","Kettlebell","Bodyweight","Band","Other"],
+  "Sliding Leg Curl": ["Bodyweight","Band","Other"],
+  "Pull-Through": ["Cable"],
+  "Hip Thrust": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
+  "Glute Bridge": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
+  "Donkey Kick": ["Cable","Bodyweight","Band"],
+  "Hip Abduction": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
+  "Standing Calf Raise": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
+  "Seated Calf Raise": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Leg Press Calf Raise": ["Pin-Select Machine","Plate-Loaded Machine"],
+  "Donkey Calf Raise": ["Pin-Select Machine","Plate-Loaded Machine"],
+  "Pull-Up / Chin-Up": ["Bodyweight"],
+  "Lat Pulldown": ["Pin-Select Machine","Plate-Loaded Machine"],
+  "Straight-Arm Pulldown": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Pullover": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Inverted Row": ["Bodyweight"],
+  "Bent-Over Row": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Band"],
+  "Seated Row": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Chest-Supported Row": ["Barbell","Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Back Extension": ["Bodyweight"],
+  "Pendlay Row": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Band"],
+  "Overhead Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Lateral Raise": ["Barbell","Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Rear Delt Fly": ["Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Face Pull": ["Cable"],
+  "Upright Row": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Smith Machine","Cable","Band"],
+  "Front Raise": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Band"],
+  "Arnold Press": ["Dumbbell","Kettlebell","Band"],
+  "Push Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Y Raise": ["Dumbbell","Kettlebell","Cable","Band"],
+  "Pull-Apart": ["Cable","Band"],
+  "Bench Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Incline Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Decline Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Floor Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Band"],
+  "Chest Fly": ["Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Incline Fly": ["Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Decline Fly": ["Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Push-Up": ["Bodyweight"],
+  "Curl": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Band"],
+  "Hammer Curl": ["Dumbbell","Kettlebell","Cable","Band"],
+  "Preacher Curl": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Incline Curl": ["Dumbbell","Kettlebell","Cable","Band"],
+  "Spider Curl": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Band"],
+  "Concentration Curl": ["Dumbbell","Kettlebell","Cable","Band"],
+  "Reverse Curl": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Band"],
+  "Zottman Curl": ["Dumbbell","Kettlebell","Cable","Band"],
+  "Overhead Triceps Extension": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Band"],
+  "Triceps Pushdown": ["Cable","Band"],
+  "Skull Crusher": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Cable","Band"],
+  "Triceps Kickback": ["Cable","Band"],
+  "Close-Grip Press": ["Barbell","Dumbbell","EZ Bar","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
+  "Seated Tricep Extension": ["Pin-Select Machine","Plate-Loaded Machine"],
+  "Dip": ["Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
+  "Plank": ["Bodyweight"],
+  "Side Plank": ["Bodyweight"],
+  "Dead Bug": ["Bodyweight"],
+  "Bird Dog": ["Bodyweight"],
+  "Hollow Body Hold": ["Bodyweight"],
+  "Pallof Press": ["Cable"],
+  "Crunch": ["Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight"],
+  "Decline Crunch": ["Bodyweight"],
+  "Hanging Knee / Leg Raise": ["Bodyweight"],
+  "Toes to Bar": ["Bodyweight"],
+  "Windshield Wiper": ["Bodyweight"],
+  "Bicycle Crunch": ["Bodyweight"],
+  "Russian Twist": ["Dumbbell","Kettlebell","Bodyweight"],
+  "Ab Wheel Rollout": ["Bodyweight"],
+  "Side Bend": ["Bodyweight","Dumbbell","Kettlebell","Cable","Band"],
+  "Cable Woodchop": ["Cable"],
+  "Landmine Twist": ["Barbell"],
+  "Dragon Flag": ["Bodyweight"],
+  "V-Up": ["Dumbbell","Kettlebell","Bodyweight"],
+  "Mountain Climber": ["Bodyweight"],
+  "Copenhagen Plank": ["Bodyweight"],
+  "Captain's Chair Raise": ["Bodyweight"],
+  "Front Squat": ["Barbell","Dumbbell","Kettlebell"],
+  "Box Squat": ["Barbell","Smith Machine","Bodyweight"],
+  "Pendulum Squat": ["Plate-Loaded Machine"],
+  "Belt Squat": ["Plate-Loaded Machine"],
+  "Sumo Deadlift": ["Barbell","Dumbbell","Kettlebell"],
+  "Curtsy Lunge": ["Dumbbell","Kettlebell","Bodyweight","Band"],
+  "Tibialis Raise": ["Bodyweight","Band","Pin-Select Machine"],
+  "Shrug": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable"],
+  "Rack Pull": ["Barbell"],
+  "Farmer Carry": ["Dumbbell","Kettlebell","Other"]
+};
+
+var BILAT_MAP = {
+  "Squat": "both",
+  "Hack Squat": "both",
+  "Leg Press": "both",
+  "Leg Extension": "both",
+  "Bulgarian Split Squat": "both",
+  "Goblet Squat": "both",
+  "Walking Lunge": "unilateral",
+  "Reverse Lunge": "unilateral",
+  "Step-Up": "unilateral",
+  "Reverse Nordic Curl": "both",
+  "Sissy Squat": "both",
+  "Wall Sit": "both",
+  "Terminal Knee Extension": "unilateral",
+  "Conventional Deadlift": "both",
+  "Nordic Curl / Nordic Hamstring Curl": "both",
+  "Romanian Deadlift (RDL)": "both",
+  "Seated Leg Curl": "both",
+  "Lying Leg Curl": "both",
+  "Stiff-Leg Deadlift": "both",
+  "Stability Ball Leg Curl": "both",
+  "Good Morning": "both",
+  "Glute Ham Raise": "both",
+  "Sliding Leg Curl": "both",
+  "Pull-Through": "both",
+  "Hip Thrust": "both",
+  "Glute Bridge": "both",
+  "Donkey Kick": "unilateral",
+  "Hip Abduction": "both",
+  "Standing Calf Raise": "both",
+  "Seated Calf Raise": "both",
+  "Leg Press Calf Raise": "both",
+  "Donkey Calf Raise": "both",
+  "Pull-Up / Chin-Up": "bilateral",
+  "Lat Pulldown": "both",
+  "Straight-Arm Pulldown": "both",
+  "Pullover": "both",
+  "Inverted Row": "both",
+  "Bent-Over Row": "both",
+  "Seated Row": "both",
+  "Chest-Supported Row": "both",
+  "Back Extension": "both",
+  "Pendlay Row": "both",
+  "Overhead Press": "both",
+  "Lateral Raise": "both",
+  "Rear Delt Fly": "both",
+  "Face Pull": "both",
+  "Upright Row": "both",
+  "Front Raise": "both",
+  "Arnold Press": "both",
+  "Push Press": "both",
+  "Y Raise": "both",
+  "Pull-Apart": "both",
+  "Bench Press": "both",
+  "Incline Press": "both",
+  "Decline Press": "both",
+  "Floor Press": "both",
+  "Chest Fly": "both",
+  "Incline Fly": "both",
+  "Decline Fly": "both",
+  "Push-Up": "bilateral",
+  "Curl": "both",
+  "Hammer Curl": "both",
+  "Preacher Curl": "both",
+  "Incline Curl": "both",
+  "Spider Curl": "both",
+  "Concentration Curl": "unilateral",
+  "Reverse Curl": "both",
+  "Zottman Curl": "both",
+  "Overhead Triceps Extension": "both",
+  "Triceps Pushdown": "both",
+  "Skull Crusher": "both",
+  "Triceps Kickback": "both",
+  "Close-Grip Press": "both",
+  "Seated Tricep Extension": "both",
+  "Dip": "both",
+  "Plank": "bilateral",
+  "Side Plank": "bilateral",
+  "Dead Bug": "bilateral",
+  "Bird Dog": "bilateral",
+  "Hollow Body Hold": "bilateral",
+  "Pallof Press": "bilateral",
+  "Crunch": "bilateral",
+  "Decline Crunch": "bilateral",
+  "Hanging Knee / Leg Raise": "bilateral",
+  "Toes to Bar": "bilateral",
+  "Windshield Wiper": "bilateral",
+  "Bicycle Crunch": "bilateral",
+  "Russian Twist": "bilateral",
+  "Ab Wheel Rollout": "bilateral",
+  "Side Bend": "bilateral",
+  "Cable Woodchop": "bilateral",
+  "Landmine Twist": "bilateral",
+  "Dragon Flag": "bilateral",
+  "V-Up": "bilateral",
+  "Mountain Climber": "bilateral",
+  "Copenhagen Plank": "bilateral",
+  "Captain's Chair Raise": "bilateral",
+  "Front Squat": "bilateral",
+  "Box Squat": "bilateral",
+  "Pendulum Squat": "bilateral",
+  "Belt Squat": "bilateral",
+  "Sumo Deadlift": "bilateral",
+  "Curtsy Lunge": "unilateral",
+  "Tibialis Raise": "bilateral",
+  "Shrug": "bilateral",
+  "Rack Pull": "bilateral",
+  "Farmer Carry": "bilateral"
+};
+
+var MIGRATION_MAP = {
+  "Barbell Back Squat": {canonical:"Squat",equipment:"Barbell"},
+  "Hack Squat Machine": {canonical:"Hack Squat",equipment:"Pin-Select Machine"},
+  "DB Goblet Squat": {canonical:"Goblet Squat",equipment:"Dumbbell"},
+  "DB Bulgarian Split Squat": {canonical:"Bulgarian Split Squat",equipment:"Dumbbell"},
+  "DB Walking Lunge": {canonical:"Walking Lunge",equipment:"Dumbbell"},
+  "DB Reverse Lunge": {canonical:"Reverse Lunge",equipment:"Dumbbell"},
+  "Step-Up DB": {canonical:"Step-Up",equipment:"Dumbbell"},
+  "DB Step-Up": {canonical:"Step-Up",equipment:"Dumbbell"},
+  "BW Squat (5-sec eccentric)": {canonical:"Squat",equipment:"Bodyweight"},
+  "BW Reverse Lunge": {canonical:"Reverse Lunge",equipment:"Bodyweight"},
+  "Resistance Band Squat": {canonical:"Squat",equipment:"Band"},
+  "Reverse Nordic Curl": {canonical:"Reverse Nordic Curl",equipment:"Bodyweight"},
+  "Sissy Squat": {canonical:"Sissy Squat",equipment:"Bodyweight"},
+  "Wall Sit Isometric": {canonical:"Wall Sit",equipment:"Bodyweight"},
+  "Terminal Knee Extension (band)": {canonical:"Terminal Knee Extension",equipment:"Band"},
+  "Conventional Deadlift": {canonical:"Conventional Deadlift",equipment:"Barbell"},
+  "Smith Machine Squat": {canonical:"Squat",equipment:"Smith Machine"},
+  "Smith Machine Bulgarian Split Squat": {canonical:"Bulgarian Split Squat",equipment:"Smith Machine"},
+  "Smith Machine Lunge": {canonical:"Walking Lunge",equipment:"Smith Machine"},
+  "Smith Machine Hack Squat": {canonical:"Hack Squat",equipment:"Smith Machine"},
+  "Barbell Bulgarian Split Squat": {canonical:"Bulgarian Split Squat",equipment:"Barbell"},
+  "Barbell Walking Lunge": {canonical:"Walking Lunge",equipment:"Barbell"},
+  "Barbell Reverse Lunge": {canonical:"Reverse Lunge",equipment:"Barbell"},
+  "Barbell Step-Up": {canonical:"Step-Up",equipment:"Barbell"},
+  "Barbell Hack Squat": {canonical:"Hack Squat",equipment:"Barbell"},
+  "Leg Press": {canonical:"Leg Press",equipment:"Plate-Loaded Machine"},
+  "Leg Extension": {canonical:"Leg Extension",equipment:"Pin-Select Machine"},
+  "Single-Leg Leg Press": {canonical:"Leg Press",equipment:"Plate-Loaded Machine"},
+  "Leg Press (Single Leg)": {canonical:"Leg Press",equipment:"Plate-Loaded Machine"},
+  "Cable Leg Extension": {canonical:"Leg Extension",equipment:"Cable"},
+  "Romanian Deadlift": {canonical:"Romanian Deadlift (RDL)",equipment:"Dumbbell"},
+  "Barbell Romanian Deadlift": {canonical:"Romanian Deadlift (RDL)",equipment:"Barbell"},
+  "Smith Machine Romanian Deadlift": {canonical:"Romanian Deadlift (RDL)",equipment:"Smith Machine"},
+  "Cable Romanian Deadlift": {canonical:"Romanian Deadlift (RDL)",equipment:"Cable"},
+  "DB Stiff-Leg Deadlift": {canonical:"Stiff-Leg Deadlift",equipment:"Dumbbell"},
+  "Seated Leg Curl": {canonical:"Seated Leg Curl",equipment:"Pin-Select Machine"},
+  "Lying Leg Curl": {canonical:"Lying Leg Curl",equipment:"Pin-Select Machine"},
+  "Stability Ball Leg Curl": {canonical:"Stability Ball Leg Curl",equipment:"Bodyweight"},
+  "Single-Leg DB RDL": {canonical:"Romanian Deadlift (RDL)",equipment:"Dumbbell"},
+  "Nordic Hamstring Curl": {canonical:"Nordic Curl / Nordic Hamstring Curl",equipment:"Bodyweight"},
+  "Band Good Morning": {canonical:"Good Morning",equipment:"Band"},
+  "Barbell Good Morning": {canonical:"Good Morning",equipment:"Barbell"},
+  "Glute Ham Raise": {canonical:"Glute Ham Raise",equipment:"Bodyweight"},
+  "Band Leg Curl": {canonical:"Seated Leg Curl",equipment:"Band"},
+  "Sliding Towel Leg Curl": {canonical:"Sliding Leg Curl",equipment:"Bodyweight"},
+  "Cable Pull-Through (Hamstring)": {canonical:"Pull-Through",equipment:"Cable"},
+  "Single-Leg Cable RDL": {canonical:"Romanian Deadlift (RDL)",equipment:"Cable"},
+  "Barbell Hip Thrust": {canonical:"Hip Thrust",equipment:"Barbell"},
+  "DB Hip Thrust": {canonical:"Hip Thrust",equipment:"Dumbbell"},
+  "Band Hip Thrust": {canonical:"Hip Thrust",equipment:"Band"},
+  "Smith Machine Hip Thrust": {canonical:"Hip Thrust",equipment:"Smith Machine"},
+  "B-Stance Hip Thrust": {canonical:"Hip Thrust",equipment:"Barbell"},
+  "Glute Bridge BW": {canonical:"Glute Bridge",equipment:"Bodyweight"},
+  "Barbell Glute Bridge": {canonical:"Glute Bridge",equipment:"Barbell"},
+  "Single-Leg Glute Bridge": {canonical:"Glute Bridge",equipment:"Bodyweight"},
+  "Donkey Kick BW": {canonical:"Donkey Kick",equipment:"Bodyweight"},
+  "Cable Donkey Kick": {canonical:"Donkey Kick",equipment:"Cable"},
+  "Cable Hip Abduction": {canonical:"Hip Abduction",equipment:"Cable"},
+  "Machine Hip Abduction": {canonical:"Hip Abduction",equipment:"Pin-Select Machine"},
+  "Cable Pull-Through": {canonical:"Pull-Through",equipment:"Cable"},
+  "Standing Calf Raise": {canonical:"Standing Calf Raise",equipment:"Pin-Select Machine"},
+  "Seated Calf Raise": {canonical:"Seated Calf Raise",equipment:"Pin-Select Machine"},
+  "Leg Press Calf Raise": {canonical:"Leg Press Calf Raise",equipment:"Plate-Loaded Machine"},
+  "Single-Leg Calf Raise (step)": {canonical:"Standing Calf Raise",equipment:"Bodyweight"},
+  "Single-Leg BW Calf Raise": {canonical:"Standing Calf Raise",equipment:"Bodyweight"},
+  "Band Calf Raise": {canonical:"Standing Calf Raise",equipment:"Band"},
+  "Smith Machine Calf Raise": {canonical:"Standing Calf Raise",equipment:"Smith Machine"},
+  "Cable Calf Raise": {canonical:"Standing Calf Raise",equipment:"Cable"},
+  "Donkey Calf Raise": {canonical:"Donkey Calf Raise",equipment:"Plate-Loaded Machine"},
+  "Pull-Up / Chin-Up": {canonical:"Pull-Up / Chin-Up",equipment:"Bodyweight"},
+  "Lat Pulldown (Neutral Grip)": {canonical:"Lat Pulldown",equipment:"Pin-Select Machine"},
+  "Lat Pulldown (Wide Grip)": {canonical:"Lat Pulldown",equipment:"Pin-Select Machine"},
+  "Underhand Lat Pulldown": {canonical:"Lat Pulldown",equipment:"Pin-Select Machine"},
+  "Single-Arm Lat Pulldown": {canonical:"Lat Pulldown",equipment:"Pin-Select Machine"},
+  "Straight-Arm Pulldown": {canonical:"Straight-Arm Pulldown",equipment:"Cable"},
+  "Band Straight-Arm Pulldown": {canonical:"Straight-Arm Pulldown",equipment:"Band"},
+  "DB Pullover": {canonical:"Pullover",equipment:"Dumbbell"},
+  "Cable Pullover": {canonical:"Pullover",equipment:"Cable"},
+  "Single-Arm Cable Pullover": {canonical:"Pullover",equipment:"Cable"},
+  "Inverted Row": {canonical:"Inverted Row",equipment:"Bodyweight"},
+  "Inverted Row (under table)": {canonical:"Inverted Row",equipment:"Bodyweight"},
+  "Band-Assisted Pull-Up": {canonical:"Pull-Up / Chin-Up",equipment:"Band"},
+  "Band-Assisted Chin-Up": {canonical:"Pull-Up / Chin-Up",equipment:"Band"},
+  "Negative Pull-Up (slow eccentric)": {canonical:"Pull-Up / Chin-Up",equipment:"Bodyweight"},
+  "Band Lat Pulldown (door anchor)": {canonical:"Lat Pulldown",equipment:"Band"},
+  "DB Single-Arm Row": {canonical:"Bent-Over Row",equipment:"Dumbbell"},
+  "Single-Arm DB Row (bench-supported)": {canonical:"Bent-Over Row",equipment:"Dumbbell"},
+  "Meadows Row (DB, bench-supported)": {canonical:"Bent-Over Row",equipment:"Dumbbell"},
+  "Chest-Supported DB Row": {canonical:"Chest-Supported Row",equipment:"Dumbbell"},
+  "Chest-Supported Band Row": {canonical:"Chest-Supported Row",equipment:"Band"},
+  "Barbell Bent-Over Row": {canonical:"Bent-Over Row",equipment:"Barbell"},
+  "Barbell Pendlay Row": {canonical:"Pendlay Row",equipment:"Barbell"},
+  "Seated Cable Row": {canonical:"Seated Row",equipment:"Cable"},
+  "Cable Single-Arm Row": {canonical:"Bent-Over Row",equipment:"Cable"},
+  "Cable Row (Wide Grip)": {canonical:"Seated Row",equipment:"Cable"},
+  "Cable Row (Underhand)": {canonical:"Seated Row",equipment:"Cable"},
+  "T-Bar Row": {canonical:"Bent-Over Row",equipment:"Plate-Loaded Machine"},
+  "Resistance Band Row": {canonical:"Bent-Over Row",equipment:"Band"},
+  "Kneeling Band Row": {canonical:"Bent-Over Row",equipment:"Band"},
+  "Single-Arm Band Row": {canonical:"Bent-Over Row",equipment:"Band"},
+  "Weighted Back Extension": {canonical:"Back Extension",equipment:"Bodyweight"},
+  "Machine Row (Chest-Supported)": {canonical:"Chest-Supported Row",equipment:"Pin-Select Machine"},
+  "Smith Machine Row": {canonical:"Bent-Over Row",equipment:"Smith Machine"},
+  "Arnold Press": {canonical:"Arnold Press",equipment:"Dumbbell"},
+  "DB Overhead Press": {canonical:"Overhead Press",equipment:"Dumbbell"},
+  "Barbell Overhead Press": {canonical:"Overhead Press",equipment:"Barbell"},
+  "Machine Overhead Press": {canonical:"Overhead Press",equipment:"Pin-Select Machine"},
+  "Seated DB Overhead Press": {canonical:"Overhead Press",equipment:"Dumbbell"},
+  "Seated Barbell Overhead Press": {canonical:"Overhead Press",equipment:"Barbell"},
+  "Smith Machine Overhead Press": {canonical:"Overhead Press",equipment:"Smith Machine"},
+  "Cable Overhead Press": {canonical:"Overhead Press",equipment:"Cable"},
+  "Push Press (DB)": {canonical:"Push Press",equipment:"Dumbbell"},
+  "Cable Lateral Raise": {canonical:"Lateral Raise",equipment:"Cable"},
+  "DB Lateral Raise": {canonical:"Lateral Raise",equipment:"Dumbbell"},
+  "Machine Lateral Raise": {canonical:"Lateral Raise",equipment:"Pin-Select Machine"},
+  "Band Lateral Raise": {canonical:"Lateral Raise",equipment:"Band"},
+  "Cable Lateral Raise (Single Arm)": {canonical:"Lateral Raise",equipment:"Cable"},
+  "Prone Y Raise BW": {canonical:"Y Raise",equipment:"Bodyweight"},
+  "Cable Face Pull": {canonical:"Face Pull",equipment:"Cable"},
+  "DB Face Pull": {canonical:"Face Pull",equipment:"Dumbbell"},
+  "Band Face Pull": {canonical:"Face Pull",equipment:"Band"},
+  "DB Rear Delt Fly": {canonical:"Rear Delt Fly",equipment:"Dumbbell"},
+  "Cable Rear Delt Fly": {canonical:"Rear Delt Fly",equipment:"Cable"},
+  "Cable Rear Delt Fly (Single Arm)": {canonical:"Rear Delt Fly",equipment:"Cable"},
+  "Reverse Pec Dec Machine": {canonical:"Rear Delt Fly",equipment:"Pin-Select Machine"},
+  "Band Pull-Apart": {canonical:"Pull-Apart",equipment:"Band"},
+  "Barbell Upright Row": {canonical:"Upright Row",equipment:"Barbell"},
+  "Cable Upright Row": {canonical:"Upright Row",equipment:"Cable"},
+  "DB Upright Row": {canonical:"Upright Row",equipment:"Dumbbell"},
+  "Cable Front Raise": {canonical:"Front Raise",equipment:"Cable"},
+  "DB Front Raise": {canonical:"Front Raise",equipment:"Dumbbell"},
+  "Barbell Front Raise": {canonical:"Front Raise",equipment:"Barbell"},
+  "Pike Push-Up": {canonical:"Overhead Press",equipment:"Bodyweight"},
+  "DB Bench Press": {canonical:"Bench Press",equipment:"Dumbbell"},
+  "Barbell Bench Press": {canonical:"Bench Press",equipment:"Barbell"},
+  "Smith Machine Bench Press": {canonical:"Bench Press",equipment:"Smith Machine"},
+  "Machine Chest Press": {canonical:"Bench Press",equipment:"Pin-Select Machine"},
+  "Incline DB Press": {canonical:"Incline Press",equipment:"Dumbbell"},
+  "Barbell Incline Press": {canonical:"Incline Press",equipment:"Barbell"},
+  "Smith Machine Incline Press": {canonical:"Incline Press",equipment:"Smith Machine"},
+  "Machine Incline Press": {canonical:"Incline Press",equipment:"Pin-Select Machine"},
+  "Single-Arm Incline DB Press": {canonical:"Incline Press",equipment:"Dumbbell"},
+  "Barbell Decline Press": {canonical:"Decline Press",equipment:"Barbell"},
+  "DB Decline Press": {canonical:"Decline Press",equipment:"Dumbbell"},
+  "Smith Machine Decline Press": {canonical:"Decline Press",equipment:"Smith Machine"},
+  "Machine Decline Press": {canonical:"Decline Press",equipment:"Pin-Select Machine"},
+  "Floor Press (DB)": {canonical:"Floor Press",equipment:"Dumbbell"},
+  "Cable Chest Fly": {canonical:"Chest Fly",equipment:"Cable"},
+  "Pec Dec Machine": {canonical:"Chest Fly",equipment:"Pin-Select Machine"},
+  "Cable Fly (Mid)": {canonical:"Chest Fly",equipment:"Cable"},
+  "Cable Fly (High to Low)": {canonical:"Incline Fly",equipment:"Cable"},
+  "Cable Fly (Low to High)": {canonical:"Decline Fly",equipment:"Cable"},
+  "Low-to-High Cable Fly": {canonical:"Decline Fly",equipment:"Cable"},
+  "Cable Single-Arm Fly": {canonical:"Chest Fly",equipment:"Cable"},
+  "Incline Cable Fly": {canonical:"Incline Fly",equipment:"Cable"},
+  "Incline DB Fly": {canonical:"Incline Fly",equipment:"Dumbbell"},
+  "DB Fly": {canonical:"Chest Fly",equipment:"Dumbbell"},
+  "Decline DB Fly": {canonical:"Decline Fly",equipment:"Dumbbell"},
+  "Resistance Band Fly": {canonical:"Chest Fly",equipment:"Band"},
+  "Push-Up": {canonical:"Push-Up",equipment:"Bodyweight"},
+  "Weighted Push-Up": {canonical:"Push-Up",equipment:"Bodyweight"},
+  "Close-Grip Push-Up": {canonical:"Close-Grip Press",equipment:"Bodyweight"},
+  "Diamond Push-Up": {canonical:"Close-Grip Press",equipment:"Bodyweight"},
+  "Incline Push-Up (feet elev.)": {canonical:"Incline Press",equipment:"Bodyweight"},
+  "Decline Push-Up (feet elev.)": {canonical:"Decline Press",equipment:"Bodyweight"},
+  "EZ Bar Curl": {canonical:"Curl",equipment:"EZ Bar"},
+  "DB Standing Curl": {canonical:"Curl",equipment:"Dumbbell"},
+  "Hammer Curl": {canonical:"Hammer Curl",equipment:"Dumbbell"},
+  "Barbell Curl": {canonical:"Curl",equipment:"Barbell"},
+  "Cable Curl (Straight Bar)": {canonical:"Curl",equipment:"Cable"},
+  "Cable Curl (EZ Bar)": {canonical:"Curl",equipment:"Cable"},
+  "Cable Curl (Single Arm)": {canonical:"Curl",equipment:"Cable"},
+  "Cable Hammer Curl": {canonical:"Hammer Curl",equipment:"Cable"},
+  "Band Bicep Curl": {canonical:"Curl",equipment:"Band"},
+  "Band Hammer Curl": {canonical:"Hammer Curl",equipment:"Band"},
+  "Standing Cable Curl (behind body)": {canonical:"Curl",equipment:"Cable"},
+  "Preacher Curl (EZ Bar or DB)": {canonical:"Preacher Curl",equipment:"EZ Bar"},
+  "Preacher Curl (Cable)": {canonical:"Preacher Curl",equipment:"Cable"},
+  "Hammer Preacher Curl": {canonical:"Preacher Curl",equipment:"Dumbbell"},
+  "Incline DB Curl": {canonical:"Incline Curl",equipment:"Dumbbell"},
+  "Incline Curl": {canonical:"Incline Curl",equipment:"Dumbbell"},
+  "Spider Curl": {canonical:"Spider Curl",equipment:"Dumbbell"},
+  "Concentration Curl": {canonical:"Concentration Curl",equipment:"Dumbbell"},
+  "Cross-Body Hammer Curl": {canonical:"Hammer Curl",equipment:"Dumbbell"},
+  "Reverse Curl (Barbell)": {canonical:"Reverse Curl",equipment:"Barbell"},
+  "Reverse Curl (Cable)": {canonical:"Reverse Curl",equipment:"Cable"},
+  "Zottman Curl": {canonical:"Zottman Curl",equipment:"Dumbbell"},
+  "Cable Overhead Triceps Ext.": {canonical:"Overhead Triceps Extension",equipment:"Cable"},
+  "DB Overhead Triceps Ext.": {canonical:"Overhead Triceps Extension",equipment:"Dumbbell"},
+  "EZ Bar Skull Crusher": {canonical:"Skull Crusher",equipment:"EZ Bar"},
+  "Barbell Skull Crusher": {canonical:"Skull Crusher",equipment:"Barbell"},
+  "DB Skull Crusher": {canonical:"Skull Crusher",equipment:"Dumbbell"},
+  "EZ Bar Overhead Triceps Ext.": {canonical:"Overhead Triceps Extension",equipment:"EZ Bar"},
+  "Cable Single-Arm Overhead Ext.": {canonical:"Overhead Triceps Extension",equipment:"Cable"},
+  "Cable Triceps Pushdown (rope)": {canonical:"Triceps Pushdown",equipment:"Cable"},
+  "Cable Triceps Pushdown (Bar)": {canonical:"Triceps Pushdown",equipment:"Cable"},
+  "Cable Triceps Pushdown (V-Bar)": {canonical:"Triceps Pushdown",equipment:"Cable"},
+  "Band Triceps Pushdown": {canonical:"Triceps Pushdown",equipment:"Band"},
+  "Band Overhead Triceps Ext.": {canonical:"Overhead Triceps Extension",equipment:"Band"},
+  "Cable Triceps Kickback": {canonical:"Triceps Kickback",equipment:"Cable"},
+  "DB Triceps Kickback": {canonical:"Triceps Kickback",equipment:"Dumbbell"},
+  "Close-Grip Bench Press": {canonical:"Close-Grip Press",equipment:"Barbell"},
+  "Smith Machine Close-Grip Press": {canonical:"Close-Grip Press",equipment:"Smith Machine"},
+  "Dip (Triceps emphasis)": {canonical:"Dip",equipment:"Bodyweight"},
+  "Bench Dip": {canonical:"Dip",equipment:"Bodyweight"},
+  "Bench Dip (feet elevated)": {canonical:"Dip",equipment:"Bodyweight"},
+  "Dead Bug": {canonical:"Dead Bug",equipment:"Bodyweight"},
+  "Plank": {canonical:"Plank",equipment:"Bodyweight"},
+  "Side Plank": {canonical:"Side Plank",equipment:"Bodyweight"},
+  "Pallof Press": {canonical:"Pallof Press",equipment:"Cable"},
+  "Cable Pallof Press": {canonical:"Pallof Press",equipment:"Cable"},
+  "Hollow Body Hold": {canonical:"Hollow Body Hold",equipment:"Bodyweight"},
+  "Hanging Knee Raise": {canonical:"Hanging Knee / Leg Raise",equipment:"Bodyweight"},
+  "Hanging Leg Raise": {canonical:"Hanging Knee / Leg Raise",equipment:"Bodyweight"},
+  "Reverse Crunch": {canonical:"Crunch",equipment:"Bodyweight"},
+  "BW Crunch": {canonical:"Crunch",equipment:"Bodyweight"},
+  "Weighted Crunch": {canonical:"Crunch",equipment:"Dumbbell"},
+  "Cable Crunch": {canonical:"Crunch",equipment:"Cable"},
+  "Decline Crunch": {canonical:"Decline Crunch",equipment:"Bodyweight"},
+  "Decline Weighted Crunch": {canonical:"Decline Crunch",equipment:"Dumbbell"},
+  "Bicycle Crunch": {canonical:"Bicycle Crunch",equipment:"Bodyweight"},
+  "Mountain Climber": {canonical:"Mountain Climber",equipment:"Bodyweight"},
+  "Captain's Chair Knee Raise": {canonical:"Captain's Chair Raise",equipment:"Bodyweight"},
+  "DB Russian Twist": {canonical:"Russian Twist",equipment:"Dumbbell"},
+  "Bird Dog": {canonical:"Bird Dog",equipment:"Bodyweight"},
+  "Ab Wheel Rollout": {canonical:"Ab Wheel Rollout",equipment:"Bodyweight"},
+  "Barbell Rollout": {canonical:"Ab Wheel Rollout",equipment:"Barbell"},
+  "Weighted Side Bend": {canonical:"Side Bend",equipment:"Dumbbell"},
+  "Cable Side Bend": {canonical:"Side Bend",equipment:"Cable"},
+  "Cable Woodchop": {canonical:"Cable Woodchop",equipment:"Cable"},
+  "Landmine Twist": {canonical:"Landmine Twist",equipment:"Barbell"},
+  "Dragon Flag": {canonical:"Dragon Flag",equipment:"Bodyweight"},
+  "V-Up": {canonical:"V-Up",equipment:"Bodyweight"},
+  "Copenhagen Plank": {canonical:"Copenhagen Plank",equipment:"Bodyweight"},
+  "Hanging Windshield Wiper": {canonical:"Windshield Wiper",equipment:"Bodyweight"},
+  "Toes to Bar": {canonical:"Toes to Bar",equipment:"Bodyweight"},
+  "Standing Band Curl (behind body)": {canonical:"Curl",equipment:"Band"},
+  "Front Squat": {canonical:"Front Squat",equipment:"Barbell"},
+  "Box Squat": {canonical:"Box Squat",equipment:"Barbell"},
+  "Pendulum Squat": {canonical:"Pendulum Squat",equipment:"Plate-Loaded Machine"},
+  "Belt Squat": {canonical:"Belt Squat",equipment:"Plate-Loaded Machine"},
+  "Sumo Deadlift": {canonical:"Sumo Deadlift",equipment:"Barbell"},
+  "Curtsy Lunge": {canonical:"Curtsy Lunge",equipment:"Dumbbell"},
+  "Tibialis Raise": {canonical:"Tibialis Raise",equipment:"Bodyweight"},
+  "Shrug": {canonical:"Shrug",equipment:"Barbell"},
+  "Rack Pull": {canonical:"Rack Pull",equipment:"Barbell"},
+  "Farmer Carry": {canonical:"Farmer Carry",equipment:"Dumbbell"},
+  "Trap Bar Deadlift": {canonical:"Conventional Deadlift",equipment:"Other"}
+};
+
+var BUILT_IN = [
+  {id:1,name:"Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:2,name:"Hack Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:3,name:"Leg Press",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:4,name:"Leg Extension",group:"Quads",muscles:"Quads",type:"Isolation"},
+  {id:5,name:"Bulgarian Split Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:6,name:"Goblet Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:7,name:"Walking Lunge",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:8,name:"Reverse Lunge",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:9,name:"Step-Up",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:10,name:"Reverse Nordic Curl",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:11,name:"Sissy Squat",group:"Quads",muscles:"Quads",type:"Isolation"},
+  {id:12,name:"Wall Sit",group:"Quads",muscles:"Quads",type:"Stability"},
+  {id:13,name:"Terminal Knee Extension",group:"Quads",muscles:"Quads",type:"Isolation"},
+  {id:14,name:"Conventional Deadlift",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:15,name:"Nordic Curl / Nordic Hamstring Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:16,name:"Romanian Deadlift (RDL)",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:17,name:"Seated Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:18,name:"Lying Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:19,name:"Stiff-Leg Deadlift",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:20,name:"Stability Ball Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:21,name:"Good Morning",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:22,name:"Glute Ham Raise",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:23,name:"Sliding Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
+  {id:24,name:"Pull-Through",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:25,name:"Hip Thrust",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:26,name:"Glute Bridge",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:27,name:"Donkey Kick",group:"Glutes",muscles:"Glutes",type:"Isolation"},
+  {id:28,name:"Hip Abduction",group:"Glutes",muscles:"Glutes",type:"Isolation"},
+  {id:29,name:"Standing Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
+  {id:30,name:"Seated Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
+  {id:31,name:"Leg Press Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
+  {id:32,name:"Donkey Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
+  {id:33,name:"Pull-Up / Chin-Up",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Compound"},
+  {id:34,name:"Lat Pulldown",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Compound"},
+  {id:35,name:"Straight-Arm Pulldown",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Isolation"},
+  {id:36,name:"Pullover",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Isolation"},
+  {id:37,name:"Inverted Row",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Compound"},
+  {id:38,name:"Bent-Over Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:39,name:"Seated Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:40,name:"Chest-Supported Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:41,name:"Back Extension",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:42,name:"Pendlay Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:43,name:"Overhead Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:44,name:"Lateral Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:45,name:"Rear Delt Fly",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:46,name:"Face Pull",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:47,name:"Upright Row",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:48,name:"Front Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:49,name:"Arnold Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:50,name:"Push Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:51,name:"Y Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:52,name:"Pull-Apart",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:53,name:"Bench Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:54,name:"Incline Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:55,name:"Decline Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:56,name:"Floor Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:57,name:"Chest Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
+  {id:58,name:"Incline Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
+  {id:59,name:"Decline Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
+  {id:60,name:"Push-Up",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:61,name:"Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:62,name:"Hammer Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:63,name:"Preacher Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:64,name:"Incline Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:65,name:"Spider Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:66,name:"Concentration Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:67,name:"Reverse Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:68,name:"Zottman Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:69,name:"Overhead Triceps Extension",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:70,name:"Triceps Pushdown",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:71,name:"Skull Crusher",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:72,name:"Triceps Kickback",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:73,name:"Close-Grip Press",group:"Triceps",muscles:"Triceps",type:"Compound"},
+  {id:74,name:"Seated Tricep Extension",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:75,name:"Dip",group:"Triceps",muscles:"Triceps",type:"Compound"},
+  {id:76,name:"Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:77,name:"Side Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:78,name:"Dead Bug",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:79,name:"Bird Dog",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:80,name:"Hollow Body Hold",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:81,name:"Pallof Press",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:82,name:"Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:83,name:"Decline Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:84,name:"Hanging Knee / Leg Raise",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:85,name:"Toes to Bar",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:86,name:"Windshield Wiper",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:87,name:"Bicycle Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:88,name:"Russian Twist",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:89,name:"Ab Wheel Rollout",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:90,name:"Side Bend",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:91,name:"Cable Woodchop",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:92,name:"Landmine Twist",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:93,name:"Dragon Flag",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:94,name:"V-Up",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:95,name:"Mountain Climber",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:96,name:"Copenhagen Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:97,name:"Captain's Chair Raise",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:98,name:"Front Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:99,name:"Box Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:100,name:"Pendulum Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:101,name:"Belt Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:102,name:"Sumo Deadlift",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:103,name:"Curtsy Lunge",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:104,name:"Tibialis Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
+  {id:105,name:"Shrug",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Isolation"},
+  {id:106,name:"Rack Pull",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:107,name:"Farmer Carry",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"}
+];// ── BW EXERCISES LIST ──
 var BW_EXERCISES=["Pull-Up / Chin-Up","Dip (Triceps emphasis)","Bench Dip","Inverted Row","Push-Up","Weighted Push-Up","Nordic Hamstring Curl","Reverse Nordic Curl","Glute Ham Raise","Close-Grip Push-Up","Diamond Push-Up","Pike Push-Up","BW Squat (5-sec eccentric)","BW Reverse Lunge","Hanging Leg Raise","Hanging Knee Raise","Captain's Chair Knee Raise","Dead Bug","Bird Dog","Plank","Side Plank","Hollow Body Hold","Mountain Climber","BW Crunch","Reverse Crunch","Bicycle Crunch","Single-Leg Glute Bridge","Glute Bridge BW","Donkey Kick BW","Single-Leg BW Calf Raise"];
 
 // ── MUSCLE GROUPS ──
@@ -1033,6 +1649,24 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function allExercises(){return BUILT_IN.concat(customExercises);}
 
 // ── LOAD ALL ──
+
+function migrateSessionHistory(){
+  if(lsGet('op-migrated-v2')) return;
+  var changed=false;
+  sessionHistory.forEach(function(sess){
+    sess.exercises.forEach(function(ex){
+      if(ex.name&&MIGRATION_MAP[ex.name]&&!ex._migrated){
+        var mapped=MIGRATION_MAP[ex.name];
+        if(!ex.canonicalName) ex.canonicalName=mapped.canonical;
+        if(!ex.equipment) ex.equipment=mapped.equipment;
+        ex._migrated=true;changed=true;
+      }
+    });
+  });
+  if(changed) lsSet('op-history',sessionHistory);
+  lsSet('op-migrated-v2',true);
+}
+
 function loadAll(){
   var s=lsGet('op-settings');if(s) settings=s;
   var c=lsGet('op-custom');if(c) customExercises=c;
@@ -1045,6 +1679,7 @@ function loadAll(){
   if(!lsGet('op-launched')){
     document.getElementById('onboard-overlay').style.display='flex';
   }
+  migrateSessionHistory();
   applySettings();
   initSession();
   loadCustomWorkoutTypes();
@@ -1417,6 +2052,84 @@ function updateLoadTypeLabel(card,ltl){
   var th=card.querySelector('.tbl-head .th:nth-child(2)');
   if(th){if(type==='bw-added') th.textContent='+kg';else if(type==='assisted') th.textContent='-kg';else th.textContent=settings.unit||'kg';}
 }
+// ── EQUIPMENT PICKER ──────────────────────────────────────────
+var equipPickerCard = null;
+var equipPickerCallback = null;
+
+var EQUIP_CATEGORIES = {
+  'Free Weights': ['Barbell','Dumbbell','EZ Bar','Kettlebell'],
+  'Machines': ['Smith Machine','Pin-Select Machine','Plate-Loaded Machine'],
+  'Cable': ['Cable'],
+  'Other': ['Bodyweight','Band','Other']
+};
+
+function openEquipPicker(card, exName, defaultEquip, callback){
+  // Handle old call signature (card, exName, callback)
+  if(typeof defaultEquip === 'function'){callback=defaultEquip;defaultEquip=null;}
+  var options = EQUIPMENT_MAP[exName];
+  if(!options||!options.length){ if(callback) callback(null); return; }
+  equipPickerCard = card;
+  equipPickerCallback = callback;
+  document.getElementById('equip-picker-exname').textContent = exName;
+  var container = document.getElementById('equip-picker-options');
+  container.innerHTML = '';
+
+  Object.keys(EQUIP_CATEGORIES).forEach(function(catLabel){
+    var catItems = EQUIP_CATEGORIES[catLabel].filter(function(e){ return options.indexOf(e) > -1; });
+    if(!catItems.length) return;
+    var label = document.createElement('div');
+    label.className = 'equip-category-label';
+    label.textContent = catLabel;
+    container.appendChild(label);
+    var grid = document.createElement('div');
+    grid.className = 'equip-grid';
+    catItems.forEach(function(eq){
+      var btn = document.createElement('button');
+      btn.className = 'equip-opt' + (eq===defaultEquip?' selected':'');
+      btn.textContent = eq;
+      btn.addEventListener('click', function(){
+        container.querySelectorAll('.equip-opt').forEach(function(b){b.classList.remove('selected');});
+        btn.classList.add('selected');
+        document.getElementById('equip-picker-overlay').classList.remove('open');
+        document.body.style.overflow = '';
+        if(equipPickerCallback) equipPickerCallback(eq);
+      });
+      grid.appendChild(btn);
+    });
+    container.appendChild(grid);
+  });
+
+  document.getElementById('equip-picker-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEquipPicker(){
+  document.getElementById('equip-picker-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('equip-picker-overlay').addEventListener('click', function(e){
+  if(e.target === document.getElementById('equip-picker-overlay')) closeEquipPicker();
+});
+
+function getEquipLabel(card){
+  return card.getAttribute('data-equipment') || '';
+}
+
+function setCardEquipment(card, equipment){
+  card.setAttribute('data-equipment', equipment);
+  // Update subtitle label on card header
+  var existing = card.querySelector('.equip-label-chip');
+  if(existing) existing.remove();
+  if(equipment){
+    var chip = document.createElement('span');
+    chip.className = 'equip-label-chip';
+    chip.textContent = equipment;
+    var nameSpan = card.querySelector('.ex-selected-display');
+    if(nameSpan) nameSpan.appendChild(chip);
+  }
+}
+
 function initBilatToggle(card){
   var bt=document.getElementById('bt-'+card.id);if(!bt) return;
   var bl=document.getElementById('bl-'+card.id);
@@ -1524,7 +2237,8 @@ function populateLastRow(card,exName){
   var bt=document.getElementById('bt-'+card.id);
   var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
   var bilatMode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
-  var last=getLastEntryForExercise(exName,bilatMode);
+  var equipment=card.getAttribute('data-equipment')||'';
+  var last=getLastEntryForExercise(exName,bilatMode,equipment);
   var lastRow=card.querySelector('.ex-row.last-row');if(!lastRow) return;
   var inputs=lastRow.querySelectorAll('input');
   if(last){
@@ -1638,10 +2352,51 @@ function createSearchableDropdown(card,selectedName){
         item.addEventListener('mousedown',function(ev){ev.preventDefault();});
         item.addEventListener('click',function(){
           currentValue=e.name;card.setAttribute('data-ex-name',e.name);updateDisplay();closeDropdown();
-          populateLastRow(card,e.name);
-          showStallBanner(card,e.name);
-          showRecoveryBanner(card,e.name);
-          showExerciseStatusBar(card,e.name);
+          // Apply last-used bilat mode
+          var lastBilat=getLastBilatForExercise(e.name);
+          if(lastBilat){
+            var bt2=document.getElementById('bt-'+card.id);
+            if(bt2){
+              bt2.querySelectorAll('.bilat-btn').forEach(function(b){
+                b.classList.toggle('active',b.getAttribute('data-mode')===lastBilat);
+              });
+              card.setAttribute('data-bilat',lastBilat);
+              var bl2=document.getElementById('bl-'+card.id);
+              if(bl2) bl2.textContent=lastBilat==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
+            }
+          }
+          // Apply last-used load type
+          var lastLoadType=getLastLoadTypeForExercise(e.name);
+          if(lastLoadType){
+            var ltt2=document.getElementById('ltt-'+card.id);
+            if(ltt2){
+              ltt2.querySelectorAll('.ltt-btn').forEach(function(b){
+                b.classList.toggle('active',b.getAttribute('data-ltt')===lastLoadType);
+              });
+              card.setAttribute('data-load-type',lastLoadType);
+              var ltl2=document.getElementById('ltl-'+card.id);
+              updateLoadTypeLabel(card,ltl2);
+            }
+          }
+          // Show equipment picker (pre-selecting last used)
+          var lastEquip=getLastEquipmentForExercise(e.name);
+          if(EQUIPMENT_MAP[e.name]&&EQUIPMENT_MAP[e.name].length){
+            openEquipPicker(card, e.name, lastEquip, function(eq){
+              setCardEquipment(card, eq);
+              card.setAttribute('data-equipment', eq||'');
+              populateLastRow(card,e.name);
+              showStallBanner(card,e.name);
+              showRecoveryBanner(card,e.name);
+              showExerciseStatusBar(card,e.name);
+              saveCurrentSession();
+            });
+          } else {
+            populateLastRow(card,e.name);
+            showStallBanner(card,e.name);
+            showRecoveryBanner(card,e.name);
+            showExerciseStatusBar(card,e.name);
+            saveCurrentSession();
+          }
           var ltt=document.getElementById('ltt-'+card.id);var ltl=document.getElementById('ltl-'+card.id);
           if(ltt){var isBW=BW_EXERCISES.indexOf(e.name)>-1;ltt.style.display=isBW?'flex':'none';if(ltl) ltl.style.display=isBW?'block':'none';if(isBW) updateLoadTypeLabel(card,ltl);}
           saveCurrentSession();haptic('save');
@@ -1812,8 +2567,9 @@ function saveCurrentSession(){
     var notes=card.querySelector('.notes-in').value;
     var loadType=card.getAttribute('data-load-type')||'standard';
     var bilatMode=card.getAttribute('data-bilat')||'bilateral';
+    var equipment=card.getAttribute('data-equipment')||'';
     currentSession.exercises.push({
-      name:name,notes:notes,loadType:loadType,bilat:bilatMode,
+      name:name,notes:notes,loadType:loadType,bilat:bilatMode,equipment:equipment,
       last:{load:li[0].value,reps:[li[1].value,li[2].value,li[3].value,li[4].value,li[5].value],rpe:li[6].value},
       curr:{load:ti[0].value,reps:[ti[1].value,ti[2].value,ti[3].value,ti[4].value,ti[5].value],rpe:ti[6].value}
     });
@@ -2418,17 +3174,21 @@ function updateRangeChips(){
   });
 }
 
-function getLogsForExercise(name,bilatFilter){
-  // bilatFilter: 'bilateral'|'unilateral'|'both'|undefined (undefined = all)
+function getLogsForExercise(name,bilatFilter,equipment){
+  // Matches by name OR canonicalName; optionally filters by bilat and equipment
   var logs=[];
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft') return;
     sess.exercises.forEach(function(ex,exIdx){
-      if(ex.name===name&&ex.curr&&(ex.curr.load||ex.curr.reps.some(function(r){return r;}))){
-        var mode=ex.bilat||'bilateral';
-        if(bilatFilter&&bilatFilter!=='both'&&mode!==bilatFilter) return;
-        logs.push({sessId:sess.id,exIdx:exIdx,date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,bilat:mode});
-      }
+      var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
+      if(!matchName) return;
+      if(!ex.curr||(! ex.curr.load&&!ex.curr.reps.some(function(r){return r;}))) return;
+      var mode=ex.bilat||'bilateral';
+      if(bilatFilter&&bilatFilter!=='both'&&mode!==bilatFilter) return;
+      if(equipment&&ex.equipment&&ex.equipment!==equipment) return;
+      logs.push({sessId:sess.id,exIdx:exIdx,date:sess.date,workout:sess.workout,
+        load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,bilat:mode,
+        equipment:ex.equipment||''});
     });
   });
   return logs;
@@ -2873,44 +3633,121 @@ function openPriorEdit(sessId){
   document.getElementById('prior-sess-list-wrap').style.display='none';
   document.getElementById('prior-sess-edit-wrap').style.display='block';
 
-  // Build exercise cards for this session
   var container=document.getElementById('prior-edit-ex-list');
   container.innerHTML='';
+  var unit=settings.unit||'kg';
 
-  sess.exercises.forEach(function(ex){
+  sess.exercises.forEach(function(ex,exIdx){
     if(!ex.name) return;
-    // Get current best (most recent across all sessions) for Last row
-    var last=getLastEntryForExercise(ex.name,ex.bilat||'bilateral');
-    var div=document.createElement('div');
-    div.className='ex-card';
-    div.setAttribute('data-ex-name',ex.name);
-    div.setAttribute('data-bilat',ex.bilat||'bilateral');
-    div.setAttribute('data-ex-idx',sess.exercises.indexOf(ex));
-
-    var unit=settings.unit||'kg';
+    var bilatMode=ex.bilat||'bilateral';
+    var equipment=ex.equipment||'';
+    var loadType=ex.loadType||'standard';
     var curr=ex.curr||{load:'',reps:['','','','',''],rpe:''};
+    var last=getLastEntryForExercise(ex.name,bilatMode,equipment);
 
-    div.innerHTML=
-      '<div class="ex-card-header" style="cursor:default;">'+
-        '<span class="ex-num" style="color:var(--cyan);">&#9998;</span>'+
-        '<span style="font-size:13px;font-weight:600;flex:1;">'+ex.name+'</span>'+
-        '<span style="font-size:10px;color:var(--muted);padding:2px 8px;background:var(--surface2);border-radius:4px;">'+(ex.bilat==='unilateral'?'Unilateral':'Bilateral')+'</span>'+
+    var card=document.createElement('div');
+    card.className='ex-card';
+    card.setAttribute('data-ex-name',ex.name);
+    card.setAttribute('data-bilat',bilatMode);
+    card.setAttribute('data-equipment',equipment);
+    card.setAttribute('data-load-type',loadType);
+    card.setAttribute('data-ex-idx',exIdx);
+    card.id='prior-card-'+exIdx;
+
+    // Header
+    var headerHtml='<div class="ex-card-header">'+
+      '<span class="ex-num" style="color:var(--cyan);">&#9998;</span>'+
+      '<span style="font-size:13px;font-weight:600;flex:1;">'+ex.name+
+        (equipment?'<span class="equip-label-chip">'+equipment+'</span>':'')+
+      '</span>'+
+      '<button class="del-btn" data-prior-idx="'+exIdx+'">&#215;</button>'+
+    '</div>';
+
+    // Bilat toggle
+    var bilatHtml='<div class="bilat-toggle" id="pbt-'+exIdx+'">'+
+      '<button class="bilat-btn'+(bilatMode==='bilateral'?' active':'')+'" data-mode="bilateral">Bilateral</button>'+
+      '<button class="bilat-btn'+(bilatMode==='unilateral'?' active':'')+'" data-mode="unilateral">Unilateral</button>'+
+    '</div>'+
+    '<div class="bilat-label" id="pbl-'+exIdx+'">'+(bilatMode==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)')+'</div>';
+
+    // Load type toggle (for BW exercises)
+    var isBW=BW_EXERCISES.indexOf(ex.name)>-1;
+    var lttHtml=isBW?'<div class="load-type-toggle" id="pltt-'+exIdx+'">'+
+      '<button class="ltt-btn'+(loadType==='standard'?' active':'')+'" data-ltt="standard">Standard</button>'+
+      '<button class="ltt-btn'+(loadType==='bw-added'?' active':'')+'" data-ltt="bw-added">BW+Added</button>'+
+      '<button class="ltt-btn'+(loadType==='assisted'?' active':'')+'" data-ltt="assisted">Assisted</button>'+
+    '</div>':'';
+
+    // Equipment button
+    var hasEquip=EQUIPMENT_MAP[ex.name]&&EQUIPMENT_MAP[ex.name].length>0;
+    var equipBtnHtml=hasEquip?'<div style="padding:4px 14px 6px;">'+
+      '<button style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--dim);cursor:pointer;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:5px 10px;" id="pequip-'+exIdx+'">'+
+        '&#9881; Equipment: '+(equipment||'tap to select')+'</button></div>':'';
+
+    // Table
+    var tableHtml='<div class="ex-table">'+
+      '<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div>'+
+      '<div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div>'+
+      '<div class="th">RPE</div></div>'+
+      '<div class="ex-row last-row"><span class="row-tag last">Best</span>'+
+        '<input type="number" class="cell-in" value="'+(last?last.load||'':'')+'" readonly tabindex="-1">'+
+        [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" value="'+(last&&last.reps?last.reps[i]||'':'')+'" readonly tabindex="-1">';}).join('')+
+        '<input type="number" class="cell-in" value="'+(last?last.rpe||'':'')+'" readonly tabindex="-1">'+
       '</div>'+
-      '<div class="ex-table">'+
-        '<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>'+
-        '<div class="ex-row last-row"><span class="row-tag last">Best</span>'+
-          '<input type="number" class="cell-in" value="'+(last?last.load||'':'')+'" readonly tabindex="-1">'+
-          [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" value="'+(last&&last.reps?last.reps[i]||'':'')+'" readonly tabindex="-1">';}).join('')+
-          '<input type="number" class="cell-in" value="'+(last?last.rpe||'':'')+'" readonly tabindex="-1">'+
-        '</div>'+
-        '<div class="ex-row this-row"><span class="row-tag this">Log</span>'+
-          '<input type="number" class="cell-in" data-field="load" value="'+(curr.load||'')+'" inputmode="decimal" placeholder="—">'+
-          [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" data-field="rep'+i+'" value="'+(curr.reps[i]||'')+'" inputmode="numeric" placeholder="—">';}).join('')+
-          '<input type="number" class="cell-in" data-field="rpe" value="'+(curr.rpe||'')+'" inputmode="decimal" placeholder="—">'+
-        '</div>'+
-      '</div>'+
+      '<div class="ex-row this-row"><span class="row-tag this">Log</span>'+
+        '<input type="number" class="cell-in" data-field="load" value="'+(curr.load||'')+'" inputmode="decimal" placeholder="—">'+
+        [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" data-field="rep'+i+'" value="'+(curr.reps&&curr.reps[i]||'')+'" inputmode="numeric" placeholder="—">';}).join('')+
+        '<input type="number" class="cell-in" data-field="rpe" value="'+(curr.rpe||'')+'" inputmode="decimal" placeholder="—">'+
+      '</div></div>'+
       '<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes…" value="'+(ex.notes||'')+'"></div>';
-    container.appendChild(div);
+
+    card.innerHTML=headerHtml+bilatHtml+lttHtml+equipBtnHtml+tableHtml;
+    container.appendChild(card);
+
+    // Wire bilat toggle
+    var bt=card.querySelector('#pbt-'+exIdx);
+    var bl=card.querySelector('#pbl-'+exIdx);
+    if(bt) bt.querySelectorAll('.bilat-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        bt.querySelectorAll('.bilat-btn').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        card.setAttribute('data-bilat',btn.getAttribute('data-mode'));
+        if(bl) bl.textContent=btn.getAttribute('data-mode')==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
+      });
+    });
+
+    // Wire load type toggle
+    var ltt=card.querySelector('#pltt-'+exIdx);
+    if(ltt) ltt.querySelectorAll('.ltt-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        ltt.querySelectorAll('.ltt-btn').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        card.setAttribute('data-load-type',btn.getAttribute('data-ltt'));
+      });
+    });
+
+    // Wire equipment button
+    var equipBtn=card.querySelector('#pequip-'+exIdx);
+    if(equipBtn) equipBtn.addEventListener('click',function(){
+      var currentEquip=card.getAttribute('data-equipment')||'';
+      openEquipPicker(card,ex.name,currentEquip,function(eq){
+        card.setAttribute('data-equipment',eq||'');
+        equipBtn.textContent='⚙ Equipment: '+(eq||'tap to select');
+        // Update chip in header
+        var chip=card.querySelector('.equip-label-chip');
+        if(chip) chip.textContent=eq;
+        else if(eq){
+          var nameSpan=card.querySelector('.ex-card-header span:nth-child(3)');
+          if(nameSpan){var c=document.createElement('span');c.className='equip-label-chip';c.textContent=eq;nameSpan.appendChild(c);}
+        }
+      });
+    });
+
+    // Wire delete button
+    var delBtn=card.querySelector('.del-btn');
+    if(delBtn) delBtn.addEventListener('click',function(){
+      if(confirm('Remove '+ex.name+' from this session?')) card.remove();
+    });
   });
 }
 
@@ -2931,7 +3768,10 @@ document.getElementById('prior-save-btn').addEventListener('click',function(){
   var newExercises=[];
   cards.forEach(function(card){
     var name=card.getAttribute('data-ex-name');
+    if(!name) return;
     var bilat=card.getAttribute('data-bilat')||'bilateral';
+    var equipment=card.getAttribute('data-equipment')||'';
+    var loadType=card.getAttribute('data-load-type')||'standard';
     var exIdx=parseInt(card.getAttribute('data-ex-idx'));
     var orig=sess.exercises[exIdx]||{};
     var thisRow=card.querySelector('.this-row');
@@ -2940,22 +3780,24 @@ document.getElementById('prior-save-btn').addEventListener('click',function(){
     var reps=[1,2,3,4,5].map(function(i){return inputs[i].value;});
     var rpe=inputs[6].value;
     var notes=card.querySelector('.notes-in').value;
-    newExercises.push({name:name,bilat:bilat,loadType:orig.loadType||'standard',notes:notes,
+    var migrated=MIGRATION_MAP[name];
+    newExercises.push({
+      name:name,
+      canonicalName:migrated?migrated.canonical:(orig.canonicalName||name),
+      bilat:bilat,equipment:equipment,loadType:loadType,notes:notes,
+      _migrated:true,
       last:orig.last||{load:'',reps:['','','','',''],rpe:''},
-      curr:{load:load,reps:reps,rpe:rpe}});
+      curr:{load:load,reps:reps,rpe:rpe}
+    });
   });
   sess.exercises=newExercises;
   lsSet('op-history',sessionHistory);
   showToast('Session updated ✓');haptic('save');
   closePriorEdit();
   renderPriorSessions();
-  // Refresh Last row in active session if any matching exercise
   newExercises.forEach(function(ex){
     document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
       if((card.getExName?card.getExName():card.getAttribute('data-ex-name'))===ex.name){
-        var bt=document.getElementById('bt-'+card.id);
-        var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
-        var mode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
         populateLastRow(card,ex.name);
       }
     });
@@ -3028,6 +3870,10 @@ function openRestTimer(){
   document.getElementById('rest-overlay').classList.add('open');
   document.body.style.overflow='hidden';
   updateRestDisplay();
+}
+
+function handleRestOverlayClick(e){
+  if(e.target===document.getElementById('rest-overlay')) closeRestTimer();
 }
 
 function closeRestTimer(){
@@ -3139,16 +3985,12 @@ function updateRestDisplay(){
 function updateBubble(){
   var m=Math.floor(Math.abs(restRemaining)/60);
   var s=Math.abs(restRemaining)%60;
-  var str=restExpired?'DONE':(restRemaining<=0?'0:00':m+':'+(s<10?'0':'')+s);
+  var str=restExpired?'DONE':(restRemaining<=0?'0:00':(restRunning||restRemaining<restSecs)?m+':'+(s<10?'0':'')+s:'REST');
   var el=document.getElementById('rest-bubble-time');if(el) el.textContent=str;
-  var bubble=document.getElementById('rest-timer-bubble');
-  if(bubble){bubble.classList.toggle('running',restRunning);bubble.classList.toggle('expired',restExpired);}
-  var ring=document.getElementById('rest-bubble-ring');
-  if(ring){
-    var pct=restSecs>0?Math.max(0,restRemaining/restSecs):0;
-    var off=BUBBLE_CIRCUMFERENCE*(1-pct);
-    ring.setAttribute('stroke-dashoffset',off.toFixed(1));
-    ring.setAttribute('stroke',restExpired?'#ff4d4d':'#00B4D8');
+  var btn=document.getElementById('rest-timer-btn');
+  if(btn){
+    btn.style.borderColor=restExpired?'rgba(255,77,77,0.5)':restRunning?'var(--cyan-border)':'var(--border)';
+    btn.style.color=restExpired?'var(--red)':restRunning?'var(--cyan)':'var(--muted)';
   }
 }
 
@@ -3174,6 +4016,3 @@ function haptic(type){
 
 // ── INIT ──
 loadAll();
-</script>
-</body>
-</html>

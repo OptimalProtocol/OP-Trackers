@@ -838,8 +838,14 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 </div>
 
 <script>
+
+// ── MUSCLE GROUPS ──
+var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Calves","Back – Lats","Back – Mid","Shoulders","Chest","Biceps","Triceps","Abs & Core"];
+
+
+
 // ── BW EXERCISES LIST ──
-var BW_EXERCISES=["Pull-Up / Chin-Up", "Inverted Row", "Push-Up", "Nordic Curl / Nordic Hamstring Curl", "Reverse Nordic Curl", "Glute Ham Raise", "Sliding Leg Curl", "Stability Ball Leg Curl", "Plank", "Side Plank", "Dead Bug", "Bird Dog", "Hollow Body Hold", "Hanging Knee / Leg Raise", "Toes to Bar", "Windshield Wiper", "Bicycle Crunch", "Mountain Climber", "Copenhagen Plank", "Captain's Chair Raise", "Dragon Flag", "Ab Wheel Rollout", "Dip", "Squat", "Wall Sit", "Sissy Squat", "Donkey Kick", "Terminal Knee Extension", "Box Squat", "Curtsy Lunge", "Farmer Carry", "L-Sit Hold"];
+var BW_EXERCISES=["Pull-Up / Chin-Up","Inverted Row","Push-Up","Nordic Curl / Nordic Hamstring Curl","Reverse Nordic Curl","Glute Ham Raise","Sliding Leg Curl","Stability Ball Leg Curl","Plank","Side Plank","Dead Bug","Bird Dog","Hollow Body Hold","Hanging Knee / Leg Raise","Toes to Bar","Windshield Wiper","Bicycle Crunch","Mountain Climber","Copenhagen Plank","Captain's Chair Raise","Dragon Flag","Ab Wheel Rollout","Dip","Squat","Wall Sit","Sissy Squat","Donkey Kick","Terminal Knee Extension","Box Squat","Curtsy Lunge","Farmer Carry"];
 
 var EQUIPMENT_MAP = {
   "Squat": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Bodyweight","Band","Other"],
@@ -1420,12 +1426,7 @@ var BUILT_IN = [
   {id:105,name:"Shrug",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Isolation"},
   {id:106,name:"Rack Pull",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
   {id:107,name:"Farmer Carry",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"}
-];// ── BW EXERCISES LIST ──
-var BW_EXERCISES=["Pull-Up / Chin-Up","Dip (Triceps emphasis)","Bench Dip","Inverted Row","Push-Up","Weighted Push-Up","Nordic Hamstring Curl","Reverse Nordic Curl","Glute Ham Raise","Close-Grip Push-Up","Diamond Push-Up","Pike Push-Up","BW Squat (5-sec eccentric)","BW Reverse Lunge","Hanging Leg Raise","Hanging Knee Raise","Captain's Chair Knee Raise","Dead Bug","Bird Dog","Plank","Side Plank","Hollow Body Hold","Mountain Climber","BW Crunch","Reverse Crunch","Bicycle Crunch","Single-Leg Glute Bridge","Glute Bridge BW","Donkey Kick BW","Single-Leg BW Calf Raise"];
-
-// ── MUSCLE GROUPS ──
-var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Calves","Back – Lats","Back – Mid","Shoulders","Chest","Biceps","Triceps","Abs & Core"];
-
+];
 
 // ── STATE ──
 var settings={name:'',block:'',start:'',weeks:'10',unit:'kg',compoundMin:6,compoundMax:12,isolationMin:10,isolationMax:15,stabilityMin:20,stabilityMax:30};
@@ -2279,7 +2280,7 @@ function createSearchableDropdown(card,selectedName){
       g.exs.forEach(function(e){
         var item=document.createElement('div');item.className='ex-dropdown-item'+(e.name===currentValue?' selected':'');item.textContent=e.name;
         item.addEventListener('mousedown',function(ev){ev.preventDefault();});
-        item.addEventListener('click',function(){
+        item.addEventListener('click',function(itemEvt){if(itemEvt) itemEvt.stopPropagation();
           currentValue=e.name;card.setAttribute('data-ex-name',e.name);updateDisplay();closeDropdown();
           // Apply last-used bilat mode
           var lastBilat=getLastBilatForExercise(e.name);
@@ -2310,6 +2311,7 @@ function createSearchableDropdown(card,selectedName){
           // Show equipment picker (pre-selecting last used)
           var lastEquip=getLastEquipmentForExercise(e.name);
           if(EQUIPMENT_MAP[e.name]&&EQUIPMENT_MAP[e.name].length){
+            setTimeout(function(){
             openEquipPicker(card, e.name, lastEquip, function(eq){
               setCardEquipment(card, eq);
               card.setAttribute('data-equipment', eq||'');
@@ -2319,6 +2321,7 @@ function createSearchableDropdown(card,selectedName){
               showExerciseStatusBar(card,e.name);
               saveCurrentSession();
             });
+            },50);
           } else {
             populateLastRow(card,e.name);
             showStallBanner(card,e.name);
@@ -2400,11 +2403,55 @@ function addExRow(data){
   createSearchableDropdown(div,data.name||'');
   if(data.name){
     div.setAttribute('data-ex-name',data.name);
+    // Apply last-used bilat mode for pre-loaded exercise
+    var preLastBilat=getLastBilatForExercise(data.name);
+    if(preLastBilat){
+      var preBt=document.getElementById('bt-'+id);
+      if(preBt){
+        preBt.querySelectorAll('.bilat-btn').forEach(function(b){
+          b.classList.toggle('active',b.getAttribute('data-mode')===preLastBilat);
+        });
+        div.setAttribute('data-bilat',preLastBilat);
+        var preBl=document.getElementById('bl-'+id);
+        if(preBl) preBl.textContent=preLastBilat==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
+      }
+    }
+    // Apply last-used equipment
+    var preLastEquip=data.equipment||(getLastEquipmentForExercise(data.name)||'');
+    if(preLastEquip){
+      div.setAttribute('data-equipment',preLastEquip);
+      setCardEquipment(div,preLastEquip);
+    }
+    // Apply last-used load type
+    var preLastLT=getLastLoadTypeForExercise(data.name);
+    var ltt=document.getElementById('ltt-'+id);var ltl=document.getElementById('ltl-'+id);
+    if(ltt){
+      var isBW=BW_EXERCISES.indexOf(data.name)>-1;
+      ltt.style.display=isBW?'flex':'none';
+      if(ltl) ltl.style.display=isBW?'block':'none';
+      if(isBW&&preLastLT){
+        ltt.querySelectorAll('.ltt-btn').forEach(function(b){
+          b.classList.toggle('active',b.getAttribute('data-ltt')===preLastLT);
+        });
+        div.setAttribute('data-load-type',preLastLT);
+        updateLoadTypeLabel(div,ltl);
+      }
+    }
     if(!data.last||(!data.last.load&&!data.last.reps.some(function(r){return r;}))){
       populateLastRow(div,data.name);
     }
-    var ltt=document.getElementById('ltt-'+id);var ltl=document.getElementById('ltl-'+id);
-    if(ltt){var isBW=BW_EXERCISES.indexOf(data.name)>-1;ltt.style.display=isBW?'flex':'none';if(ltl) ltl.style.display=isBW?'block':'none';}
+    // Show equipment picker if no equipment set and exercise has variants
+    if(!preLastEquip&&EQUIPMENT_MAP[data.name]&&EQUIPMENT_MAP[data.name].length){
+      setTimeout(function(){
+        openEquipPicker(div,data.name,null,function(eq){
+          div.setAttribute('data-equipment',eq||'');
+          setCardEquipment(div,eq);
+          populateLastRow(div,data.name);
+          showExerciseStatusBar(div,data.name);
+          saveCurrentSession();
+        });
+      },100);
+    }
   }
 }
 
@@ -3750,10 +3797,20 @@ function openPriorEdit(sessId){
   var workoutEl=document.getElementById('prior-edit-workout');
   if(dateEl) dateEl.value=sess.date||'';
   if(workoutEl){
-    var opts=workoutEl.options;
-    for(var o=0;o<opts.length;o++){if(opts[o].value===sess.workout||opts[o].text===sess.workout){workoutEl.selectedIndex=o;break;}}
-    // If not found, set as custom
-    if(workoutEl.value!==sess.workout) workoutEl.options[workoutEl.options.length-1].selected=true;
+    // Try to find exact match
+    var found=false;
+    for(var o=0;o<workoutEl.options.length;o++){
+      if(workoutEl.options[o].value===sess.workout||workoutEl.options[o].text===sess.workout){
+        workoutEl.selectedIndex=o;found=true;break;
+      }
+    }
+    // If not found, add it as an option and select it
+    if(!found&&sess.workout){
+      var newOpt=document.createElement('option');
+      newOpt.value=sess.workout;newOpt.textContent=sess.workout;
+      workoutEl.appendChild(newOpt);
+      workoutEl.value=sess.workout;
+    }
   }
   document.getElementById('prior-sess-list-wrap').style.display='none';
   document.getElementById('prior-sess-edit-wrap').style.display='block';

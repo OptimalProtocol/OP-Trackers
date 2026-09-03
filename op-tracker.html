@@ -268,7 +268,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 /* SHARE CARD */
 .share-btn-wrap{padding:12px 16px 0;text-align:right;}
-.equip-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:350;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.equip-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
 .equip-picker-overlay.open{opacity:1;pointer-events:all;}
 .equip-picker-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:70vh;overflow-y:auto;padding:20px 16px 40px;transform:translateY(20px);transition:transform 0.2s;}
 .equip-picker-overlay.open .equip-picker-sheet{transform:translateY(0);}
@@ -563,7 +563,6 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
   <!-- CURRENT SESSION VIEW -->
   <div id="sess-view-current">
-  <div id="draft-warning-banner" style="display:none;"></div>
   <div class="sess-timer" id="sess-timer">Session not started</div>
   <div id="draft-alert-wrap"></div>
   <!-- Session controls: duration + rest timer icon -->
@@ -1440,19 +1439,6 @@ var draftSessionId=null;
 var sessionStartTime=null;
 var sessTimerInterval=null;
 
-function startSessTimer(){
-  if(sessTimerInterval) clearInterval(sessTimerInterval);
-  sessTimerInterval=setInterval(function(){
-    if(!sessionStartTime) return;
-    var elapsed=Math.floor((Date.now()-sessionStartTime)/1000);
-    var mins=Math.floor(elapsed/60);var secs=elapsed%60;
-    var el=document.getElementById('sess-timer');
-    if(el){
-      el.textContent='⏱ Session: '+mins+'m '+String(secs).padStart(2,'0')+'s';
-      el.className='sess-timer active';
-    }
-  },1000);
-}
 var progFilters={muscle:'All',workout:'All',prOnly:false};
 var progSort={col:'sincePR',dir:'desc'};
 var currentProgView='exercises';
@@ -1531,7 +1517,6 @@ document.getElementById('ob-lbs').addEventListener('click',function(){
 var PAGE_LABELS={settings:'Settings',library:'Exercise Library',session:'Session Log',progress:'Insights'};
 document.querySelectorAll('.nav-btn').forEach(function(btn){
   btn.addEventListener('click',function(){
-    try{
     var page=btn.getAttribute('data-page');
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
     document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
@@ -1539,6 +1524,7 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
     btn.classList.add('active');
     document.getElementById('header-sub').textContent=PAGE_LABELS[page]||page;
     if(page==='library') renderLibrary();
+    if(page==='session') requestNotifPermission();
     if(page==='progress'){
       renderProgression();
       var ps=document.getElementById('prog-search');
@@ -1558,7 +1544,6 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
         clearBtn._wired=true;
       }
     }
-  }catch(err){alert("Nav error: "+err.message);}
   });
 });
 
@@ -1664,8 +1649,8 @@ function renderLibrary(){
             '<input class="lib-rr-input" type="number" value="'+rr.min+'" min="1" max="50" data-rr="min" style="border-color:'+(isCustomRR?'var(--gold)':'var(--border)')+'">'+
             '<span class="lib-rr-sep">–</span>'+
             '<input class="lib-rr-input" type="number" value="'+rr.max+'" min="1" max="50" data-rr="max" style="border-color:'+(isCustomRR?'var(--gold)':'var(--border)')+'">'+
-            '<button class="lib-rr-save" data-rrsave="'+e.name+'">✓</button>'+
-            (isCustomRR?'<button class="lib-rr-reset" data-rrreset="'+e.name+'">✕</button>':'')+
+            '<button class="lib-rr-save" data-rrsave="'+e.name.replace(/'/g,"&#39;")+'">✓</button>'+
+            (isCustomRR?'<button class="lib-rr-reset" data-rrreset="'+e.name.replace(/'/g,"&#39;")+'">✕</button>':'')+
           '</div>'+
         '</div></div>';
     });
@@ -2091,19 +2076,84 @@ function initLoadTypeToggle(card){
 }
 
 // ── EXERCISE LOOKUP ──
-function getLastEntryForExercise(name){
-  if(!name) return null;
+function getLastBilatForExercise(name){
   for(var i=sessionHistory.length-1;i>=0;i--){
     var sess=sessionHistory[i];
     if(sess.status==='draft') continue;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
-      if(ex.name===name&&ex.curr&&(ex.curr.load||ex.curr.reps.some(function(r){return r;}))){
-        return {load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,date:sess.date,workout:sess.workout};
-      }
+      var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
+      if(matchName&&ex.bilat) return ex.bilat;
+    }
+  }
+  return BILAT_MAP[name]||'bilateral';
+}
+
+function getLastEquipmentForExercise(name){
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    var sess=sessionHistory[i];
+    if(sess.status==='draft') continue;
+    for(var j=0;j<sess.exercises.length;j++){
+      var ex=sess.exercises[j];
+      var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
+      if(matchName&&ex.equipment) return ex.equipment;
     }
   }
   return null;
+}
+
+function getLastLoadTypeForExercise(name){
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    var sess=sessionHistory[i];
+    if(sess.status==='draft') continue;
+    for(var j=0;j<sess.exercises.length;j++){
+      var ex=sess.exercises[j];
+      var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
+      if(matchName&&ex.loadType&&ex.loadType!=='standard') return ex.loadType;
+    }
+  }
+  return null;
+}
+
+function getLastEntryForExercise(name,bilatMode,equipment){
+  // Returns the most recent entry matching name, bilat mode, and equipment
+  // Falls back: if no equipment match exists, return best bilat-mode match
+  // Falls back further: return any match (for exercises with no bilat/equipment tagged yet)
+  if(!name) return null;
+  var mode=bilatMode||'bilateral';
+  var modeMatch=null;
+  var anyMatch=null;
+  for(var i=sessionHistory.length-1;i>=0;i--){
+    var sess=sessionHistory[i];
+    if(sess.status==='draft') continue;
+    for(var j=0;j<sess.exercises.length;j++){
+      var ex=sess.exercises[j];
+      var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
+      if(!matchName) continue;
+      if(!ex.curr||(! ex.curr.load&&!ex.curr.reps.some(function(r){return r;}))) continue;
+      var exMode=ex.bilat||'bilateral';
+      var exEquip=ex.equipment||'';
+      var modeOk=exMode===mode;
+      var equipOk=!equipment||!exEquip||exEquip===equipment;
+      // Best case: mode and equipment both match
+      if(modeOk&&equipOk){
+        return {load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,
+          date:sess.date,workout:sess.workout,equipment:exEquip};
+      }
+      // Mode matches but equipment doesn't — keep as fallback
+      if(modeOk&&!modeMatch){
+        modeMatch={load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,
+          date:sess.date,workout:sess.workout,equipment:exEquip};
+      }
+      // No match at all — keep as last resort
+      if(!anyMatch){
+        anyMatch={load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,
+          date:sess.date,workout:sess.workout,equipment:exEquip};
+      }
+    }
+  }
+  // Return mode match if found, otherwise null (blank Last row for this bilat mode)
+  return modeMatch||null;
 }
 function getSincePR(exName, bilatMode){
   // Returns sessions since last PR for this exercise + bilat mode
@@ -2323,11 +2373,13 @@ function createSearchableDropdown(card,selectedName){
             });
             },50);
           } else {
-            populateLastRow(card,e.name);
-            showStallBanner(card,e.name);
-            showRecoveryBanner(card,e.name);
-            showExerciseStatusBar(card,e.name);
-            saveCurrentSession();
+            setTimeout(function(){
+              populateLastRow(card,e.name);
+              showStallBanner(card,e.name);
+              showRecoveryBanner(card,e.name);
+              showExerciseStatusBar(card,e.name);
+              saveCurrentSession();
+            },50);
           }
           var ltt=document.getElementById('ltt-'+card.id);var ltl=document.getElementById('ltl-'+card.id);
           if(ltt){var isBW=BW_EXERCISES.indexOf(e.name)>-1;ltt.style.display=isBW?'flex':'none';if(ltl) ltl.style.display=isBW?'block':'none';if(isBW) updateLoadTypeLabel(card,ltl);}
@@ -2437,21 +2489,25 @@ function addExRow(data){
         updateLoadTypeLabel(div,ltl);
       }
     }
-    if(!data.last||(!data.last.load&&!data.last.reps.some(function(r){return r;}))){
+    // Always show status bar after DOM settles
+    setTimeout(function(){
       populateLastRow(div,data.name);
-    }
-    // Show equipment picker if no equipment set and exercise has variants
-    if(!preLastEquip&&EQUIPMENT_MAP[data.name]&&EQUIPMENT_MAP[data.name].length){
-      setTimeout(function(){
-        openEquipPicker(div,data.name,null,function(eq){
-          div.setAttribute('data-equipment',eq||'');
-          setCardEquipment(div,eq);
-          populateLastRow(div,data.name);
-          showExerciseStatusBar(div,data.name);
-          saveCurrentSession();
-        });
-      },100);
-    }
+      showStallBanner(div,data.name);
+      showRecoveryBanner(div,data.name);
+      showExerciseStatusBar(div,data.name);
+      // Show equipment picker if no equipment set and exercise has variants
+      if(!preLastEquip&&EQUIPMENT_MAP[data.name]&&EQUIPMENT_MAP[data.name].length){
+        setTimeout(function(){
+          openEquipPicker(div,data.name,null,function(eq){
+            div.setAttribute('data-equipment',eq||'');
+            setCardEquipment(div,eq);
+            populateLastRow(div,data.name);
+            showExerciseStatusBar(div,data.name);
+            saveCurrentSession();
+          });
+        },100);
+      }
+    },50);
   }
 }
 
@@ -2508,13 +2564,18 @@ var sessDurationInterval=null;
 
 function startSessDurationTimer(){
   clearInterval(sessDurationInterval);
-  var el=document.getElementById('sess-duration-display');
-  sessDurationInterval=setInterval(function(){
-    if(!sessionStartTime){return;}
+  function tick(){
+    var el=document.getElementById('sess-duration-display');
+    if(!sessionStartTime||!el) return;
     var elapsed=Math.floor((Date.now()-sessionStartTime)/1000);
     var m=Math.floor(elapsed/60),s=elapsed%60;
-    if(el) el.textContent=m+':'+(s<10?'0':'')+s;
-  },1000);
+    el.textContent=m+':'+(s<10?'0':'')+s;
+  }
+  tick(); // immediate update when app returns to foreground
+  sessDurationInterval=setInterval(tick,1000);
+  // Update on visibility change (app returning from background)
+  document.removeEventListener('visibilitychange',tick);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden) tick();});
 }
 
 function initSession(){
@@ -2527,7 +2588,7 @@ function initSession(){
     currentSession.exercises.forEach(function(ex){addExRow(ex);});
   } else {addExRow();addExRow();addExRow();}
   sessionStartTime=Date.now();
-  startSessTimer();
+  startSessDurationTimer();
   checkDraftAlert();
 }
 
@@ -3509,43 +3570,6 @@ var currentSessTab='current';
 var priorFilters={muscle:'All',workout:'All'};
 var editingSessionId=null;
 
-function checkIncompleteDraft(){
-  var banner=document.getElementById('draft-warning-banner');
-  if(!banner) return;
-  if(!draftSessionId){banner.style.display='none';return;}
-  var draft=sessionHistory.find(function(s){return s.id===draftSessionId;});
-  if(!draft){banner.style.display='none';return;}
-  var today=new Date().toISOString().split('T')[0];
-  if(draft.date===today){banner.style.display='none';return;} // today's draft — normal
-  // Draft from a previous day
-  banner.style.display='block';
-  banner.innerHTML='<div class="draft-warning">'+
-    '<div class="draft-warning-text">&#9888; Incomplete session from '+(draft.date?formatDate(draft.date):'a previous day')+
-    '. Complete it or clear it before starting a new session.</div>'+
-    '<div class="draft-warning-btns">'+
-      '<button class="draft-warning-btn" onclick="completeDraftWarning()">Complete</button>'+
-      '<button class="draft-warning-btn" style="border-color:rgba(255,77,77,0.4);color:var(--red);" onclick="clearDraftWarning()">Clear</button>'+
-    '</div>'+
-  '</div>';
-}
-
-function completeDraftWarning(){
-  document.getElementById('draft-warning-banner').style.display='none';
-  // Scroll to complete session button
-  document.getElementById('save-btn').scrollIntoView({behavior:'smooth'});
-}
-
-function clearDraftWarning(){
-  if(!confirm('Clear the incomplete session from a previous day?')) return;
-  if(draftSessionId){
-    sessionHistory=sessionHistory.filter(function(s){return s.id!==draftSessionId;});
-    lsSet('op-history',sessionHistory);draftSessionId=null;
-  }
-  currentSession={date:'',workout:'',notes:'',exercises:[]};
-  lsSet('op-current',currentSession);
-  initSession();
-}
-
 function switchSessTab(tab){
   currentSessTab=tab;
   document.getElementById('sess-view-current').style.display=tab==='current'?'block':'none';
@@ -3984,6 +4008,8 @@ var restRemaining=120;
 var restRunning=false;
 var restInterval=null;
 var restExpired=false;
+var restStartTime=null;   // wall-clock when timer last started
+var restElapsedAtPause=0; // seconds elapsed before last pause
 var REST_CIRCUMFERENCE=722.6;
 var BUBBLE_CIRCUMFERENCE=144.5;
 
@@ -4012,6 +4038,7 @@ function closeRestTimer(){
 
 function setRestPreset(secs){
   restSecs=secs;restRemaining=secs;restRunning=false;restExpired=false;
+  restStartTime=null;restElapsedAtPause=0;
   clearInterval(restInterval);
   document.querySelectorAll('.rest-preset-btn').forEach(function(b){
     b.classList.toggle('active',parseInt(b.getAttribute('data-secs'))===secs);
@@ -4030,8 +4057,11 @@ function toggleRestTimer(){
   restRunning=!restRunning;
   document.getElementById('rest-start-btn').textContent=restRunning?'Pause':'Resume';
   if(restRunning){
+    restStartTime=Date.now();
+    clearInterval(restInterval);
     restInterval=setInterval(function(){
-      restRemaining--;
+      var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
+      restRemaining=Math.max(0,restSecs-elapsed);
       updateRestDisplay();
       updateBubble();
       if(restRemaining<=0){
@@ -4040,15 +4070,19 @@ function toggleRestTimer(){
         restExpired=true;
         onRestExpired();
       }
-    },1000);
+    },250); // tick 4x/sec for smooth display
   } else {
+    // Pause: record elapsed so far
+    restElapsedAtPause+=Math.floor((Date.now()-restStartTime)/1000);
     clearInterval(restInterval);
+    restStartTime=null;
   }
 }
 
 function resetRestTimer(){
   clearInterval(restInterval);
   restRunning=false;restExpired=false;restRemaining=restSecs;
+  restStartTime=null;restElapsedAtPause=0;
   document.getElementById('rest-start-btn').textContent='Start';
   document.getElementById('rest-overlay').classList.remove('expired');
   document.getElementById('rest-expired-content').style.display='none';
@@ -4076,6 +4110,20 @@ function onRestExpired(){
     new Notification('Rest Complete',{body:'Time to hit your next set.',icon:''});
   }
 }
+
+// Resume rest timer correctly when app returns from background
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&restRunning&&restStartTime){
+    // Recalculate remaining based on wall clock
+    var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
+    restRemaining=Math.max(0,restSecs-elapsed);
+    updateRestDisplay();updateBubble();
+    if(restRemaining<=0&&!restExpired){
+      clearInterval(restInterval);restRunning=false;restExpired=true;
+      onRestExpired();
+    }
+  }
+});
 
 function playRestBeep(){
   try{
@@ -4150,6 +4198,8 @@ document.getElementById('save-rep-ranges-btn').addEventListener('click',function
 
 // ── INIT ──
 loadAll();
+
+
 
 </script>
 </body>

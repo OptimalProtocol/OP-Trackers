@@ -362,6 +362,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .lib-rr-sep{font-size:10px;color:var(--muted);}
 .lib-rr-save{background:var(--cyan);border:none;border-radius:4px;color:#000;cursor:pointer;font-size:9px;font-weight:700;padding:3px 7px;}
 .lib-rr-reset{background:none;border:none;color:var(--muted);cursor:pointer;font-size:9px;padding:3px 5px;}
+.lib-custom-edit{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;padding:3px 7px;margin-left:4px;}
+.lib-custom-del{background:none;border:1px solid rgba(255,77,77,0.3);border-radius:4px;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;padding:3px 7px;margin-left:2px;}
 
 /* ── PRIOR SESSION EDIT IMPROVEMENTS ── */
 .prior-session-title-edit{display:flex;gap:8px;padding:10px 16px 0;flex-wrap:wrap;}
@@ -827,17 +829,11 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <button class="rest-preset-btn" data-secs="90">90 sec</button>
     <button class="rest-preset-btn active" data-secs="120">2 min</button>
     <button class="rest-preset-btn" data-secs="180">3 min</button>
-  </div>
-  <div class="rest-controls">
-    <button class="rest-ctrl-btn primary" id="rest-start-btn" onclick="toggleRestTimer()">Start</button>
-    <button class="rest-ctrl-btn" id="rest-reset-btn" onclick="resetRestTimer()">Reset</button>
-  </div>
-  <div class="rest-dismiss" onclick="closeRestTimer()">Dismiss &amp; return to session</div>
+    </div>
   </div><!-- end rest-sheet -->
 </div>
 
 <script>
-
 // ── MUSCLE GROUPS ──
 var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Calves","Back – Lats","Back – Mid","Shoulders","Chest","Biceps","Triceps","Abs & Core"];
 
@@ -1603,20 +1599,53 @@ document.getElementById('import-file').addEventListener('change',function(e){
 // ── LIBRARY ──
 var GROUPS=['All','Quads','Hamstrings','Glutes','Calves','Back – Lats','Back – Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
 document.getElementById('lib-search').addEventListener('input',renderLibrary);
+var editingCustomId=null;
+
+function openCustomExEdit(cid){
+  var ex=customExercises.find(function(e){return e.id===cid;});
+  if(!ex) return;
+  editingCustomId=cid;
+  document.getElementById('custom-name').value=ex.name||'';
+  document.getElementById('custom-group').value=ex.group||'';
+  document.getElementById('custom-type').value=ex.type||'Compound';
+  var btn=document.getElementById('add-custom-btn');
+  if(btn) btn.textContent='Save Changes';
+  var form=document.querySelector('.add-ex-form');
+  if(form) form.scrollIntoView({behavior:'smooth',block:'start'});
+  showToast('Editing: '+ex.name);
+}
+
 document.getElementById('add-custom-btn').addEventListener('click',function(){
   var name=document.getElementById('custom-name').value.trim();
   if(!name){showToast('Enter exercise name');return;}
   var group=document.getElementById('custom-group').value;
   var type=document.getElementById('custom-type').value;
-  customExercises.push({id:Date.now(),name:name,group:group,muscles:group,type:type,custom:true});
+  if(editingCustomId){
+    var cidx=customExercises.findIndex(function(e){return e.id===editingCustomId;});
+    if(cidx>-1){
+      customExercises[cidx].name=name;
+      customExercises[cidx].group=group;
+      customExercises[cidx].muscles=group;
+      customExercises[cidx].type=type;
+    }
+    editingCustomId=null;
+    var btn2=document.getElementById('add-custom-btn');
+    if(btn2) btn2.textContent='Add Exercise';
+    showToast('Exercise updated ✓');
+  } else {
+    customExercises.push({id:Date.now(),name:name,group:group,muscles:group,type:type,custom:true});
+    showToast('Exercise added ✓');
+  }
   lsSet('op-custom',customExercises);
   document.getElementById('custom-name').value='';
-  renderLibrary();showToast('Exercise added ✓');
+  renderLibrary();
 });
 function renderLibrary(){
   var q=(document.getElementById('lib-search').value||'').toLowerCase();
   var fr=document.getElementById('filter-row');
-  fr.innerHTML=GROUPS.map(function(g){
+  var hasCustom=customExercises.length>0;
+  var filterGroups=GROUPS.concat(hasCustom?['Custom']:[]);
+  fr.innerHTML=filterGroups.map(function(g){
     return '<button class="filter-chip'+(activeLibFilter===g?' active':'')+'" data-grp="'+g+'">'+g+'</button>';
   }).join('');
   fr.querySelectorAll('.filter-chip').forEach(function(chip){
@@ -1624,7 +1653,7 @@ function renderLibrary(){
   });
   var filtered=allExercises().filter(function(e){
     return (!q||e.name.toLowerCase().indexOf(q)>-1||(e.muscles||'').toLowerCase().indexOf(q)>-1)&&
-           (activeLibFilter==='All'||e.group===activeLibFilter);
+           (activeLibFilter==='All'||(activeLibFilter==='Custom'&&e.custom)||e.group===activeLibFilter);
   });
   var byGroup={};
   filtered.forEach(function(e){if(!byGroup[e.group])byGroup[e.group]=[];byGroup[e.group].push(e);});
@@ -1644,7 +1673,7 @@ function renderLibrary(){
         '<div style="font-size:11px;color:var(--dim);margin-top:2px;">'+(e.muscles||'')+'</div></div>'+
         '<div class="ex-meta" style="gap:6px;align-items:center;">'+
           '<span class="ex-badge badge-'+tc+'">'+e.type+'</span>'+
-          (e.custom?'<span class="ex-badge badge-custom">Custom</span>':'')+
+          (e.custom?'<span class="ex-badge badge-custom">Custom</span>'+'<button class="lib-custom-edit" data-cid="'+e.id+'">Edit</button>'+'<button class="lib-custom-del" data-cid="'+e.id+'">Delete</button>':'')+
           '<div class="lib-rr-edit" data-exid="'+e.id+'" data-exname="'+e.name+'">'+
             '<input class="lib-rr-input" type="number" value="'+rr.min+'" min="1" max="50" data-rr="min" style="border-color:'+(isCustomRR?'var(--gold)':'var(--border)')+'">'+
             '<span class="lib-rr-sep">–</span>'+
@@ -1676,6 +1705,26 @@ function renderLibrary(){
       delete customRepRanges[exName];
       lsSet('op-custom-rr',customRepRanges);
       showToast('Rep range reset');
+      renderLibrary();
+    });
+  });
+
+  // Wire custom edit/delete
+  container.querySelectorAll('.lib-custom-edit').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var cid=parseInt(btn.getAttribute('data-cid'));
+      openCustomExEdit(cid);
+    });
+  });
+  container.querySelectorAll('.lib-custom-del').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var cid=parseInt(btn.getAttribute('data-cid'));
+      var ex=customExercises.find(function(e){return e.id===cid;});
+      if(!ex) return;
+      if(!confirm('Delete "'+ex.name+'"? This cannot be undone.')) return;
+      customExercises=customExercises.filter(function(e){return e.id!==cid;});
+      lsSet('op-custom',customExercises);
+      showToast('Exercise deleted');
       renderLibrary();
     });
   });
@@ -2033,13 +2082,28 @@ function getEquipLabel(card){
 
 function setCardEquipment(card, equipment){
   card.setAttribute('data-equipment', equipment);
-  // Update subtitle label on card header
   var existing = card.querySelector('.equip-label-chip');
   if(existing) existing.remove();
   if(equipment){
-    var chip = document.createElement('span');
+    var chip = document.createElement('button');
     chip.className = 'equip-label-chip';
     chip.textContent = equipment;
+    chip.title = 'Tap to change equipment';
+    chip.style.cssText += ';cursor:pointer;background:var(--surface2);border:1px solid var(--border);';
+    chip.addEventListener('click', function(e){
+      e.stopPropagation();
+      var exName = card.getExName ? card.getExName() : card.getAttribute('data-ex-name');
+      if(!exName) return;
+      var currentEquip = card.getAttribute('data-equipment')||'';
+      openEquipPicker(card, exName, currentEquip, function(eq){
+        setCardEquipment(card, eq);
+        card.setAttribute('data-equipment', eq||'');
+        // Re-populate last row and status bar for new equipment
+        populateLastRow(card, exName);
+        showExerciseStatusBar(card, exName);
+        saveCurrentSession();
+      });
+    });
     var nameSpan = card.querySelector('.ex-selected-display');
     if(nameSpan) nameSpan.appendChild(chip);
   }
@@ -3403,66 +3467,110 @@ function enrichLogs(logs){
 
 function drawChartBoth(bilatLogs,uniLogs){
   var svg=document.getElementById('prog-chart');
-  var W=svg.parentElement.clientWidth-32;var H=parseInt(svg.style.height)||160;
-  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML='';
+  var W=svg.parentElement.clientWidth-32;
+  var H=parseInt(svg.style.height)||160;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.innerHTML='';
   var ns='http://www.w3.org/2000/svg';
-  var bEnriched=enrichLogs(bilatLogs);var uEnriched=enrichLogs(uniLogs);
-  var allLoads=bEnriched.concat(uEnriched).map(function(l){return l.load;});
-  if(!allLoads.length){svg.innerHTML='<text x="50%" y="50%" fill="#555" font-size="12" text-anchor="middle">No data</text>';return;}
-  var minL=Math.min.apply(null,allLoads)*0.92,maxL=Math.max.apply(null,allLoads)*1.05||1;
+  var unit=settings.unit||'kg';
+
+  // Sort each set oldest→newest
+  function sortLogs(logs){
+    return logs.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+  }
+  var bLogs=sortLogs(bilatLogs);
+  var uLogs=sortLogs(uniLogs);
+
+  if(!bLogs.length&&!uLogs.length){
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x','50%');t.setAttribute('y','50%');
+    t.setAttribute('fill','#555');t.setAttribute('font-size','12');
+    t.setAttribute('text-anchor','middle');t.textContent='No data';
+    svg.appendChild(t);return;
+  }
+
+  // Y axis: combine all loads
+  var allLoads=bLogs.concat(uLogs).map(function(l){return parseFloat(l.load)||0;}).filter(function(v){return v>0;});
+  if(!allLoads.length) return;
+  var minL=Math.min.apply(null,allLoads)*0.92;
+  var maxL=Math.max.apply(null,allLoads)*1.05;
   if(minL===maxL){minL*=0.9;maxL*=1.1;}
-  var allEntries=bEnriched.concat(uEnriched).sort(function(a,b){return a.date.localeCompare(b.date);});
-  var n=allEntries.length;if(n<1) return;
-  var pad={l:32,r:8,t:8,b:22};
-  var allDates=allEntries.map(function(l){return l.date;});
-  function xp(date){var i=allDates.indexOf(date);return pad.l+i*(W-pad.l-pad.r)/(Math.max(n-1,1));}
+
+  // X axis: session index (0-based), each variant independent
+  var maxSess=Math.max(bLogs.length,uLogs.length);
+  if(maxSess<1) return;
+  var pad={l:32,r:8,t:20,b:28};
+
+  function xp(i,total){
+    if(total<=1) return pad.l+(W-pad.l-pad.r)/2;
+    return pad.l+i*(W-pad.l-pad.r)/(total-1);
+  }
   function yp(v){return pad.t+(1-((v-minL)/(maxL-minL)))*(H-pad.t-pad.b);}
-  // Grid
+
+  // Grid lines
   [0,0.5,1].forEach(function(t){
     var yy=pad.t+(1-t)*(H-pad.t-pad.b);
-    var line=document.createElementNS(ns,'line');line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);line.setAttribute('y1',yy);line.setAttribute('y2',yy);line.setAttribute('stroke','rgba(255,255,255,0.05)');line.setAttribute('stroke-width','1');svg.appendChild(line);
-    var txt=document.createElementNS(ns,'text');txt.setAttribute('x',pad.l-4);txt.setAttribute('y',yy+4);txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');txt.setAttribute('text-anchor','end');txt.textContent=Math.round(minL+(maxL-minL)*t);svg.appendChild(txt);
+    var line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);
+    line.setAttribute('y1',yy);line.setAttribute('y2',yy);
+    line.setAttribute('stroke','rgba(255,255,255,0.05)');line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+    var txt=document.createElementNS(ns,'text');
+    txt.setAttribute('x',pad.l-4);txt.setAttribute('y',yy+4);
+    txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');
+    txt.setAttribute('text-anchor','end');
+    txt.textContent=Math.round(minL+(maxL-minL)*t);
+    svg.appendChild(txt);
   });
-  // Bilateral line (cyan)
-  if(bEnriched.length>1){var bp=document.createElementNS(ns,'polyline');bp.setAttribute('points',bEnriched.map(function(l){return xp(l.date)+','+yp(l.load);}).join(' '));bp.setAttribute('fill','none');bp.setAttribute('stroke','rgba(0,180,216,0.4)');bp.setAttribute('stroke-width','2');svg.appendChild(bp);}
-  // Unilateral line (gold)
-  if(uEnriched.length>1){var up=document.createElementNS(ns,'polyline');up.setAttribute('points',uEnriched.map(function(l){return xp(l.date)+','+yp(l.load);}).join(' '));up.setAttribute('fill','none');up.setAttribute('stroke','rgba(255,184,0,0.4)');up.setAttribute('stroke-width','2');svg.appendChild(up);}
-  // Dots
-  bEnriched.forEach(function(l){var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(l.date));c.setAttribute('cy',yp(l.load));c.setAttribute('r',5);c.setAttribute('fill','#00B4D8');c.setAttribute('opacity','0.9');svg.appendChild(c);});
-  uEnriched.forEach(function(l){var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(l.date));c.setAttribute('cy',yp(l.load));c.setAttribute('r',5);c.setAttribute('fill','#FFB800');c.setAttribute('opacity','0.9');svg.appendChild(c);});
-  // Date labels
-  allEntries.forEach(function(l){var dl=document.createElementNS(ns,'text');dl.setAttribute('x',xp(l.date));dl.setAttribute('y',H-pad.b+14);dl.setAttribute('fill','#555');dl.setAttribute('font-size','8');dl.setAttribute('text-anchor','middle');dl.textContent=l.date.slice(5);svg.appendChild(dl);});
-  // Legend
-  var legY=pad.t+12;
-  function leg(x,col,label){var c=document.createElementNS(ns,'circle');c.setAttribute('cx',x);c.setAttribute('cy',legY);c.setAttribute('r',4);c.setAttribute('fill',col);svg.appendChild(c);var t=document.createElementNS(ns,'text');t.setAttribute('x',x+7);t.setAttribute('y',legY+4);t.setAttribute('fill','#888');t.setAttribute('font-size','9');t.textContent=label;svg.appendChild(t);}
-  if(bEnriched.length) leg(pad.l+4,'#00B4D8','Bilateral');
-  if(uEnriched.length) leg(pad.l+(bEnriched.length?70:4),'#FFB800','Unilateral');
-}
 
-// ── CHART TOOLTIP ──────────────────────────────────────────────
-function showChartTooltip(evt,load,reps,date,unit){
-  var tip=document.getElementById('chart-tooltip');
-  if(!tip){
-    tip=document.createElement('div');
-    tip.id='chart-tooltip';
-    tip.className='chart-tooltip';
-    document.body.appendChild(tip);
+  // Draw a line + dots for a log set
+  function drawLine(logs, color, label){
+    if(!logs.length) return;
+    var pts=logs.map(function(l,i){return {x:xp(i,logs.length),y:yp(parseFloat(l.load)||0),log:l,i:i};});
+    if(pts.length>1){
+      var poly=document.createElementNS(ns,'polyline');
+      poly.setAttribute('points',pts.map(function(p){return p.x+','+p.y;}).join(' '));
+      poly.setAttribute('fill','none');poly.setAttribute('stroke',color.replace('1)','0.4)'));
+      poly.setAttribute('stroke-width','2');svg.appendChild(poly);
+    }
+    pts.forEach(function(p){
+      var c=document.createElementNS(ns,'circle');
+      c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',5);
+      c.setAttribute('fill',color);c.setAttribute('opacity','0.9');
+      c.style.cursor='pointer';
+      c.addEventListener('click',function(evt){
+        showChartTooltip(evt,p.log.load,p.log.reps,p.log.date,unit);
+        evt.stopPropagation();
+      });
+      svg.appendChild(c);
+    });
+    // Session number labels on X axis
+    logs.forEach(function(l,i){
+      var txt=document.createElementNS(ns,'text');
+      txt.setAttribute('x',xp(i,logs.length));
+      txt.setAttribute('y',H-pad.b+12);
+      txt.setAttribute('fill','#444');txt.setAttribute('font-size','8');
+      txt.setAttribute('text-anchor','middle');
+      txt.textContent='S'+(i+1);
+      svg.appendChild(txt);
+    });
   }
-  var repsArr=(reps||[]).filter(function(r){return r;});
-  tip.innerHTML='<div class="chart-tooltip-date">'+(date||'')+'</div>'+
-    '<div class="chart-tooltip-load">'+(load||'')+(unit||'kg')+'</div>'+
-    '<div class="chart-tooltip-reps">'+repsArr.join(', ')+' reps</div>';
-  var rect=evt.target.getBoundingClientRect();
-  tip.style.left=Math.min(rect.left,window.innerWidth-140)+'px';
-  tip.style.top=(rect.top-80)+'px';
-  tip.style.display='block';
-  setTimeout(function(){tip.style.display='none';},3000);
+
+  drawLine(bLogs,'rgba(0,180,216,1)','Bilateral');
+  drawLine(uLogs,'rgba(255,184,0,1)','Unilateral');
+
+  // Legend
+  var legY=pad.t+10;
+  function leg(x,col,label){
+    var c=document.createElementNS(ns,'circle');c.setAttribute('cx',x);c.setAttribute('cy',legY);
+    c.setAttribute('r',4);c.setAttribute('fill',col);svg.appendChild(c);
+    var t=document.createElementNS(ns,'text');t.setAttribute('x',x+7);t.setAttribute('y',legY+4);
+    t.setAttribute('fill','#888');t.setAttribute('font-size','9');t.textContent=label;svg.appendChild(t);
+  }
+  if(bLogs.length) leg(pad.l+4,'rgba(0,180,216,1)','Bilateral');
+  if(uLogs.length) leg(pad.l+(bLogs.length?70:4),'rgba(255,184,0,1)','Unilateral');
 }
 
-function hideChartTooltip(){
-  var tip=document.getElementById('chart-tooltip');
-  if(tip) tip.style.display='none';
-}
 
 function drawChart(logs){
   var svg=document.getElementById('prog-chart');
@@ -3821,19 +3929,30 @@ function openPriorEdit(sessId){
   var workoutEl=document.getElementById('prior-edit-workout');
   if(dateEl) dateEl.value=sess.date||'';
   if(workoutEl){
-    // Try to find exact match
+    // Add all unique workout types from history as options
+    var historyWorkouts=[...new Set(sessionHistory.map(function(s){return s.workout;}).filter(Boolean))];
+    historyWorkouts.forEach(function(wt){
+      var alreadyExists=false;
+      for(var o=0;o<workoutEl.options.length;o++){
+        if(workoutEl.options[o].value===wt||workoutEl.options[o].text===wt){alreadyExists=true;break;}
+      }
+      if(!alreadyExists){
+        var newOpt=document.createElement('option');
+        newOpt.value=wt;newOpt.textContent=wt;
+        workoutEl.insertBefore(newOpt,workoutEl.lastElementChild); // before 'Other'
+      }
+    });
+    // Select matching option
     var found=false;
     for(var o=0;o<workoutEl.options.length;o++){
       if(workoutEl.options[o].value===sess.workout||workoutEl.options[o].text===sess.workout){
         workoutEl.selectedIndex=o;found=true;break;
       }
     }
-    // If not found, add it as an option and select it
     if(!found&&sess.workout){
-      var newOpt=document.createElement('option');
-      newOpt.value=sess.workout;newOpt.textContent=sess.workout;
-      workoutEl.appendChild(newOpt);
-      workoutEl.value=sess.workout;
+      var newOpt2=document.createElement('option');
+      newOpt2.value=sess.workout;newOpt2.textContent=sess.workout;
+      workoutEl.appendChild(newOpt2);workoutEl.value=sess.workout;
     }
   }
   document.getElementById('prior-sess-list-wrap').style.display='none';
@@ -4183,7 +4302,8 @@ function haptic(type){
   else if(type==='warning') navigator.vibrate([30,20,30]);
 }
 
-// ── REP RANGE SAVE ──
+// ── REP RANGE SAVE
+
 document.getElementById('save-rep-ranges-btn').addEventListener('click',function(){
   ['compound','isolation','stability'].forEach(function(type){
     ['min','max'].forEach(function(mm){
@@ -4198,9 +4318,6 @@ document.getElementById('save-rep-ranges-btn').addEventListener('click',function
 
 // ── INIT ──
 loadAll();
-
-
-
 </script>
 </body>
 </html>

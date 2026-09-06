@@ -840,7 +840,7 @@ var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Calves","Back – Lats","Back 
 
 
 // ── BW EXERCISES LIST ──
-var BW_EXERCISES=["Pull-Up / Chin-Up","Inverted Row","Push-Up","Nordic Curl / Nordic Hamstring Curl","Reverse Nordic Curl","Glute Ham Raise","Sliding Leg Curl","Stability Ball Leg Curl","Plank","Side Plank","Dead Bug","Bird Dog","Hollow Body Hold","Hanging Knee / Leg Raise","Toes to Bar","Windshield Wiper","Bicycle Crunch","Mountain Climber","Copenhagen Plank","Captain's Chair Raise","Dragon Flag","Ab Wheel Rollout","Dip","Squat","Wall Sit","Sissy Squat","Donkey Kick","Terminal Knee Extension","Box Squat","Curtsy Lunge","Farmer Carry"];
+var BW_EXERCISES=["Pull-Up / Chin-Up", "Inverted Row", "Push-Up", "Nordic Curl / Nordic Hamstring Curl", "Reverse Nordic Curl", "Glute Ham Raise", "Sliding Leg Curl", "Stability Ball Leg Curl", "Plank", "Side Plank", "Dead Bug", "Bird Dog", "Hollow Body Hold", "Hanging Knee / Leg Raise", "Toes to Bar", "Windshield Wiper", "Bicycle Crunch", "Mountain Climber", "Copenhagen Plank", "Captain's Chair Raise", "Dragon Flag", "Ab Wheel Rollout", "Dip", "Squat", "Wall Sit", "Sissy Squat", "Donkey Kick", "Terminal Knee Extension", "Box Squat", "Curtsy Lunge", "Farmer Carry", "Hip Extension (45-Degree Bench)", "Back Extension (Prone)"];
 
 var EQUIPMENT_MAP = {
   "Squat": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Plate-Loaded Machine","Bodyweight","Band","Other"],
@@ -883,7 +883,6 @@ var EQUIPMENT_MAP = {
   "Bent-Over Row": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Band"],
   "Seated Row": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
   "Chest-Supported Row": ["Barbell","Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
-  "Back Extension": ["Bodyweight"],
   "Pendlay Row": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Band"],
   "Overhead Press": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
   "Lateral Raise": ["Barbell","Dumbbell","Kettlebell","Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
@@ -949,7 +948,9 @@ var EQUIPMENT_MAP = {
   "Tibialis Raise": ["Bodyweight","Band","Pin-Select Machine"],
   "Shrug": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable"],
   "Rack Pull": ["Barbell"],
-  "Farmer Carry": ["Dumbbell","Kettlebell","Other"]
+  "Farmer Carry": ["Dumbbell","Kettlebell","Other"],
+  "Back Extension (Prone)": ["Bodyweight"],
+  "Hip Extension (45-Degree Bench)": ["Bodyweight","Dumbbell","Plate-Loaded Machine"]
 };
 
 var BILAT_MAP = {
@@ -993,7 +994,6 @@ var BILAT_MAP = {
   "Bent-Over Row": "both",
   "Seated Row": "both",
   "Chest-Supported Row": "both",
-  "Back Extension": "both",
   "Pendlay Row": "both",
   "Overhead Press": "both",
   "Lateral Raise": "both",
@@ -1059,7 +1059,66 @@ var BILAT_MAP = {
   "Tibialis Raise": "bilateral",
   "Shrug": "bilateral",
   "Rack Pull": "bilateral",
-  "Farmer Carry": "bilateral"
+  "Farmer Carry": "bilateral",
+  "Back Extension (Prone)": "both",
+  "Hip Extension (45-Degree Bench)": "both"
+};
+
+var SECONDARY_MAP = {
+  "Squat": {"Glutes":0.5},
+  "Hack Squat": {"Glutes":0.5},
+  "Leg Press": {"Glutes":0.5},
+  "Bulgarian Split Squat": {"Glutes":0.5},
+  "Goblet Squat": {"Glutes":0.5},
+  "Walking Lunge": {"Glutes":0.5},
+  "Reverse Lunge": {"Glutes":0.5},
+  "Step-Up": {"Glutes":0.5},
+  "Conventional Deadlift": {"Glutes":0.5,"Back \u2013 Mid":0.5},
+  "Nordic Curl / Nordic Hamstring Curl": {"Glutes":0.25},
+  "Romanian Deadlift (RDL)": {"Glutes":0.5,"Back \u2013 Mid":0.25},
+  "Stiff-Leg Deadlift": {"Glutes":0.5,"Back \u2013 Mid":0.25},
+  "Stability Ball Leg Curl": {"Glutes":0.25},
+  "Good Morning": {"Glutes":0.5,"Back \u2013 Mid":0.25},
+  "Glute Ham Raise": {"Glutes":0.5},
+  "Sliding Leg Curl": {"Glutes":0.25},
+  "Pull-Through": {"Glutes":0.5},
+  "Hip Thrust": {"Hamstrings":0.5},
+  "Glute Bridge": {"Hamstrings":0.5},
+  "Pull-Up / Chin-Up": {"Back \u2013 Mid":0.25,"Biceps":0.5},
+  "Lat Pulldown": {"Back \u2013 Mid":0.25,"Biceps":0.5},
+  "Pullover": {"Chest":0.25},
+  "Inverted Row": {"Back \u2013 Mid":0.5,"Biceps":0.5},
+  "Bent-Over Row": {"Back \u2013 Lats":0.5,"Biceps":0.5},
+  "Seated Row": {"Back \u2013 Lats":0.5,"Biceps":0.5},
+  "Chest-Supported Row": {"Back \u2013 Lats":0.5,"Biceps":0.5},
+  "Pendlay Row": {"Back \u2013 Lats":0.5,"Biceps":0.5},
+  "Overhead Press": {"Triceps":0.25},
+  "Rear Delt Fly": {"Back \u2013 Mid":0.25},
+  "Face Pull": {"Back \u2013 Mid":0.5},
+  "Upright Row": {"Back \u2013 Mid":0.25},
+  "Arnold Press": {"Triceps":0.25},
+  "Push Press": {"Quads":0.25,"Triceps":0.25},
+  "Y Raise": {"Back \u2013 Mid":0.25},
+  "Pull-Apart": {"Back \u2013 Mid":0.25},
+  "Bench Press": {"Shoulders":0.5,"Triceps":0.5},
+  "Incline Press": {"Shoulders":0.5,"Triceps":0.5},
+  "Decline Press": {"Shoulders":0.25,"Triceps":0.5},
+  "Floor Press": {"Shoulders":0.25,"Triceps":0.5},
+  "Push-Up": {"Shoulders":0.25,"Triceps":0.5},
+  "Close-Grip Press": {"Shoulders":0.25,"Chest":0.5},
+  "Dip": {"Shoulders":0.25,"Chest":0.5},
+  "Ab Wheel Rollout": {"Back \u2013 Lats":0.25},
+  "Copenhagen Plank": {"Glutes":0.25},
+  "Front Squat": {"Glutes":0.5},
+  "Box Squat": {"Glutes":0.5},
+  "Pendulum Squat": {"Glutes":0.5},
+  "Belt Squat": {"Glutes":0.5},
+  "Sumo Deadlift": {"Hamstrings":0.5,"Back \u2013 Mid":0.5},
+  "Curtsy Lunge": {"Quads":0.5},
+  "Rack Pull": {"Hamstrings":0.5,"Glutes":0.25},
+  "Farmer Carry": {"Back \u2013 Mid":0.5},
+  "Back Extension (Prone)": {"Glutes":0.5},
+  "Hip Extension (45-Degree Bench)": {"Glutes":0.5}
 };
 
 var MIGRATION_MAP = {
@@ -1163,7 +1222,7 @@ var MIGRATION_MAP = {
   "Resistance Band Row": {canonical:"Bent-Over Row",equipment:"Band"},
   "Kneeling Band Row": {canonical:"Bent-Over Row",equipment:"Band"},
   "Single-Arm Band Row": {canonical:"Bent-Over Row",equipment:"Band"},
-  "Weighted Back Extension": {canonical:"Back Extension",equipment:"Bodyweight"},
+  "Weighted Back Extension": {canonical:"Back Extension (Prone)",equipment:"Dumbbell"},
   "Machine Row (Chest-Supported)": {canonical:"Chest-Supported Row",equipment:"Pin-Select Machine"},
   "Smith Machine Row": {canonical:"Bent-Over Row",equipment:"Smith Machine"},
   "Arnold Press": {canonical:"Arnold Press",equipment:"Dumbbell"},
@@ -1310,9 +1369,15 @@ var MIGRATION_MAP = {
   "Shrug": {canonical:"Shrug",equipment:"Barbell"},
   "Rack Pull": {canonical:"Rack Pull",equipment:"Barbell"},
   "Farmer Carry": {canonical:"Farmer Carry",equipment:"Dumbbell"},
-  "Trap Bar Deadlift": {canonical:"Conventional Deadlift",equipment:"Other"}
+  "Trap Bar Deadlift": {canonical:"Conventional Deadlift",equipment:"Other"},
+  "Back Extension": {canonical:"Back Extension (Prone)",equipment:"Bodyweight"},
+  "45 Degree Back Extension": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
+  "Single Leg 45 Degree Back Extension": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
+  "Hip Extension (45-Degree Bench)": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
+  "Back Extension (Prone)": {canonical:"Back Extension (Prone)",equipment:"Bodyweight"}
 };
 
+// ── EXERCISE LIBRARY ──
 var BUILT_IN = [
   {id:1,name:"Squat",group:"Quads",muscles:"Quads",type:"Compound"},
   {id:2,name:"Hack Squat",group:"Quads",muscles:"Quads",type:"Compound"},
@@ -1327,7 +1392,7 @@ var BUILT_IN = [
   {id:11,name:"Sissy Squat",group:"Quads",muscles:"Quads",type:"Isolation"},
   {id:12,name:"Wall Sit",group:"Quads",muscles:"Quads",type:"Stability"},
   {id:13,name:"Terminal Knee Extension",group:"Quads",muscles:"Quads",type:"Isolation"},
-  {id:14,name:"Conventional Deadlift",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:14,name:"Conventional Deadlift",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
   {id:15,name:"Nordic Curl / Nordic Hamstring Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
   {id:16,name:"Romanian Deadlift (RDL)",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
   {id:17,name:"Seated Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"},
@@ -1346,81 +1411,82 @@ var BUILT_IN = [
   {id:30,name:"Seated Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
   {id:31,name:"Leg Press Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
   {id:32,name:"Donkey Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
-  {id:33,name:"Pull-Up / Chin-Up",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Compound"},
-  {id:34,name:"Lat Pulldown",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Compound"},
-  {id:35,name:"Straight-Arm Pulldown",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Isolation"},
-  {id:36,name:"Pullover",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Isolation"},
-  {id:37,name:"Inverted Row",group:"Back \u2013 Lats",muscles:"Back \u2013 Lats",type:"Compound"},
-  {id:38,name:"Bent-Over Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:39,name:"Seated Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:40,name:"Chest-Supported Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:41,name:"Back Extension",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:42,name:"Pendlay Row",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:43,name:"Overhead Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
-  {id:44,name:"Lateral Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
-  {id:45,name:"Rear Delt Fly",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
-  {id:46,name:"Face Pull",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
-  {id:47,name:"Upright Row",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
-  {id:48,name:"Front Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
-  {id:49,name:"Arnold Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
-  {id:50,name:"Push Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
-  {id:51,name:"Y Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
-  {id:52,name:"Pull-Apart",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
-  {id:53,name:"Bench Press",group:"Chest",muscles:"Chest",type:"Compound"},
-  {id:54,name:"Incline Press",group:"Chest",muscles:"Chest",type:"Compound"},
-  {id:55,name:"Decline Press",group:"Chest",muscles:"Chest",type:"Compound"},
-  {id:56,name:"Floor Press",group:"Chest",muscles:"Chest",type:"Compound"},
-  {id:57,name:"Chest Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
-  {id:58,name:"Incline Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
-  {id:59,name:"Decline Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
-  {id:60,name:"Push-Up",group:"Chest",muscles:"Chest",type:"Compound"},
-  {id:61,name:"Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:62,name:"Hammer Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:63,name:"Preacher Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:64,name:"Incline Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:65,name:"Spider Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:66,name:"Concentration Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:67,name:"Reverse Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:68,name:"Zottman Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
-  {id:69,name:"Overhead Triceps Extension",group:"Triceps",muscles:"Triceps",type:"Isolation"},
-  {id:70,name:"Triceps Pushdown",group:"Triceps",muscles:"Triceps",type:"Isolation"},
-  {id:71,name:"Skull Crusher",group:"Triceps",muscles:"Triceps",type:"Isolation"},
-  {id:72,name:"Triceps Kickback",group:"Triceps",muscles:"Triceps",type:"Isolation"},
-  {id:73,name:"Close-Grip Press",group:"Triceps",muscles:"Triceps",type:"Compound"},
-  {id:74,name:"Seated Tricep Extension",group:"Triceps",muscles:"Triceps",type:"Isolation"},
-  {id:75,name:"Dip",group:"Triceps",muscles:"Triceps",type:"Compound"},
-  {id:76,name:"Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:77,name:"Side Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:78,name:"Dead Bug",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:79,name:"Bird Dog",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:80,name:"Hollow Body Hold",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:81,name:"Pallof Press",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:82,name:"Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:83,name:"Decline Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:84,name:"Hanging Knee / Leg Raise",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:85,name:"Toes to Bar",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:86,name:"Windshield Wiper",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:87,name:"Bicycle Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:88,name:"Russian Twist",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:89,name:"Ab Wheel Rollout",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
-  {id:90,name:"Side Bend",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:91,name:"Cable Woodchop",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
-  {id:92,name:"Landmine Twist",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
-  {id:93,name:"Dragon Flag",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
-  {id:94,name:"V-Up",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:95,name:"Mountain Climber",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
-  {id:96,name:"Copenhagen Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
-  {id:97,name:"Captain's Chair Raise",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
-  {id:98,name:"Front Squat",group:"Quads",muscles:"Quads",type:"Compound"},
-  {id:99,name:"Box Squat",group:"Quads",muscles:"Quads",type:"Compound"},
-  {id:100,name:"Pendulum Squat",group:"Quads",muscles:"Quads",type:"Compound"},
-  {id:101,name:"Belt Squat",group:"Quads",muscles:"Quads",type:"Compound"},
-  {id:102,name:"Sumo Deadlift",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
-  {id:103,name:"Curtsy Lunge",group:"Glutes",muscles:"Glutes",type:"Compound"},
-  {id:104,name:"Tibialis Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
-  {id:105,name:"Shrug",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Isolation"},
-  {id:106,name:"Rack Pull",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:107,name:"Farmer Carry",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"}
+  {id:33,name:"Pull-Up / Chin-Up",group:"Back \\u2013 Lats",muscles:"Back \\u2013 Lats",type:"Compound"},
+  {id:34,name:"Lat Pulldown",group:"Back \\u2013 Lats",muscles:"Back \\u2013 Lats",type:"Compound"},
+  {id:35,name:"Straight-Arm Pulldown",group:"Back \\u2013 Lats",muscles:"Back \\u2013 Lats",type:"Isolation"},
+  {id:36,name:"Pullover",group:"Back \\u2013 Lats",muscles:"Back \\u2013 Lats",type:"Isolation"},
+  {id:37,name:"Inverted Row",group:"Back \\u2013 Lats",muscles:"Back \\u2013 Lats",type:"Compound"},
+  {id:38,name:"Bent-Over Row",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Compound"},
+  {id:39,name:"Seated Row",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Compound"},
+  {id:40,name:"Chest-Supported Row",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Compound"},
+  {id:41,name:"Pendlay Row",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Compound"},
+  {id:42,name:"Overhead Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:43,name:"Lateral Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:44,name:"Rear Delt Fly",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:45,name:"Face Pull",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:46,name:"Upright Row",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:47,name:"Front Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:48,name:"Arnold Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:49,name:"Push Press",group:"Shoulders",muscles:"Shoulders",type:"Compound"},
+  {id:50,name:"Y Raise",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:51,name:"Pull-Apart",group:"Shoulders",muscles:"Shoulders",type:"Isolation"},
+  {id:52,name:"Bench Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:53,name:"Incline Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:54,name:"Decline Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:55,name:"Floor Press",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:56,name:"Chest Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
+  {id:57,name:"Incline Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
+  {id:58,name:"Decline Fly",group:"Chest",muscles:"Chest",type:"Isolation"},
+  {id:59,name:"Push-Up",group:"Chest",muscles:"Chest",type:"Compound"},
+  {id:60,name:"Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:61,name:"Hammer Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:62,name:"Preacher Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:63,name:"Incline Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:64,name:"Spider Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:65,name:"Concentration Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:66,name:"Reverse Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:67,name:"Zottman Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:68,name:"Overhead Triceps Extension",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:69,name:"Triceps Pushdown",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:70,name:"Skull Crusher",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:71,name:"Triceps Kickback",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:72,name:"Close-Grip Press",group:"Triceps",muscles:"Triceps",type:"Compound"},
+  {id:73,name:"Seated Tricep Extension",group:"Triceps",muscles:"Triceps",type:"Isolation"},
+  {id:74,name:"Dip",group:"Triceps",muscles:"Triceps",type:"Compound"},
+  {id:75,name:"Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:76,name:"Side Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:77,name:"Dead Bug",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:78,name:"Bird Dog",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:79,name:"Hollow Body Hold",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:80,name:"Pallof Press",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:81,name:"Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:82,name:"Decline Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:83,name:"Hanging Knee / Leg Raise",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:84,name:"Toes to Bar",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:85,name:"Windshield Wiper",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:86,name:"Bicycle Crunch",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:87,name:"Russian Twist",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:88,name:"Ab Wheel Rollout",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:89,name:"Side Bend",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:90,name:"Cable Woodchop",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:91,name:"Landmine Twist",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:92,name:"Dragon Flag",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:93,name:"V-Up",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:94,name:"Mountain Climber",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:95,name:"Copenhagen Plank",group:"Abs & Core",muscles:"Abs & Core",type:"Stability"},
+  {id:96,name:"Captain's Chair Raise",group:"Abs & Core",muscles:"Abs & Core",type:"Isolation"},
+  {id:97,name:"Front Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:98,name:"Box Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:99,name:"Pendulum Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:100,name:"Belt Squat",group:"Quads",muscles:"Quads",type:"Compound"},
+  {id:101,name:"Sumo Deadlift",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:102,name:"Curtsy Lunge",group:"Glutes",muscles:"Glutes",type:"Compound"},
+  {id:103,name:"Tibialis Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
+  {id:104,name:"Shrug",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Isolation"},
+  {id:105,name:"Rack Pull",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Compound"},
+  {id:106,name:"Farmer Carry",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
+  {id:107,name:"Back Extension (Prone)",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
+  {id:108,name:"Hip Extension (45-Degree Bench)",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"}
 ];
 
 // ── STATE ──
@@ -1450,20 +1516,34 @@ function allExercises(){return BUILT_IN.concat(customExercises);}
 // ── LOAD ALL ──
 
 function migrateSessionHistory(){
-  if(lsGet('op-migrated-v2')) return;
-  var changed=false;
-  sessionHistory.forEach(function(sess){
-    sess.exercises.forEach(function(ex){
-      if(ex.name&&MIGRATION_MAP[ex.name]&&!ex._migrated){
-        var mapped=MIGRATION_MAP[ex.name];
-        if(!ex.canonicalName) ex.canonicalName=mapped.canonical;
-        if(!ex.equipment) ex.equipment=mapped.equipment;
-        ex._migrated=true;changed=true;
-      }
+  // v2: canonical name + equipment tagging
+  if(!lsGet('op-migrated-v2')){
+    var ch2=false;
+    sessionHistory.forEach(function(sess){
+      sess.exercises.forEach(function(ex){
+        if(ex.name&&MIGRATION_MAP[ex.name]&&!ex._migrated){
+          var mapped=MIGRATION_MAP[ex.name];
+          if(!ex.canonicalName) ex.canonicalName=mapped.canonical;
+          if(!ex.equipment) ex.equipment=mapped.equipment;
+          ex._migrated=true;ch2=true;
+        }
+      });
     });
-  });
-  if(changed) lsSet('op-history',sessionHistory);
-  lsSet('op-migrated-v2',true);
+    if(ch2) lsSet('op-history',sessionHistory);
+    lsSet('op-migrated-v2',true);
+  }
+  // v3: Back Extension → Back Extension (Prone)
+  if(!lsGet('op-migrated-v3')){
+    var ch3=false;
+    sessionHistory.forEach(function(sess){
+      sess.exercises.forEach(function(ex){
+        if(ex.name==='Back Extension'){ex.name='Back Extension (Prone)';ch3=true;}
+        if(ex.canonicalName==='Back Extension'){ex.canonicalName='Back Extension (Prone)';ch3=true;}
+      });
+    });
+    if(ch3) lsSet('op-history',sessionHistory);
+    lsSet('op-migrated-v3',true);
+  }
 }
 
 function loadAll(){
@@ -1669,11 +1749,13 @@ function renderLibrary(){
       var rrDisplay=rr.min+'–'+rr.max;
       var rrColor=isCustomRR?'var(--gold)':'var(--muted)';
       html+='<div class="ex-item'+(e.custom?' custom-ex':'')+'" id="lib-ex-'+e.id+'">'+
+        (e.custom?'<div style="display:flex;gap:6px;padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid rgba(255,255,255,0.06);"><button class="lib-custom-edit" data-cid="'+e.id+'">&#9998; Edit</button><button class="lib-custom-del" data-cid="'+e.id+'">&times; Delete</button></div>':'')+
+        '<div style="display:flex;align-items:flex-start;gap:6px;">'+
         '<div style="flex:1"><div class="ex-name">'+e.name+'</div>'+
         '<div style="font-size:11px;color:var(--dim);margin-top:2px;">'+(e.muscles||'')+'</div></div>'+
         '<div class="ex-meta" style="gap:6px;align-items:center;">'+
           '<span class="ex-badge badge-'+tc+'">'+e.type+'</span>'+
-          (e.custom?'<span class="ex-badge badge-custom">Custom</span>'+'<button class="lib-custom-edit" data-cid="'+e.id+'">Edit</button>'+'<button class="lib-custom-del" data-cid="'+e.id+'">Delete</button>':'')+
+          (e.custom?'<span class="ex-badge badge-custom">Custom</span>':'')+
           '<div class="lib-rr-edit" data-exid="'+e.id+'" data-exname="'+e.name+'">'+
             '<input class="lib-rr-input" type="number" value="'+rr.min+'" min="1" max="50" data-rr="min" style="border-color:'+(isCustomRR?'var(--gold)':'var(--border)')+'">'+
             '<span class="lib-rr-sep">–</span>'+
@@ -1681,7 +1763,7 @@ function renderLibrary(){
             '<button class="lib-rr-save" data-rrsave="'+e.name.replace(/'/g,"&#39;")+'">✓</button>'+
             (isCustomRR?'<button class="lib-rr-reset" data-rrreset="'+e.name.replace(/'/g,"&#39;")+'">✕</button>':'')+
           '</div>'+
-        '</div></div>';
+        '</div></div></div>';
     });
     div.innerHTML=html;container.appendChild(div);
   });
@@ -2877,12 +2959,28 @@ function renderVolumeTab(){
       var grp=lib?lib.group:'Other';
       var sets=(ex.curr.reps||[]).filter(function(r){return parseFloat(r)>0;}).length;
       var totalReps=(ex.curr.reps||[]).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
-      if(!weekMap[wk].groups[grp]) weekMap[wk].groups[grp]={sets:0,exercises:{}};
+      // Direct (primary) volume
+      if(!weekMap[wk].groups[grp]) weekMap[wk].groups[grp]={sets:0,directSets:0,indirectSets:0,exercises:{}};
       weekMap[wk].groups[grp].sets+=sets;
-      if(!weekMap[wk].groups[grp].exercises[ex.name]) weekMap[wk].groups[grp].exercises[ex.name]={sets:0,totalReps:0};
+      weekMap[wk].groups[grp].directSets+=sets;
+      if(!weekMap[wk].groups[grp].exercises[ex.name]) weekMap[wk].groups[grp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,totalReps:0};
       weekMap[wk].groups[grp].exercises[ex.name].sets+=sets;
+      weekMap[wk].groups[grp].exercises[ex.name].directSets+=sets;
       weekMap[wk].groups[grp].exercises[ex.name].totalReps+=totalReps;
       weekMap[wk].totalSets+=sets;
+      // Indirect (secondary) volume
+      var exSecondary=SECONDARY_MAP[ex.canonicalName||ex.name]||{};
+      Object.keys(exSecondary).forEach(function(secGrp){
+        var credit=exSecondary[secGrp]||0;
+        var indirectSets=sets*credit;
+        if(!weekMap[wk].groups[secGrp]) weekMap[wk].groups[secGrp]={sets:0,directSets:0,indirectSets:0,exercises:{}};
+        weekMap[wk].groups[secGrp].sets+=indirectSets;
+        weekMap[wk].groups[secGrp].indirectSets+=indirectSets;
+        if(!weekMap[wk].groups[secGrp].exercises[ex.name]) weekMap[wk].groups[secGrp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,totalReps:0};
+        weekMap[wk].groups[secGrp].exercises[ex.name].sets+=indirectSets;
+        weekMap[wk].groups[secGrp].exercises[ex.name].indirectSets+=indirectSets;
+        weekMap[wk].totalSets+=indirectSets;
+      });
     });
   });
 
@@ -2904,7 +3002,7 @@ function renderVolumeTab(){
   // ── MEV consistency (item 6) ──
   var mevConsistency={};
   MUSCLE_GROUPS.forEach(function(g){
-    var hitsArr=weeks.map(function(wk){return (weekMap[wk].groups[g]||{sets:0}).sets>=MEV;});
+    var hitsArr=weeks.map(function(wk){return (weekMap[wk].groups[g]||{directSets:0}).directSets>=MEV;});
     var hits=hitsArr.filter(Boolean).length;
     mevConsistency[g]={hits:hits,total:weeks.length,pct:weeks.length?Math.round(hits/weeks.length*100):0};
   });
@@ -2917,27 +3015,27 @@ function renderVolumeTab(){
   weeks.forEach(function(wk){
     var wkGroups=weekMap[wk].groups;
     pushGroups.forEach(function(g){
-      pushTotal+=(wkGroups[g]||{sets:0}).sets;
+      pushTotal+=(wkGroups[g]||{directSets:0}).directSets;
       if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
-        pushEx[ex]=(pushEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+        pushEx[ex]=(pushEx[ex]||0)+(wkGroups[g].exercises[ex].directSets||0);
       });
     });
     pullGroups.forEach(function(g){
-      pullTotal+=(wkGroups[g]||{sets:0}).sets;
+      pullTotal+=(wkGroups[g]||{directSets:0}).directSets;
       if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
-        pullEx[ex]=(pullEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+        pullEx[ex]=(pullEx[ex]||0)+(wkGroups[g].exercises[ex].directSets||0);
       });
     });
     quadGroups.forEach(function(g){
-      quadTotal+=(wkGroups[g]||{sets:0}).sets;
+      quadTotal+=(wkGroups[g]||{directSets:0}).directSets;
       if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
-        quadEx[ex]=(quadEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+        quadEx[ex]=(quadEx[ex]||0)+(wkGroups[g].exercises[ex].directSets||0);
       });
     });
     hamGroups.forEach(function(g){
-      hamTotal+=(wkGroups[g]||{sets:0}).sets;
+      hamTotal+=(wkGroups[g]||{directSets:0}).directSets;
       if(wkGroups[g]) Object.keys(wkGroups[g].exercises).forEach(function(ex){
-        hamEx[ex]=(hamEx[ex]||0)+wkGroups[g].exercises[ex].sets;
+        hamEx[ex]=(hamEx[ex]||0)+(wkGroups[g].exercises[ex].directSets||0);
       });
     });
   });
@@ -3091,14 +3189,14 @@ function renderVolumeTab(){
         else if(sets<prevSets) trend='<span style="color:var(--red);font-size:11px;margin-left:3px;">&#9660;</span>';
         else trend='<span style="color:var(--muted);font-size:10px;margin-left:3px;">&mdash;</span>';
       }
-      var mevColor=sets>=MEV?'var(--cyan)':'var(--muted)';
+      var mevColor=directS>=MEV?'var(--cyan)':'var(--muted)';
       var mevTip=sets<MEV?'<span style="font-size:9px;color:var(--muted);margin-left:4px;">'+(MEV-sets)+' to MEV</span>':'';
       var exDrillId='exdrill-'+wk.replace('-','_')+'-'+grp.replace(/[^a-z0-9]/gi,'_');
       html+='<div style="border-bottom:1px solid var(--border);">';
       html+='<div data-drill="'+exDrillId+'" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;">'+
         '<div style="min-width:100px;font-size:12px;font-weight:500;display:flex;align-items:center;">'+grp+trend+'</div>'+
         '<div style="flex:1;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+mevColor+';border-radius:4px;"></div></div>'+
-        '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+sets+' sets</div>'+
+        '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+Math.round(directS*10)/10+' direct · '+Math.round(indirectS*10)/10+' indirect</div>'+
         mevTip+
         '<span style="color:var(--muted);font-size:10px;">&#9660;</span>'+
       '</div>';

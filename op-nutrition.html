@@ -528,6 +528,11 @@ function loadAll(){
   }
   applySettings();
   checkRecalibration();
+  // Daily is the tab shown on first load — render its content now rather than waiting
+  // for a nav click, otherwise the page looks inert (empty history, no banner) until
+  // the user taps away and back.
+  renderDaily();
+  renderRecalBanner('recal-banner-daily');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1038,6 +1043,12 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
   var tgt=getActiveTarget(type);
   var entry={date:date,type:type,cal:cal,protein:protein,carbs:carbs,fat:fat,weight:logWeight,processed:processed,confidence:confidence,fibre:fibre,
     targetCal:tgt?tgt.cal:null,targetProtein:tgt?tgt.protein:null,targetCarbs:tgt?tgt.carbs:null,targetFat:tgt?tgt.fat:null};
+  // If we were editing an existing entry and the date field was changed to a different day,
+  // remove the original entry first — otherwise it's left behind as an orphaned duplicate.
+  if(editingDate&&editingDate!==date){
+    var staleIdx=dailyLog.findIndex(function(d){return d.date===editingDate;});
+    if(staleIdx>-1) dailyLog.splice(staleIdx,1);
+  }
   var existing=dailyLog.findIndex(function(d){return d.date===date;});
   if(existing>-1){dailyLog[existing]=entry;showToast('Entry updated ✓');}
   else{dailyLog.push(entry);dailyLog.sort(function(a,b){return b.date.localeCompare(a.date);});showToast('Entry saved ✓');}
@@ -1296,7 +1307,8 @@ function renderETA(){
   } else if(eta.status==='flat'){
     el.innerHTML='<div class="eta-card"><div class="eta-headline">Trend is essentially flat</div><div class="eta-sub">No clear direction over the last 4 weeks yet — keep logging and this will sharpen.</div></div>';
   } else if(eta.status==='wrong-direction'){
-    el.innerHTML='<div class="eta-card" style="border-color:rgba(255,184,0,0.35)"><div class="eta-headline">Current trend is moving away from your goal</div><div class="eta-sub">Rate: '+(eta.weeklyRate>0?'+':'')+eta.weeklyRate+' '+unit+'/week. Goal weight is '+eta.goalKg.toFixed?eta.goalKg:eta.goalKg+' kg away in the wrong direction — worth reviewing intake against your target above.</div></div>';
+    var awayKg=Math.abs(Math.round((eta.currentKg-eta.goalKg)*10)/10);
+    el.innerHTML='<div class="eta-card" style="border-color:rgba(255,184,0,0.35)"><div class="eta-headline">Current trend is moving away from your goal</div><div class="eta-sub">Rate: '+(eta.weeklyRate>0?'+':'')+eta.weeklyRate+' '+unit+'/week. You\'re currently '+awayKg+' kg from your goal weight and the trend is heading the wrong way — worth reviewing intake against your target above.</div></div>';
   } else {
     el.innerHTML='<div class="eta-card"><div class="eta-headline">On track for '+formatDate(eta.etaDate)+'</div><div class="eta-sub">At your current logged rate of '+(eta.weeklyRate>0?'+':'')+eta.weeklyRate+' '+unit+'/week, based on the last 4 weeks.</div></div>';
   }

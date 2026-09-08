@@ -268,9 +268,9 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 /* SHARE CARD */
 .share-btn-wrap{padding:12px 16px 0;text-align:right;}
-.equip-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.equip-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding-top:env(safe-area-inset-top,0px);opacity:0;pointer-events:none;transition:opacity 0.2s;}
 .equip-picker-overlay.open{opacity:1;pointer-events:all;}
-.equip-picker-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:70vh;overflow-y:auto;padding:20px 16px 40px;transform:translateY(20px);transition:transform 0.2s;}
+.equip-picker-sheet{background:var(--surface);border-radius:0 0 20px 20px;width:100%;max-height:75vh;overflow-y:auto;padding:16px 16px 32px;transform:translateY(-20px);transition:transform 0.2s;}
 .equip-picker-overlay.open .equip-picker-sheet{transform:translateY(0);}
 .equip-picker-title{font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px;}
 .equip-picker-ex{font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;}
@@ -326,7 +326,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .onboard-annotation:last-of-type+.onboard-annotation-text{margin-bottom:0;}
 
 /* CUSTOM MODALS */
-.custom-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.custom-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:env(safe-area-inset-top,0px);opacity:0;pointer-events:none;transition:opacity 0.2s;}
 .custom-modal-overlay.open{opacity:1;pointer-events:all;}
 .custom-modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-height:80vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s;-webkit-overflow-scrolling:touch;}
 .custom-modal-overlay.open .custom-modal{transform:translateY(0);}
@@ -830,6 +830,10 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <button class="rest-preset-btn active" data-secs="120">2 min</button>
     <button class="rest-preset-btn" data-secs="180">3 min</button>
     </div>
+  <div style="display:flex;gap:10px;margin-top:16px;justify-content:center;">
+    <button id="rest-start-btn" onclick="toggleRestTimer()" style="background:var(--cyan);border:none;border-radius:10px;color:#000;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:12px 0;flex:1;">Start</button>
+    <button id="rest-reset-btn" onclick="resetRestTimer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:12px 20px;">Reset</button>
+  </div>
   </div><!-- end rest-sheet -->
 </div>
 
@@ -950,7 +954,9 @@ var EQUIPMENT_MAP = {
   "Rack Pull": ["Barbell"],
   "Farmer Carry": ["Dumbbell","Kettlebell","Other"],
   "Back Extension (Prone)": ["Bodyweight"],
-  "Hip Extension (45-Degree Bench)": ["Bodyweight","Dumbbell","Plate-Loaded Machine"]
+  "Hip Extension (45-Degree Bench)": ["Bodyweight","Dumbbell","Plate-Loaded Machine"],
+  "Hammer Preacher Curl": ["Dumbbell","EZ Bar","Cable","Pin-Select Machine"],
+  "Machine Chest Press": ["Pin-Select Machine","Plate-Loaded Machine","Cable"]
 };
 
 var BILAT_MAP = {
@@ -1061,7 +1067,9 @@ var BILAT_MAP = {
   "Rack Pull": "bilateral",
   "Farmer Carry": "bilateral",
   "Back Extension (Prone)": "both",
-  "Hip Extension (45-Degree Bench)": "both"
+  "Hip Extension (45-Degree Bench)": "both",
+  "Hammer Preacher Curl": "both",
+  "Machine Chest Press": "bilateral"
 };
 
 var SECONDARY_MAP = {
@@ -1374,7 +1382,9 @@ var MIGRATION_MAP = {
   "45 Degree Back Extension": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
   "Single Leg 45 Degree Back Extension": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
   "Hip Extension (45-Degree Bench)": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
-  "Back Extension (Prone)": {canonical:"Back Extension (Prone)",equipment:"Bodyweight"}
+  "Back Extension (Prone)": {canonical:"Back Extension (Prone)",equipment:"Bodyweight"},
+  "Hammer Preacher Curl": {canonical:"Hammer Preacher Curl",equipment:"Dumbbell"},
+  "Machine Chest Press": {canonical:"Machine Chest Press",equipment:"Pin-Select Machine"}
 };
 
 // ── EXERCISE LIBRARY ──
@@ -1486,7 +1496,9 @@ var BUILT_IN = [
   {id:105,name:"Rack Pull",group:"Back \\u2013 Mid",muscles:"Back \\u2013 Mid",type:"Compound"},
   {id:106,name:"Farmer Carry",group:"Abs & Core",muscles:"Abs & Core",type:"Compound"},
   {id:107,name:"Back Extension (Prone)",group:"Back \u2013 Mid",muscles:"Back \u2013 Mid",type:"Compound"},
-  {id:108,name:"Hip Extension (45-Degree Bench)",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"}
+  {id:108,name:"Hip Extension (45-Degree Bench)",group:"Hamstrings",muscles:"Hamstrings",type:"Compound"},
+  {id:109,name:"Hammer Preacher Curl",group:"Biceps",muscles:"Biceps",type:"Isolation"},
+  {id:110,name:"Machine Chest Press",group:"Chest",muscles:"Chest",type:"Compound"}
 ];
 
 // ── STATE ──
@@ -1935,15 +1947,22 @@ function getProgressionTarget(exName,bilatMode,equipment){
   var lastReps=(last.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
   var lastAvg=lastReps.length?Math.round(lastReps.reduce(function(a,b){return a+b;},0)/lastReps.length):0;
 
-  if(lastCeiling&&prevCeiling){
+  // Load continuity: both sessions must be at same load for ceiling to count
+  var prevLoad=parseFloat(prev.load)||0;
+  var sameLoad=lastLoad>0&&prevLoad>0&&lastLoad===prevLoad;
+
+  if(lastCeiling&&prevCeiling&&sameLoad){
+    // Both sessions hit ceiling at same load — ready to progress
     return {type:'increase',load:lastLoad,maxReps:maxReps,
-      text:'Increase load — hit '+maxReps+' reps 2 sessions running'};
-  } else if(lastCeiling&&!prevCeiling){
+      text:'Ready to increase load — hit '+maxReps+' reps '+2+' sessions at '+lastLoad+(settings.unit||'kg')};
+  } else if(lastCeiling&&(!prevCeiling||!sameLoad)){
+    // Hit ceiling this session but not confirmed yet (either first time or load just changed)
     return {type:'repeat',load:lastLoad,maxReps:maxReps,
-      text:'Target: '+lastLoad+(settings.unit||'kg')+' × '+maxReps+' — repeat to confirm'};
+      text:'Target: '+lastLoad+(settings.unit||'kg')+' × '+maxReps+' reps — repeat to confirm'};
   } else {
+    // Not at ceiling — keep building reps
     return {type:'build',load:lastLoad,current:lastAvg,maxReps:maxReps,
-      text:'Target: '+lastLoad+(settings.unit||'kg')+' × aim for '+maxReps+' per set (last: '+lastAvg+')'};
+      text:'Target: '+lastLoad+(settings.unit||'kg')+' × aim for '+maxReps+' per set'+(lastAvg?' (last avg: '+lastAvg+')':'')};
   }
 }
 
@@ -2546,14 +2565,15 @@ function createSearchableDropdown(card,selectedName){
     searchIn.addEventListener('mousedown',function(e){e.stopPropagation();});
     searchWrap.appendChild(searchIn);dropdown.appendChild(searchWrap);
     var listEl=document.createElement('div');listEl.className='ex-dropdown-list';listEl.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;';
-    dropdown.appendChild(listEl);buildList('');
-    var rect=display.getBoundingClientRect();
-    var spaceBelow=window.innerHeight-rect.bottom-8;
-    var maxH=Math.min(Math.max(spaceBelow,120),window.innerHeight*0.55);
-    dropdown.style.maxHeight=Math.round(maxH)+'px';dropdown.style.width=Math.round(window.innerWidth-32)+'px';
-    dropdown.style.left='16px';dropdown.style.position='fixed';dropdown.style.zIndex='9999';dropdown.style.boxShadow='0 8px 32px rgba(0,0,0,0.6)';
-    if(spaceBelow>=120) dropdown.style.top=(rect.bottom+4)+'px';
-    else{dropdown.style.bottom=(window.innerHeight-rect.top+4)+'px';dropdown.style.top='auto';}
+    dropdown.appendChild(listEl);buildList('');searchIn.focus();
+    // Position at top of screen so keyboard doesn't cover it
+    var safeTop=44; // status bar clearance
+    var maxH=Math.round(window.innerHeight*0.6);
+    dropdown.style.maxHeight=maxH+'px';
+    dropdown.style.width=Math.round(window.innerWidth-32)+'px';
+    dropdown.style.left='16px';dropdown.style.top=safeTop+'px';
+    dropdown.style.position='fixed';dropdown.style.zIndex='9999';
+    dropdown.style.boxShadow='0 8px 32px rgba(0,0,0,0.6)';
     document.body.appendChild(dropdown);
     setTimeout(function(){searchIn.focus();},80);
   }
@@ -2912,10 +2932,8 @@ document.getElementById('ps-done-btn').addEventListener('click',function(){
     lsSet('op-history',sessionHistory);
   }
   document.getElementById('post-session-overlay').classList.remove('open');
-  // Reset for next session
-  var prevSess=sessionHistory[sessionHistory.length-1];
-  var nextEx=prevSess?prevSess.exercises.map(function(ex){return {name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}};})  :[];
-  currentSession={date:'',workout:'',notes:'',exercises:nextEx};
+  // Reset to blank for next session
+  currentSession={date:'',workout:'',notes:'',exercises:[]};
   lsSet('op-current',currentSession);draftSessionId=null;
   initSession();showToast('Session saved ✓');haptic('save');
 });
@@ -3385,6 +3403,8 @@ function getLogsForExercise(name,bilatFilter,equipment){
       var mode=ex.bilat||'bilateral';
       if(bilatFilter&&bilatFilter!=='both'&&mode!==bilatFilter) return;
       if(equipment&&ex.equipment&&ex.equipment!==equipment) return;
+      // If equipment specified but entry has none (old/untagged), skip to avoid bleed-through
+      if(equipment&&!ex.equipment) return;
       logs.push({sessId:sess.id,exIdx:exIdx,date:sess.date,workout:sess.workout,
         load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,bilat:mode,
         equipment:ex.equipment||''});
@@ -3561,6 +3581,20 @@ function enrichLogs(logs){
     if(load>maxLoad)maxLoad=load;if(avg>maxAvg)maxAvg=avg;
     return {load:load,avgReps:avg,date:l.date};
   });
+}
+
+function showChartTooltip(evt,load,reps,date,unit,rpe){
+  var tip=document.getElementById('chart-tooltip');
+  if(!tip){tip=document.createElement('div');tip.id='chart-tooltip';tip.className='chart-tooltip';document.body.appendChild(tip);}
+  var repsArr=(reps||[]).filter(function(r){return r&&parseFloat(r)>0;}).map(function(r){return parseFloat(r);});
+  tip.innerHTML='<div class="chart-tooltip-date">'+(date||'')+'</div>'+
+    '<div class="chart-tooltip-load">'+(load||'')+(unit||'kg')+'</div>'+
+    '<div class="chart-tooltip-reps">'+repsArr.join(', ')+' reps'+(rpe?' · RPE '+rpe:'')+'</div>';
+  var tw=tip.offsetWidth||140;
+  tip.style.display='block';
+  tip.style.left=Math.min(evt.clientX-tw/2,window.innerWidth-tw-8)+'px';
+  tip.style.top=Math.max(8,evt.clientY-80)+'px';
+  clearTimeout(tip._t);tip._t=setTimeout(function(){tip.style.display='none';},3000);
 }
 
 function drawChartBoth(bilatLogs,uniLogs){
@@ -4233,7 +4267,9 @@ var BUBBLE_CIRCUMFERENCE=144.5;
 function openRestTimer(){
   document.getElementById('rest-overlay').classList.add('open');
   document.body.style.overflow='hidden';
-  updateRestDisplay();
+  var sb=document.getElementById('rest-start-btn');
+  if(sb) sb.textContent=restRunning?'Pause':(restExpired?'New Timer':'Start');
+  updateRestDisplay();updateBubble();
 }
 
 function handleRestOverlayClick(e){
@@ -4300,6 +4336,8 @@ function resetRestTimer(){
   clearInterval(restInterval);
   restRunning=false;restExpired=false;restRemaining=restSecs;
   restStartTime=null;restElapsedAtPause=0;
+  var startBtn=document.getElementById('rest-start-btn');
+  if(startBtn) startBtn.textContent='Start';
   document.getElementById('rest-start-btn').textContent='Start';
   document.getElementById('rest-overlay').classList.remove('expired');
   document.getElementById('rest-expired-content').style.display='none';
@@ -4414,8 +4452,24 @@ document.getElementById('save-rep-ranges-btn').addEventListener('click',function
   showToast('Rep ranges saved ✓');
 });
 
+// ── REP RANGE SAVE
+
+document.getElementById('save-rep-ranges-btn').addEventListener('click',function(){
+  ['compound','isolation','stability'].forEach(function(type){
+    ['min','max'].forEach(function(mm){
+      var el=document.getElementById('s-'+type+'-'+mm);
+      var key=type+(mm==='min'?'Min':'Max');
+      if(el) settings[key]=parseInt(el.value)||settings[key];
+    });
+  });
+  lsSet('op-settings',settings);
+  showToast('Rep ranges saved ✓');
+});
+
+
 // ── INIT ──
 loadAll();
+
 </script>
 </body>
 </html>

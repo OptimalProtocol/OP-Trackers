@@ -830,14 +830,15 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <button class="rest-preset-btn active" data-secs="120">2 min</button>
     <button class="rest-preset-btn" data-secs="180">3 min</button>
     </div>
-  <div style="display:flex;gap:10px;margin-top:16px;justify-content:center;">
-    <button id="rest-start-btn" onclick="toggleRestTimer()" style="background:var(--cyan);border:none;border-radius:10px;color:#000;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:12px 0;flex:1;">Start</button>
-    <button id="rest-reset-btn" onclick="resetRestTimer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:12px 0;flex:1;">Reset</button>
+  <div style="display:flex;gap:10px;margin-top:16px;width:100%;">
+    <button id="rest-start-btn" onclick="toggleRestTimer()" style="background:var(--cyan);border:none;border-radius:10px;color:#000;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:14px 0;flex:1;">Start</button>
+    <button id="rest-reset-btn" onclick="resetRestTimer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:14px 0;flex:1;">Reset</button>
   </div>
   </div><!-- end rest-sheet -->
 </div>
 
 <script>
+// ── MUSCL
 // ── MUSCLE GROUPS ──
 var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Calves","Back – Lats","Back – Mid","Shoulders","Chest","Biceps","Triceps","Abs & Core"];
 
@@ -4227,6 +4228,7 @@ var restInterval=null;
 var restExpired=false;
 var restStartTime=null;   // wall-clock when timer last started
 var restEndTimestamp=null; // absolute timestamp when timer will expire
+var restNotifTimeout=null;  // scheduled notification timeout ID
 var restElapsedAtPause=0; // seconds elapsed before last pause
 var REST_CIRCUMFERENCE=722.6;
 var BUBBLE_CIRCUMFERENCE=144.5;
@@ -4258,8 +4260,9 @@ function closeRestTimer(){
 
 function setRestPreset(secs){
   restSecs=secs;restRemaining=secs;restRunning=false;restExpired=false;
-  restStartTime=null;restElapsedAtPause=0;
+  restStartTime=null;restElapsedAtPause=0;restEndTimestamp=null;
   clearInterval(restInterval);
+  clearTimeout(restNotifTimeout);restNotifTimeout=null;
   document.querySelectorAll('.rest-preset-btn').forEach(function(b){
     b.classList.toggle('active',parseInt(b.getAttribute('data-secs'))===secs);
   });
@@ -4278,7 +4281,22 @@ function toggleRestTimer(){
   document.getElementById('rest-start-btn').textContent=restRunning?'Pause':'Resume';
   if(restRunning){
     restStartTime=Date.now();
-    restEndTimestamp=Date.now()+(restSecs-restElapsedAtPause)*1000;
+    var msRemaining=(restSecs-restElapsedAtPause)*1000;
+    restEndTimestamp=Date.now()+msRemaining;
+    // Schedule notification at exact expiry time — fires even when app is backgrounded
+    clearTimeout(restNotifTimeout);
+    if(window.Notification&&Notification.permission==='granted'){
+      restNotifTimeout=setTimeout(function(){
+        if(!restExpired){
+          try{
+            new Notification('Rest Complete ⏱',{
+              body:'Time to hit your next set.',
+              requireInteraction:false
+            });
+          }catch(e){}
+        }
+      },msRemaining);
+    }
     clearInterval(restInterval);
     restInterval=setInterval(function(){
       var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
@@ -4296,6 +4314,7 @@ function toggleRestTimer(){
     // Pause: record elapsed so far
     restElapsedAtPause+=Math.floor((Date.now()-restStartTime)/1000);
     clearInterval(restInterval);
+    clearTimeout(restNotifTimeout);restNotifTimeout=null;
     restStartTime=null;
     restEndTimestamp=null;
   }
@@ -4303,8 +4322,9 @@ function toggleRestTimer(){
 
 function resetRestTimer(){
   clearInterval(restInterval);
+  clearTimeout(restNotifTimeout);restNotifTimeout=null;
   restRunning=false;restExpired=false;restRemaining=restSecs;
-  restStartTime=null;restElapsedAtPause=0;
+  restStartTime=null;restElapsedAtPause=0;restEndTimestamp=null;
   var startBtn=document.getElementById('rest-start-btn');
   if(startBtn) startBtn.textContent='Start';
   document.getElementById('rest-start-btn').textContent='Start';
@@ -4329,16 +4349,9 @@ function onRestExpired(){
   document.getElementById('rest-start-btn').textContent='New Timer';
   document.body.style.overflow='hidden';
   updateBubble();
-  // System notification — fires even when app was in background
+  // Notification fired by scheduled setTimeout — no duplicate here
   restEndTimestamp=null;
-  if(window.Notification&&Notification.permission==='granted'){
-    try{
-      new Notification('Rest Complete ⏱',{
-        body:'Time to hit your next set.',
-        requireInteraction:false
-      });
-    }catch(e){}
-  }
+  restNotifTimeout=null;
 }
 
 // Resume rest timer correctly when app returns from background

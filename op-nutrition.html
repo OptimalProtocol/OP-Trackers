@@ -119,6 +119,24 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .toggle-2-btn{flex:1;background:none;border:none;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:8px;text-align:center;transition:all 0.15s;}
 .toggle-2-btn.active{background:var(--cyan);color:#000;}
 .toggle-2-btn.active-warn{background:rgba(255,77,77,0.2);color:var(--red);}
+.daysched-row{display:flex;gap:4px;}
+.daysched-btn{flex:1;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;padding:9px 2px;text-align:center;transition:all 0.15s;}
+.daysched-btn.is-training{background:var(--cyan);color:#000;border-color:var(--cyan);}
+.daysched-btn.is-rest{background:var(--surface2);color:var(--dim);}
+.today-target-card{background:var(--surface);border:1px solid var(--cyan-border);border-radius:12px;padding:16px;margin:12px 16px 4px;}
+.today-target-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.today-target-date{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.today-target-daytype{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.today-target-daytype.training{background:var(--cyan-dim);color:var(--cyan);}
+.today-target-daytype.rest{background:rgba(255,184,0,0.12);color:var(--gold);}
+.today-target-cal{font-size:36px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);line-height:1;}
+.today-target-cal-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;}
+.today-target-macros{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.today-target-macro{flex:1;text-align:center;}
+.today-target-macro-val{font-size:16px;font-weight:700;}
+.today-target-macro-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.today-target-adaptive{font-size:10px;color:var(--cyan);margin-top:10px;}
+.today-target-switch{font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;margin-top:10px;display:inline-block;}
 .confidence-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.06em;}
 .badge-confirmed{background:rgba(0,200,150,0.15);color:var(--green);}
 .badge-estimated{background:rgba(255,184,0,0.15);color:var(--gold);}
@@ -233,6 +251,7 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
 
 <!-- TAB: DAILY (default) -->
 <div class="page active" id="page-daily">
+  <div id="today-target-card"></div>
   <div id="recal-banner-daily"></div>
   <div class="add-day-form">
     <div class="add-day-title" id="form-title">+ Log Today</div>
@@ -421,13 +440,17 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
         <input type="number" class="field-input" id="s-goal-weight" placeholder="e.g. 75" inputmode="decimal" min="0">
       </div>
       <div class="field">
-        <label class="field-label">Training Days Per Week</label>
-        <select class="field-input" id="s-training-days">
-          <option value="3">3 days</option>
-          <option value="4" selected>4 days</option>
-          <option value="5">5 days</option>
-          <option value="6">6 days</option>
-        </select>
+        <label class="field-label">Weekly Training Schedule</label>
+        <div class="daysched-row" id="weekly-schedule-row">
+          <button type="button" class="daysched-btn" data-day="1">Mon</button>
+          <button type="button" class="daysched-btn" data-day="2">Tue</button>
+          <button type="button" class="daysched-btn" data-day="3">Wed</button>
+          <button type="button" class="daysched-btn" data-day="4">Thu</button>
+          <button type="button" class="daysched-btn" data-day="5">Fri</button>
+          <button type="button" class="daysched-btn" data-day="6">Sat</button>
+          <button type="button" class="daysched-btn" data-day="0">Sun</button>
+        </div>
+        <div class="info-box">Tap a day to switch it between Training and Rest. This repeats every week and sets which calorie target applies by default — you can still switch an individual day when you log it, without changing the pattern.</div>
       </div>
       <div class="field">
         <label class="field-label">Non-Gym Activity Level</label>
@@ -574,7 +597,7 @@ var GOAL_CONFIG = {
 // ══════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════
-var settings={name:'',age:'',sex:'male',height:'',weight:'',unit:'kg',bf:'',goal:'maintain',goalWeight:'',trainingDays:4,activity:1.5,customCal:'',customProtein:'',customCarbs:'',customFat:'',fibre:false,_kgNormalized:false};
+var settings={name:'',age:'',sex:'male',height:'',weight:'',unit:'kg',bf:'',goal:'maintain',goalWeight:'',trainingDays:4,weeklySchedule:null,activity:1.5,customCal:'',customProtein:'',customCarbs:'',customFat:'',fibre:false,_kgNormalized:false};
 var dailyLog=[];
 var phases=[]; // {id,label,goal,startDate,endDate(null=active),startWeightKg,createdAt}
 var editingDate=null;
@@ -611,13 +634,16 @@ function loadAll(){
   }
   migrateWeightUnits();
   ensureInitialPhase();
+  ensureWeeklySchedule();
   applySettings();
   checkRecalibration();
+  document.getElementById('log-type').value=getDayTypeForDate(todayStr());
   // Daily is the tab shown on first load — render its content now rather than waiting
   // for a nav click, otherwise the page looks inert (empty history, no banner) until
   // the user taps away and back.
   renderDaily();
   renderRecalBanner('recal-banner-daily');
+  renderTodayTarget();
 }
 
 // One-time migration: internally, every weight value (settings.weight, settings.goalWeight,
@@ -730,7 +756,7 @@ function formulaTDEE(){
   var weightKg=avgWeightData?avgWeightData.avg:(parseFloat(settings.weight)||0);
   var bf=parseFloat(settings.bf)||0;
   var activity=parseFloat(settings.activity)||1.5;
-  var trainingDays=parseInt(settings.trainingDays)||4;
+  var trainingDays=weeklyScheduleTrainingCount();
   // Hard guard: a mistyped negative or zero age/height/weight must never reach a calculation —
   // it would otherwise silently produce a nonsensical (or unsafe-looking) target with no warning.
   if(!age||age<=0||!height||height<=0||!weightKg||weightKg<=0) return null;
@@ -799,12 +825,109 @@ function getActiveTarget(dayType){
   return {cal:dayType==='training'?t.trainingCal:t.restCal,protein:t.protein,carbs:t.carbs,fat:t.fat};
 }
 
+// ══════════════════════════════════════════════════════════════
+// WEEKLY TRAINING SCHEDULE — a fixed, repeating pattern of which
+// days are training vs rest, so the app knows "today" without the
+// user re-selecting it every time. Keyed 0-6 to match Date.getDay()
+// (0=Sunday...6=Saturday). Individual days can still be overridden
+// when logging — this only sets the default.
+// ══════════════════════════════════════════════════════════════
+function ensureWeeklySchedule(){
+  if(settings.weeklySchedule) return;
+  // Migrate from the old "N training days per week" count: seed a plausible pattern
+  // (weekdays first, then weekend) so existing users land somewhere sensible rather
+  // than an empty schedule. It's fully editable in Settings from here on.
+  var count=parseInt(settings.trainingDays)||4;
+  var priority=[1,2,3,4,5,6,0]; // Mon..Sat, Sun last
+  var sched={};
+  priority.forEach(function(day,i){sched[day]=i<count?'training':'rest';});
+  settings.weeklySchedule=sched;
+  lsSet('opn-settings',settings);
+}
+function dayOfWeekIdx(dateStr){
+  var d=new Date(dateStr+'T00:00:00');
+  if(isNaN(d.getTime())) return new Date().getDay();
+  return d.getDay();
+}
+function getDayTypeForDate(dateStr){
+  var sched=settings.weeklySchedule;
+  if(!sched) return 'training';
+  var v=sched[String(dayOfWeekIdx(dateStr))];
+  return v==='rest'?'rest':'training';
+}
+function weeklyScheduleTrainingCount(){
+  var sched=settings.weeklySchedule;
+  if(!sched) return parseInt(settings.trainingDays)||4;
+  var n=0;
+  Object.keys(sched).forEach(function(k){if(sched[k]==='training') n++;});
+  return n;
+}
+function renderWeeklyScheduleSettings(){
+  var row=document.getElementById('weekly-schedule-row');
+  if(!row) return;
+  var sched=settings.weeklySchedule||{};
+  row.querySelectorAll('.daysched-btn').forEach(function(btn){
+    var day=btn.getAttribute('data-day');
+    var isTraining=sched[day]!=='rest';
+    btn.classList.toggle('is-training',isTraining);
+    btn.classList.toggle('is-rest',!isTraining);
+  });
+}
+document.getElementById('weekly-schedule-row').querySelectorAll('.daysched-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    if(!settings.weeklySchedule) ensureWeeklySchedule();
+    var day=btn.getAttribute('data-day');
+    settings.weeklySchedule[day]=settings.weeklySchedule[day]==='rest'?'training':'rest';
+    lsSet('opn-settings',settings);
+    renderWeeklyScheduleSettings();
+    renderTargets();
+    renderTodayTarget();
+  });
+});
+
+function renderTodayTarget(){
+  var el=document.getElementById('today-target-card');
+  if(!el) return;
+  var today=todayStr();
+  var dayType=getDayTypeForDate(today);
+  var tgt=getActiveTarget(dayType);
+  if(!tgt){
+    el.innerHTML='<div class="today-target-card"><div class="today-target-date">'+formatDate(today)+'</div>'+
+      '<div style="margin-top:8px;font-size:13px;color:var(--muted);">Complete your profile in Settings to see today\'s target here — the recommended calories and macros before you log anything.</div></div>';
+    return;
+  }
+  var otherType=dayType==='training'?'rest':'training';
+  var adaptiveNote=recal.workingMaintenance!=null?'<div class="today-target-adaptive">Adaptive — based on your logged intake and actual weight change over the last two weeks, not just the formula.</div>':'';
+  el.innerHTML='<div class="today-target-card">'+
+    '<div class="today-target-head"><span class="today-target-date">'+formatDate(today)+'</span>'+
+      '<span class="today-target-daytype '+dayType+'">'+(dayType==='training'?'Training Day':'Rest Day')+'</span></div>'+
+    '<div class="today-target-cal">'+tgt.cal+'</div><div class="today-target-cal-label">Target Calories</div>'+
+    '<div class="today-target-macros">'+
+      '<div class="today-target-macro"><div class="today-target-macro-val">'+tgt.protein+'g</div><div class="today-target-macro-label">Protein</div></div>'+
+      '<div class="today-target-macro"><div class="today-target-macro-val">'+tgt.carbs+'g</div><div class="today-target-macro-label">Carbs</div></div>'+
+      '<div class="today-target-macro"><div class="today-target-macro-val">'+tgt.fat+'g</div><div class="today-target-macro-label">Fat</div></div>'+
+    '</div>'+
+    adaptiveNote+
+    '<span class="today-target-switch" id="today-target-switch-btn">Not a typical day? Log today as '+(otherType==='training'?'Training':'Rest')+' instead</span>'+
+  '</div>';
+  var switchBtn=document.getElementById('today-target-switch-btn');
+  if(switchBtn) switchBtn.addEventListener('click',function(){
+    if(document.getElementById('log-date').value===today){
+      document.getElementById('log-type').value=otherType;
+      updateLogPreview();
+    }
+    showToast('Set to '+(otherType==='training'?'Training':'Rest')+' for today\'s entry below — the schedule itself is unchanged.');
+  });
+}
+
 // ── Mechanism B: compare what the logged calorie balance predicted against what actually
 // happened to bodyweight, and when they disagree by enough, trust the outcome over the formula.
 function checkRecalibration(){
+  // Recalculates every time this runs (every save, and on load) rather than waiting a fixed
+  // number of days between checks — it compares the last 7 days' average weight against the
+  // 7 days before that, so it's always looking at a full week-vs-week trend, just re-evaluated
+  // continuously instead of on a rigid cycle.
   var today=todayStr();
-  if(recal.lastCheckDate&&dateDiffDays(recal.lastCheckDate,today)<CONFIG.RECAL_WINDOW_DAYS) return;
-
   var windowStart=addDays(today,-CONFIG.RECAL_WINDOW_DAYS);
   var midpoint=addDays(windowStart,7);
   var windowDays=dailyLog.filter(function(d){
@@ -1129,7 +1252,7 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
     // worst case that one tab's content is incomplete and logged to console, but the tab still
     // becomes active and every other tab keeps working normally.
     try{
-      if(page==='daily'){renderDaily();renderRecalBanner('recal-banner-daily');}
+      if(page==='daily'){renderDaily();renderRecalBanner('recal-banner-daily');renderTodayTarget();}
       if(page==='weekly') renderWeekly();
       if(page==='progress') renderProgress();
       if(page==='settings') renderTargets();
@@ -1147,8 +1270,8 @@ function applySettings(){
   if(settings.height) document.getElementById('s-height').value=settings.height;
   if(settings.bf) document.getElementById('s-bf').value=settings.bf;
   if(settings.goal) document.getElementById('s-goal').value=settings.goal;
-  if(settings.trainingDays) document.getElementById('s-training-days').value=settings.trainingDays;
   if(settings.activity) document.getElementById('s-activity').value=settings.activity;
+  renderWeeklyScheduleSettings();
   if(settings.customCal) document.getElementById('s-custom-cal').value=settings.customCal;
   if(settings.customProtein) document.getElementById('s-custom-protein').value=settings.customProtein;
   if(settings.customCarbs) document.getElementById('s-custom-carbs').value=settings.customCarbs;
@@ -1183,7 +1306,6 @@ function saveSettings(){
   settings.goal=document.getElementById('s-goal').value;
   var gwVal=document.getElementById('s-goal-weight').value;
   settings.goalWeight=gwVal===''?'':Math.round(toKgFromUnit(gwVal,settings.unit)*100)/100;
-  settings.trainingDays=document.getElementById('s-training-days').value;
   settings.activity=document.getElementById('s-activity').value;
   settings.customCal=document.getElementById('s-custom-cal').value;
   settings.customProtein=document.getElementById('s-custom-protein').value;
@@ -1199,6 +1321,7 @@ function saveSettings(){
   renderTargets();
   renderCurrentPhaseSettings();
   updateLogPreview();
+  renderTodayTarget();
 }
 
 function setSex(s,save){
@@ -1244,7 +1367,7 @@ document.getElementById('unit-lbs').addEventListener('click',function(){setUnit(
 ['s-name','s-age','s-height','s-weight','s-bf','s-goal-weight','s-custom-cal','s-custom-protein','s-custom-carbs','s-custom-fat'].forEach(function(id){
   document.getElementById(id).addEventListener('input',saveSettings);
 });
-['s-goal','s-training-days','s-activity'].forEach(function(id){
+['s-goal','s-activity'].forEach(function(id){
   document.getElementById(id).addEventListener('change',saveSettings);
 });
 
@@ -1328,6 +1451,17 @@ function updateLogPreview(){
 
 ['log-cal','log-protein','log-carbs','log-fat'].forEach(function(id){document.getElementById(id).addEventListener('input',updateLogPreview);});
 document.getElementById('log-type').addEventListener('change',updateLogPreview);
+// Picking a different date (logging a backdated day) re-derives Day Type from the weekly
+// schedule for that date, so catching up on several days still gets the right default for
+// each one instead of staying stuck on whatever the last entry used. Only when not mid-edit
+// of an existing entry — editing already restores that entry's own saved type.
+document.getElementById('log-date').addEventListener('change',function(){
+  if(editingDate) return;
+  var d=document.getElementById('log-date').value;
+  if(!d) return;
+  document.getElementById('log-type').value=getDayTypeForDate(d);
+  updateLogPreview();
+});
 
 document.getElementById('log-proc-no').addEventListener('click',function(){
   document.getElementById('log-proc-no').classList.add('active');
@@ -1371,7 +1505,7 @@ function clearForm(){
   editingDate=null;
   document.getElementById('form-title').textContent='+ Log Today';
   document.getElementById('log-date').value=todayStr();
-  document.getElementById('log-type').value='training';
+  document.getElementById('log-type').value=getDayTypeForDate(todayStr());
   document.getElementById('log-weight').value='';
   document.getElementById('log-fibre').value='';
   document.getElementById('log-proc-no').classList.add('active');document.getElementById('log-proc-yes').classList.remove('active');
@@ -1422,6 +1556,7 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
     renderDaily();
     checkRecalibration();
     renderRecalBanner('recal-banner-daily');
+    renderTodayTarget();
   }catch(err){console.error('Post-save render failed',err);}
   nudgeRepaint();
 });
@@ -1517,7 +1652,7 @@ function renderRecalBanner(targetId){
   el.innerHTML='<div class="banner banner-adaptive"><div class="banner-title">Target recalibrated <span class="tag">ADAPTIVE</span></div>'+
     '<div class="banner-body">Your maintenance calories moved '+dir+' from '+last.from+' to '+last.to+' kcal based on what your logged intake and actual weight change showed over '+formatDate(last.windowStart)+' – '+formatDate(last.windowEnd)+'. This replaces the formula estimate with what your body is actually showing us.</div>'+
     evidence+
-    '<div class="banner-meta">Rechecks every '+CONFIG.RECAL_WINDOW_DAYS+' days · next check '+formatDate(addDays(recal.lastCheckDate,CONFIG.RECAL_WINDOW_DAYS))+'</div></div>';
+    '<div class="banner-meta">Continuously recalibrated — comparing this week\'s average weight to last week\'s every time you log</div></div>';
 }
 
 function renderPlateauBanner(){

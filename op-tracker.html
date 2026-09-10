@@ -832,7 +832,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     </div>
   <div style="display:flex;gap:10px;margin-top:16px;justify-content:center;">
     <button id="rest-start-btn" onclick="toggleRestTimer()" style="background:var(--cyan);border:none;border-radius:10px;color:#000;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:12px 0;flex:1;">Start</button>
-    <button id="rest-reset-btn" onclick="resetRestTimer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:12px 20px;">Reset</button>
+    <button id="rest-reset-btn" onclick="resetRestTimer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:12px 0;flex:1;">Reset</button>
   </div>
   </div><!-- end rest-sheet -->
 </div>
@@ -1923,47 +1923,50 @@ function isCustomRepRange(exName){
 }
 
 function getProgressionTarget(exName,bilatMode,equipment){
-  // Get last 2 completed sessions for this exercise
+  // Three states: build reps → repeat to confirm → increase load
+  var unit=settings.unit||'kg';
   var logs=getLogsForExercise(exName,bilatMode,equipment);
-  if(!logs||logs.length===0) return {type:'none'};
-  if(logs.length===1) return {type:'base'};
+  if(!logs||logs.length===0) return {type:'none',text:''};
+  if(logs.length===1){
+    // First session — show what to aim for next time
+    var firstLog=logs[0];
+    var firstReps=(firstLog.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var firstMin=firstReps.length?Math.min.apply(null,firstReps):0;
+    var rr0=getRepRange(exName);
+    return {type:'base',text:'Target: '+firstLog.load+unit+' × '+(firstMin+1)+' reps per set'};
+  }
 
   var rr=getRepRange(exName);
   var maxReps=rr.max;
-
-  // Check last 2 sessions — did ALL sets hit maxReps?
-  function sessionHitCeiling(log){
-    var reps=(log.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-    if(!reps.length) return false;
-    return reps.every(function(r){return r>=maxReps;});
-  }
-
   var last=logs[logs.length-1];
   var prev=logs[logs.length-2];
-  var lastCeiling=sessionHitCeiling(last);
-  var prevCeiling=sessionHitCeiling(prev);
-
   var lastLoad=parseFloat(last.load)||0;
-  var lastReps=(last.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-  var lastAvg=lastReps.length?Math.round(lastReps.reduce(function(a,b){return a+b;},0)/lastReps.length):0;
-
-  // Load continuity: both sessions must be at same load for ceiling to count
   var prevLoad=parseFloat(prev.load)||0;
+
+  function allSetsAtCeiling(log){
+    var reps=(log.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    return reps.length>0&&reps.every(function(r){return r>=maxReps;});
+  }
+
+  var lastCeiling=allSetsAtCeiling(last);
+  var prevCeiling=allSetsAtCeiling(prev);
   var sameLoad=lastLoad>0&&prevLoad>0&&lastLoad===prevLoad;
 
+  // State 3: Two consecutive sessions at ceiling, same load → INCREASE
   if(lastCeiling&&prevCeiling&&sameLoad){
-    // Both sessions hit ceiling at same load — ready to progress
-    return {type:'increase',load:lastLoad,maxReps:maxReps,
-      text:'Ready to increase load — hit '+maxReps+' reps '+2+' sessions at '+lastLoad+(settings.unit||'kg')};
-  } else if(lastCeiling&&(!prevCeiling||!sameLoad)){
-    // Hit ceiling this session but not confirmed yet (either first time or load just changed)
-    return {type:'repeat',load:lastLoad,maxReps:maxReps,
-      text:'Target: '+lastLoad+(settings.unit||'kg')+' × '+maxReps+' reps — repeat to confirm'};
-  } else {
-    // Not at ceiling — keep building reps
-    return {type:'build',load:lastLoad,current:lastAvg,maxReps:maxReps,
-      text:'Target: '+lastLoad+(settings.unit||'kg')+' × aim for '+maxReps+' per set'+(lastAvg?' (last avg: '+lastAvg+')':'')};
+    return {type:'increase',text:'Increase load — ready to progress ↑'};
   }
+
+  // State 2: Last session hit ceiling, but not confirmed yet → REPEAT
+  if(lastCeiling){
+    return {type:'repeat',text:'Target: '+lastLoad+unit+' × '+maxReps+' reps — do it again to confirm'};
+  }
+
+  // State 1: Not at ceiling → AIM FOR ONE MORE REP
+  var lastReps=(last.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+  var lastMin=lastReps.length?Math.min.apply(null,lastReps):0;
+  var nextTarget=Math.min(lastMin+1,maxReps);
+  return {type:'build',text:'Target: '+lastLoad+unit+' × '+nextTarget+' reps per set'};
 }
 
 function showExerciseStatusBar(card,exName){
@@ -2344,40 +2347,6 @@ function getSincePR(exName, bilatMode){
   return lastPRIdx===-1?logs.length-1:(logs.length-1-lastPRIdx);
 }
 
-function getTargetLine(exName, bilatMode){
-  // Returns a suggested target string based on OP progression rules
-  var unit=settings.unit||'kg';
-  var logs=[];
-  sessionHistory.forEach(function(sess){
-    if(sess.status==='draft') return;
-    sess.exercises.forEach(function(ex){
-      if(ex.name===exName&&(ex.bilat||'bilateral')===bilatMode&&ex.curr){
-        var load=parseFloat(ex.curr.load)||0;
-        var reps=(ex.curr.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-        var rpe=parseFloat(ex.curr.rpe)||0;
-        if(load||reps.length) logs.push({load:load,reps:reps,rpe:rpe});
-      }
-    });
-  });
-  if(!logs.length) return null;
-  var last=logs[logs.length-1];
-  var lastLoad=last.load;
-  var lastReps=last.reps;
-  var lastRpe=last.rpe;
-  var maxReps=lastReps.length?Math.max.apply(null,lastReps):0;
-  var minReps=lastReps.length?Math.min.apply(null,lastReps.filter(function(r){return r>0;})):0;
-  // Check if all sets at same reps (rep ceiling check — simplified)
-  var allSame=lastReps.length>0&&lastReps.every(function(r){return r===lastReps[0]&&r>0;});
-  if(lastRpe>=9&&allSame){
-    // Suggest load increase
-    var increment=unit==='kg'?2.5:5;
-    return 'Target: '+(lastLoad+increment)+unit+' (same reps — load increase due)';
-  } else {
-    // Suggest +1 rep on each set
-    return 'Target: '+lastLoad+unit+' × +'+(minReps+1)+' reps per set';
-  }
-}
-
 function populateLastRow(card,exName){
   var bt=document.getElementById('bt-'+card.id);
   var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
@@ -2440,12 +2409,7 @@ function populateLastRow(card,exName){
   }
 
   // Target line
-  var target=getTargetLine(exName,bilatMode);
-  if(target){
-    var tline=card.querySelector('.target-line');
-    if(!tline){tline=document.createElement('div');tline.className='target-line';csl.after(tline);}
-    tline.textContent=target;
-  }
+  // Target line handled by showExerciseStatusBar
 
   // Last session notes
   var lastNote=null;
@@ -2745,10 +2709,10 @@ function startSessDurationTimer(){
 }
 
 function initSession(){
-  var today=new Date().toISOString().split('T')[0];
-  document.getElementById('sess-date').value=currentSession.date||today;
-  if(currentSession.workout) document.getElementById('sess-workout').value=currentSession.workout;
-  if(currentSession.notes) document.getElementById('sess-notes').value=currentSession.notes;
+  // Clear all fields — only restore from draft if a draft exists
+  document.getElementById('sess-date').value=currentSession.date||'';
+  document.getElementById('sess-workout').value=currentSession.workout||'';
+  document.getElementById('sess-notes').value=currentSession.notes||'';
   document.getElementById('ex-list').innerHTML='';exCount=0;
   if(currentSession.exercises&&currentSession.exercises.length){
     currentSession.exercises.forEach(function(ex){addExRow(ex);});
@@ -2932,9 +2896,11 @@ document.getElementById('ps-done-btn').addEventListener('click',function(){
     lsSet('op-history',sessionHistory);
   }
   document.getElementById('post-session-overlay').classList.remove('open');
-  // Reset to blank for next session
+  // Reset to fully blank for next session
   currentSession={date:'',workout:'',notes:'',exercises:[]};
-  lsSet('op-current',currentSession);draftSessionId=null;
+  lsSet('op-current',currentSession);
+  lsSet('op-draft-id',null);
+  draftSessionId=null;
   initSession();showToast('Session saved ✓');haptic('save');
 });
 
@@ -4260,6 +4226,7 @@ var restRunning=false;
 var restInterval=null;
 var restExpired=false;
 var restStartTime=null;   // wall-clock when timer last started
+var restEndTimestamp=null; // absolute timestamp when timer will expire
 var restElapsedAtPause=0; // seconds elapsed before last pause
 var REST_CIRCUMFERENCE=722.6;
 var BUBBLE_CIRCUMFERENCE=144.5;
@@ -4311,6 +4278,7 @@ function toggleRestTimer(){
   document.getElementById('rest-start-btn').textContent=restRunning?'Pause':'Resume';
   if(restRunning){
     restStartTime=Date.now();
+    restEndTimestamp=Date.now()+(restSecs-restElapsedAtPause)*1000;
     clearInterval(restInterval);
     restInterval=setInterval(function(){
       var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
@@ -4329,6 +4297,7 @@ function toggleRestTimer(){
     restElapsedAtPause+=Math.floor((Date.now()-restStartTime)/1000);
     clearInterval(restInterval);
     restStartTime=null;
+    restEndTimestamp=null;
   }
 }
 
@@ -4360,16 +4329,23 @@ function onRestExpired(){
   document.getElementById('rest-start-btn').textContent='New Timer';
   document.body.style.overflow='hidden';
   updateBubble();
-  // Notification if supported
+  // System notification — fires even when app was in background
+  restEndTimestamp=null;
   if(window.Notification&&Notification.permission==='granted'){
-    new Notification('Rest Complete',{body:'Time to hit your next set.',icon:''});
+    try{
+      new Notification('Rest Complete ⏱',{
+        body:'Time to hit your next set.',
+        requireInteraction:false
+      });
+    }catch(e){}
   }
 }
 
 // Resume rest timer correctly when app returns from background
 document.addEventListener('visibilitychange',function(){
-  if(!document.hidden&&restRunning&&restStartTime){
-    // Recalculate remaining based on wall clock
+  if(document.hidden) return;
+  // App returning from background
+  if(restRunning&&restStartTime){
     var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
     restRemaining=Math.max(0,restSecs-elapsed);
     updateRestDisplay();updateBubble();
@@ -4377,6 +4353,12 @@ document.addEventListener('visibilitychange',function(){
       clearInterval(restInterval);restRunning=false;restExpired=true;
       onRestExpired();
     }
+  } else if(restEndTimestamp&&!restExpired&&Date.now()>=restEndTimestamp){
+    // Timer expired while paused and app was in background
+    restRunning=false;restExpired=true;restRemaining=0;
+    clearInterval(restInterval);
+    updateRestDisplay();updateBubble();
+    onRestExpired();
   }
 });
 

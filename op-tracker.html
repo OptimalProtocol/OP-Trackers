@@ -343,6 +343,27 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .empty-state{text-align:center;padding:48px 24px;color:var(--muted);}
 
+
+/* ── PER-SET ROWS ── */
+.sets-wrap{padding:4px 12px 8px;}
+.sets-head{display:grid;grid-template-columns:22px 62px 1fr 1fr 52px 26px;gap:5px;padding:0 2px 4px;}
+.sets-head .sh{font-size:8px;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;text-align:center;}
+.set-row{display:grid;grid-template-columns:22px 62px 1fr 1fr 52px 26px;gap:5px;align-items:center;margin-bottom:5px;}
+.set-idx{font-size:10px;font-weight:700;color:var(--muted);text-align:center;font-family:'JetBrains Mono',monospace;}
+.set-type{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--cyan);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;padding:7px 2px;text-align:center;-webkit-appearance:none;appearance:none;text-align-last:center;}
+.set-type[data-t="U"]{color:var(--gold);}
+.set-type[data-t="D"]{color:#c77dff;}
+.set-in{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;padding:7px 2px;text-align:center;width:100%;box-sizing:border-box;}
+.set-in:focus{border-color:var(--cyan);outline:none;}
+.set-in.rpe{font-size:11px;}
+.set-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px;}
+.set-del:hover{color:var(--red);}
+.add-set-btn{background:var(--surface2);border:1px dashed var(--border);border-radius:7px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.04em;margin-top:2px;padding:7px;width:100%;}
+.add-set-btn:active{background:var(--cyan-dim);color:var(--cyan);}
+.last-sets{background:rgba(255,255,255,0.02);border-radius:7px;font-size:10px;color:var(--dim);padding:6px 9px;margin-bottom:7px;line-height:1.5;}
+.last-sets b{color:var(--text);font-weight:700;}
+.last-sets .ls-tag{color:var(--muted);font-size:9px;letter-spacing:0.05em;text-transform:uppercase;margin-right:5px;}
+
 /* ── REP RANGE CHIP ── */
 .rep-range-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--cyan);font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 7px;margin-left:5px;vertical-align:middle;}
 .rep-range-chip.custom{border-color:var(--gold);color:var(--gold);}
@@ -695,6 +716,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
       <button class="modal-bilat-btn" data-mmode="unilateral">Unilateral</button>
       <button class="modal-bilat-btn" data-mmode="both">Both</button>
     </div>
+    <div id="modal-equip-row" style="display:none;gap:6px;flex-wrap:wrap;padding:0 16px 8px;"></div>
     <div class="range-filter" id="modal-range-filter">
       <button class="range-chip" data-range="5">Last 5</button>
       <button class="range-chip active" data-range="10">Last 10</button>
@@ -830,7 +852,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <button class="rest-preset-btn active" data-secs="120">2 min</button>
     <button class="rest-preset-btn" data-secs="180">3 min</button>
     </div>
-  <div style="display:flex;gap:10px;margin-top:16px;width:100%;">
+  <div id="rest-audio-note" style="font-size:10px;color:var(--muted);text-align:center;margin-top:12px;letter-spacing:0.02em;">Keep other audio paused so the alarm can sound</div>
+  <div style="display:flex;gap:10px;margin-top:10px;width:100%;">
     <button id="rest-start-btn" onclick="toggleRestTimer()" style="background:var(--cyan);border:none;border-radius:10px;color:#000;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:14px 0;flex:1;">Start</button>
     <button id="rest-reset-btn" onclick="resetRestTimer()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:14px 0;flex:1;">Reset</button>
   </div>
@@ -1522,6 +1545,7 @@ var progSort={col:'sincePR',dir:'desc'};
 var currentProgView='exercises';
 var currentProgExName='';
 var modalBilatMode='bilateral'; // current modal bilat view
+var modalEquip='All';            // current modal equipment filter
 var modalRange={}; // per-exercise range preference: {exName: '5'|'10'|'20'|'all'}
 var currentModalRange='10'; // active range for current modal
 
@@ -1547,6 +1571,20 @@ function migrateSessionHistory(){
     });
     if(ch2) lsSet('op-history',sessionHistory);
     lsSet('op-migrated-v2',true);
+  }
+  // v4: expand legacy {load, reps[], rpe} into a per-set array
+  if(!lsGet('op-migrated-v4')){
+    var ch4=false;
+    sessionHistory.forEach(function(sess){
+      (sess.exercises||[]).forEach(function(ex){
+        if(ex.sets&&ex.sets.length) return;
+        var built=normalizeSets(ex);
+        if(built.length){ex.sets=built;ch4=true;}
+        else if(ex.name){ex.sets=[];ch4=true;}
+      });
+    });
+    if(ch4) lsSet('op-history',sessionHistory);
+    lsSet('op-migrated-v4',true);
   }
   // v3: Back Extension → Back Extension (Prone)
   if(!lsGet('op-migrated-v3')){
@@ -1835,8 +1873,8 @@ function getStallCount(exName){
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft') return;
     sess.exercises.forEach(function(ex){
-      if(ex.name===exName&&ex.curr){
-        var totalReps=(ex.curr.reps||[]).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
+      if(ex.name===exName&&normalizeSets(ex).length){
+        var totalReps=setsAtTopLoad(normalizeSets(ex)).map(function(s){return s.r;}).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
         var load=parseFloat(ex.curr.load)||0;
         if(load>0||totalReps>0) logs.push({load:load,totalReps:totalReps});
       }
@@ -1927,50 +1965,70 @@ function isCustomRepRange(exName){
 }
 
 function getProgressionTarget(exName,bilatMode,equipment){
-  // Three states: build reps → repeat to confirm → increase load
+  // Three states, computed from WORKING SETS ONLY.
+  // Warm-ups and drop sets never influence progression.
+  // The session's load is the heaviest working set; the rep ceiling must be
+  // met by every working set performed AT that load.
   var unit=settings.unit||'kg';
   var logs=getLogsForExercise(exName,bilatMode,equipment);
   if(!logs||logs.length===0) return {type:'none',text:''};
-  if(logs.length===1){
-    // First session — show what to aim for next time
-    var firstLog=logs[0];
-    var firstReps=(firstLog.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-    var firstMin=firstReps.length?Math.min.apply(null,firstReps):0;
-    var rr0=getRepRange(exName);
-    return {type:'base',text:'Target: '+firstLog.load+unit+' × '+(firstMin+1)+' reps per set'};
-  }
 
   var rr=getRepRange(exName);
   var maxReps=rr.max;
-  var last=logs[logs.length-1];
-  var prev=logs[logs.length-2];
-  var lastLoad=parseFloat(last.load)||0;
-  var prevLoad=parseFloat(prev.load)||0;
 
-  function allSetsAtCeiling(log){
-    var reps=(log.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-    return reps.length>0&&reps.every(function(r){return r>=maxReps;});
+  function topLoad(l){return topWorkingLoad(l.sets);}
+  function atTop(l){return setsAtTopLoad(l.sets);}
+  function allAtCeiling(l){
+    // A ceiling session requires EVERY working set to be at the top load
+    // AND at the rep ceiling. If a working set dropped to a lighter load,
+    // the session does not count — the goal is to bring it up to the top
+    // load first before the load is increased again.
+    var ws=workingSets(l.sets);
+    var a=atTop(l);
+    if(!a.length||a.length!==ws.length) return false;
+    return a.every(function(s){return (parseFloat(s.r)||0)>=maxReps;});
+  }
+  function minRepsAtTop(l){
+    var a=atTop(l);
+    if(!a.length) return 0;
+    return Math.min.apply(null,a.map(function(s){return parseFloat(s.r)||0;}));
+  }
+  function countAtTop(l){return atTop(l).length;}
+
+  var last=logs[logs.length-1];
+  var lastLoad=topLoad(last);
+  if(!lastLoad) return {type:'none',text:''};
+
+  if(logs.length===1){
+    return {type:'base',text:'Target: '+lastLoad+unit+' \u00d7 '+(minRepsAtTop(last)+1)+' reps per set'};
   }
 
-  var lastCeiling=allSetsAtCeiling(last);
-  var prevCeiling=allSetsAtCeiling(prev);
+  var prev=logs[logs.length-2];
+  var prevLoad=topLoad(prev);
   var sameLoad=lastLoad>0&&prevLoad>0&&lastLoad===prevLoad;
 
-  // State 3: Two consecutive sessions at ceiling, same load → INCREASE
-  if(lastCeiling&&prevCeiling&&sameLoad){
-    return {type:'increase',text:'Increase load — ready to progress ↑'};
+  // State 3 — two consecutive sessions with every working set at the rep
+  // ceiling, at the same load
+  if(allAtCeiling(last)&&allAtCeiling(prev)&&sameLoad){
+    return {type:'increase',text:'Increase load \u2014 ready to progress \u2191'};
   }
 
-  // State 2: Last session hit ceiling, but not confirmed yet → REPEAT
-  if(lastCeiling){
-    return {type:'repeat',text:'Target: '+lastLoad+unit+' × '+maxReps+' reps — do it again to confirm'};
+  // State 2 — ceiling hit this session but not yet confirmed
+  if(allAtCeiling(last)){
+    return {type:'repeat',text:'Target: '+lastLoad+unit+' \u00d7 '+maxReps+' reps \u2014 do it again to confirm'};
   }
 
-  // State 1: Not at ceiling → AIM FOR ONE MORE REP
-  var lastReps=(last.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-  var lastMin=lastReps.length?Math.min.apply(null,lastReps):0;
-  var nextTarget=Math.min(lastMin+1,maxReps);
-  return {type:'build',text:'Target: '+lastLoad+unit+' × '+nextTarget+' reps per set'};
+  // State 1 — build. If some working sets were done below the top load,
+  // the goal is to bring them all up to the top load first.
+  var wsLast=workingSets(last.sets);
+  var belowTop=wsLast.length-countAtTop(last);
+  if(belowTop>0){
+    return {type:'build',
+      text:'Target: '+wsLast.length+' \u00d7 '+maxReps+' reps at '+lastLoad+unit+
+           ' ('+countAtTop(last)+' of '+wsLast.length+' at load last time)'};
+  }
+  var nextTarget=Math.min(minRepsAtTop(last)+1,maxReps);
+  return {type:'build',text:'Target: '+lastLoad+unit+' \u00d7 '+nextTarget+' reps per set'};
 }
 
 function showExerciseStatusBar(card,exName){
@@ -2248,6 +2306,193 @@ function initLoadTypeToggle(card){
 }
 
 // ── EXERCISE LOOKUP ──
+// ── SET MODEL ───────────────────────────────────────────────────
+// Each exercise stores an array of sets:
+//   {t:'W'|'U'|'D', l:load, r:reps, rpe:rpe}
+//   W = working set   U = warm-up   D = drop set
+// Only working sets drive the progression algorithm and PR detection.
+// Volume counts working and drop sets separately; warm-ups never count.
+
+var SET_TYPES=[{v:'W',label:'Work'},{v:'U',label:'Warm'},{v:'D',label:'Drop'}];
+var MAX_SETS=8;
+
+function blankSet(t){return {t:t||'W',l:'',r:'',rpe:''};}
+
+function normalizeSets(ex){
+  // Returns a sets array for an exercise, converting the legacy
+  // {load, reps[], rpe} shape on the fly if sets are absent.
+  if(ex&&ex.sets&&ex.sets.length) return ex.sets;
+  var out=[];
+  var c=(ex&&ex.curr)?ex.curr:null;
+  if(c){
+    var reps=c.reps||[];
+    for(var i=0;i<reps.length;i++){
+      if(reps[i]===''||reps[i]===null||reps[i]===undefined) continue;
+      out.push({t:'W',l:c.load||'',r:reps[i],rpe:c.rpe||''});
+    }
+    if(!out.length&&c.load) out.push({t:'W',l:c.load,r:'',rpe:c.rpe||''});
+  }
+  return out;
+}
+
+function workingSets(sets){
+  return (sets||[]).filter(function(s){
+    return s&&s.t==='W'&&(s.l!==''||s.r!=='');
+  });
+}
+function dropSets(sets){
+  return (sets||[]).filter(function(s){
+    return s&&s.t==='D'&&(s.l!==''||s.r!=='');
+  });
+}
+function countedSets(sets){
+  // Sets that contribute volume: working + drop, never warm-up
+  return (sets||[]).filter(function(s){
+    return s&&(s.t==='W'||s.t==='D')&&(s.l!==''||s.r!=='');
+  });
+}
+
+function topWorkingLoad(sets){
+  // The session's reference load: the heaviest working set.
+  var ws=workingSets(sets),max=0;
+  ws.forEach(function(s){var v=parseFloat(s.l)||0;if(v>max)max=v;});
+  return max;
+}
+
+function setsAtTopLoad(sets){
+  // Working sets performed at the heaviest working load. A back-off set
+  // at a lighter weight is excluded, so it cannot block a rep ceiling.
+  var top=topWorkingLoad(sets);
+  if(!top) return [];
+  return workingSets(sets).filter(function(s){return (parseFloat(s.l)||0)===top;});
+}
+
+function setsHaveData(sets){
+  return (sets||[]).some(function(s){return s&&(s.l!==''||s.r!=='');});
+}
+
+function setsSummary(sets,unit){
+  // "80kg x 10, 10" style summary of the top working sets
+  var top=topWorkingLoad(sets);
+  var at=setsAtTopLoad(sets);
+  if(!top||!at.length) return '';
+  var reps=at.map(function(s){return s.r||'0';}).join(', ');
+  return top+(unit||'kg')+' \u00d7 '+reps;
+}
+
+// ── SET ROW RENDERING ───────────────────────────────────────────
+function setRowHtml(idx,s){
+  var t=s.t||'W';
+  var opts=SET_TYPES.map(function(o){
+    return '<option value="'+o.v+'"'+(o.v===t?' selected':'')+'>'+o.label+'</option>';
+  }).join('');
+  return '<div class="set-row" data-set-idx="'+idx+'">'+
+    '<span class="set-idx">'+(idx+1)+'</span>'+
+    '<select class="set-type" data-f="t" data-t="'+t+'">'+opts+'</select>'+
+    '<input type="number" class="set-in" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'">'+
+    '<input type="number" class="set-in" data-f="r" inputmode="numeric" placeholder="\u2014" value="'+(s.r||'')+'">'+
+    '<input type="number" class="set-in rpe" data-f="rpe" inputmode="decimal" min="1" max="10" step="0.5" placeholder="\u2014" value="'+(s.rpe||'')+'">'+
+    '<button class="set-del" data-del-set="'+idx+'" title="Remove set">&#215;</button>'+
+  '</div>';
+}
+
+function setsBlockHtml(sets,unit){
+  var rows=sets.map(function(s,i){return setRowHtml(i,s);}).join('');
+  return '<div class="sets-wrap">'+
+    '<div class="last-sets" data-last-sets><span class="ls-tag">Last</span><span data-last-text>\u2014</span></div>'+
+    '<div class="sets-head">'+
+      '<div class="sh"></div><div class="sh">Type</div><div class="sh">'+unit+'</div>'+
+      '<div class="sh">Reps</div><div class="sh">RPE</div><div class="sh"></div>'+
+    '</div>'+
+    '<div class="set-rows">'+rows+'</div>'+
+    '<button class="add-set-btn" data-add-set>+ Add Set</button>'+
+  '</div>';
+}
+
+function readSetsFromCard(card){
+  var out=[];
+  card.querySelectorAll('.set-row').forEach(function(row){
+    out.push({
+      t:row.querySelector('[data-f="t"]').value||'W',
+      l:row.querySelector('[data-f="l"]').value,
+      r:row.querySelector('[data-f="r"]').value,
+      rpe:row.querySelector('[data-f="rpe"]').value
+    });
+  });
+  return out;
+}
+
+function reindexSetRows(card){
+  card.querySelectorAll('.set-row').forEach(function(row,i){
+    row.setAttribute('data-set-idx',i);
+    row.querySelector('.set-idx').textContent=i+1;
+    row.querySelector('[data-del-set]').setAttribute('data-del-set',i);
+  });
+}
+
+function wireSetsBlock(card,onChange){
+  var wrap=card.querySelector('.sets-wrap');
+  if(!wrap||wrap._wired) return;
+  wrap._wired=true;
+
+  wrap.addEventListener('input',function(e){
+    if(e.target.classList.contains('set-in')) onChange&&onChange();
+  });
+  wrap.addEventListener('change',function(e){
+    if(e.target.classList.contains('set-type')){
+      e.target.setAttribute('data-t',e.target.value);
+      onChange&&onChange();
+    }
+  });
+  wrap.addEventListener('click',function(e){
+    var add=e.target.closest('[data-add-set]');
+    if(add){
+      var rows=wrap.querySelector('.set-rows');
+      if(rows.children.length>=MAX_SETS){showToast('Max '+MAX_SETS+' sets');return;}
+      // New sets inherit the previous set's type and load for fast entry
+      var prev=rows.lastElementChild;
+      var seed=blankSet('W');
+      if(prev){
+        seed.t=prev.querySelector('[data-f="t"]').value||'W';
+        seed.l=prev.querySelector('[data-f="l"]').value||'';
+      }
+      var tmp=document.createElement('div');
+      tmp.innerHTML=setRowHtml(rows.children.length,seed);
+      rows.appendChild(tmp.firstChild);
+      reindexSetRows(card);
+      onChange&&onChange();
+      return;
+    }
+    var del=e.target.closest('[data-del-set]');
+    if(del){
+      var rows2=wrap.querySelector('.set-rows');
+      if(rows2.children.length<=1){showToast('At least one set required');return;}
+      del.closest('.set-row').remove();
+      reindexSetRows(card);
+      onChange&&onChange();
+    }
+  });
+}
+
+function renderLastSetsLine(card,sets,unit){
+  var el=card.querySelector('[data-last-text]');
+  if(!el) return;
+  if(!sets||!setsHaveData(sets)){el.textContent='\u2014 no previous session';return;}
+  var ws=workingSets(sets),ds=dropSets(sets);
+  var parts=[];
+  // Group consecutive working sets by load
+  var groups=[];
+  ws.forEach(function(s){
+    var l=s.l||'';
+    var g=groups[groups.length-1];
+    if(g&&g.l===l) g.reps.push(s.r||'0');
+    else groups.push({l:l,reps:[s.r||'0']});
+  });
+  groups.forEach(function(g){parts.push('<b>'+g.l+unit+'</b> \u00d7 '+g.reps.join(', '));});
+  if(ds.length) parts.push('<span style="color:#c77dff;">drop '+ds.map(function(s){return (s.l||'')+unit+'\u00d7'+(s.r||'');}).join(', ')+'</span>');
+  el.innerHTML=parts.join(' \u00b7 ')||'\u2014';
+}
+
 function getLastBilatForExercise(name){
   for(var i=sessionHistory.length-1;i>=0;i--){
     var sess=sessionHistory[i];
@@ -2288,13 +2533,11 @@ function getLastLoadTypeForExercise(name){
 }
 
 function getLastEntryForExercise(name,bilatMode,equipment){
-  // Returns the most recent entry matching name, bilat mode, and equipment
-  // Falls back: if no equipment match exists, return best bilat-mode match
-  // Falls back further: return any match (for exercises with no bilat/equipment tagged yet)
+  // Most recent entry matching name + bilat mode (+ equipment when given).
+  // Returns the full sets array so callers can show per-set detail.
   if(!name) return null;
   var mode=bilatMode||'bilateral';
   var modeMatch=null;
-  var anyMatch=null;
   for(var i=sessionHistory.length-1;i>=0;i--){
     var sess=sessionHistory[i];
     if(sess.status==='draft') continue;
@@ -2302,40 +2545,32 @@ function getLastEntryForExercise(name,bilatMode,equipment){
       var ex=sess.exercises[j];
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
       if(!matchName) continue;
-      if(!ex.curr||(! ex.curr.load&&!ex.curr.reps.some(function(r){return r;}))) continue;
+      var sets=normalizeSets(ex);
+      if(!setsHaveData(sets)) continue;
       var exMode=ex.bilat||'bilateral';
       var exEquip=ex.equipment||'';
-      var modeOk=exMode===mode;
+      if(exMode!==mode) continue;
       var equipOk=!equipment||!exEquip||exEquip===equipment;
-      // Best case: mode and equipment both match
-      if(modeOk&&equipOk){
-        return {load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,
-          date:sess.date,workout:sess.workout,equipment:exEquip};
-      }
-      // Mode matches but equipment doesn't — keep as fallback
-      if(modeOk&&!modeMatch){
-        modeMatch={load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,
-          date:sess.date,workout:sess.workout,equipment:exEquip};
-      }
-      // No match at all — keep as last resort
-      if(!anyMatch){
-        anyMatch={load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,
-          date:sess.date,workout:sess.workout,equipment:exEquip};
-      }
+      var entry={sets:sets,date:sess.date,workout:sess.workout,equipment:exEquip,
+        load:topWorkingLoad(sets),
+        reps:setsAtTopLoad(sets).map(function(s){return s.r;}),
+        rpe:(function(){var a=setsAtTopLoad(sets);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})()};
+      if(equipOk) return entry;
+      if(!modeMatch) modeMatch=entry;
     }
   }
-  // Return mode match if found, otherwise null (blank Last row for this bilat mode)
   return modeMatch||null;
 }
+
 function getSincePR(exName, bilatMode){
   // Returns sessions since last PR for this exercise + bilat mode
   var logs = [];
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft') return;
     sess.exercises.forEach(function(ex){
-      if(ex.name===exName && (ex.bilat||'bilateral')===bilatMode && ex.curr){
-        var load=parseFloat(ex.curr.load)||0;
-        var reps=(ex.curr.reps||[]).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
+      if(ex.name===exName && (ex.bilat||'bilateral')===bilatMode && normalizeSets(ex).length){
+        var load=topWorkingLoad(normalizeSets(ex));
+        var reps=setsAtTopLoad(normalizeSets(ex)).map(function(s){return s.r;}).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
         if(load||reps) logs.push({load:load,reps:reps});
       }
     });
@@ -2356,89 +2591,33 @@ function populateLastRow(card,exName){
   var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
   var bilatMode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
   var equipment=card.getAttribute('data-equipment')||'';
+  var unit=settings.unit||'kg';
   var last=getLastEntryForExercise(exName,bilatMode,equipment);
-  var lastRow=card.querySelector('.ex-row.last-row');if(!lastRow) return;
-  var inputs=lastRow.querySelectorAll('input');
-  if(last){
-    inputs[0].value=last.load||'';
-    for(var i=0;i<5;i++) inputs[i+1].value=last.reps[i]||'';
-    inputs[6].value=last.rpe||'';
-  } else {
-    inputs.forEach(function(inp){inp.value='';});
-  }
-
-  // ── Status line: since-PR chip + last session summary ──
-  var csl=document.getElementById('csl-'+card.id);
-  if(!csl) return;
-  csl.innerHTML='';
-
-  var sincePR=getSincePR(exName,bilatMode);
-  if(sincePR===-2){
-    // No data at all
-    csl.innerHTML='';
-    return;
-  }
-
-  // Since PR chip
-  var chip=document.createElement('span');
-  chip.className='since-pr-chip';
-  if(sincePR===-1){
-    chip.className+=' base';
-    chip.textContent='Base Load';
-  } else if(sincePR===0){
-    chip.className+=' fresh';
-    chip.textContent='PR last session ✓';
-  } else if(sincePR===1){
-    chip.className+=' amber';
-    chip.textContent='1 session since PR';
-  } else if(sincePR<=3){
-    chip.className+=' amber';
-    chip.textContent=sincePR+' sessions since PR';
-  } else {
-    chip.className+=' stale';
-    chip.textContent=sincePR+' sessions since PR';
-  }
-  csl.appendChild(chip);
-
-  // Last session summary (load × reps @ RPE)
-  if(last&&last.load){
-    var unit=settings.unit||'kg';
-    var validReps=(last.reps||[]).filter(function(r){return r;});
-    var repsStr=validReps.length?validReps.join(', '):'—';
-    var rpeStr=last.rpe?(' @ RPE '+last.rpe):'';
-    var summary=document.createElement('span');
-    summary.className='last-sess-summary';
-    summary.textContent=last.load+unit+' × ['+repsStr+']'+rpeStr;
-    csl.appendChild(summary);
-  }
-
-  // Target line
-  // Target line handled by showExerciseStatusBar
+  renderLastSetsLine(card,last?last.sets:null,unit);
 
   // Last session notes
   var lastNote=null;
   for(var i=sessionHistory.length-1;i>=0;i--){
     var sess=sessionHistory[i];
     if(sess.status==='draft') continue;
+    var hit=null;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
-      if(ex.name===exName&&(ex.bilat||'bilateral')===bilatMode&&ex.notes){
-        lastNote=ex.notes;break;
-      }
+      if((ex.name===exName||ex.canonicalName===exName)&&(ex.bilat||'bilateral')===bilatMode){hit=ex;break;}
     }
-    if(lastNote) break;
+    if(hit){ if(hit.notes) lastNote=hit.notes; break; }
   }
-  var noteLine=card.querySelector('.last-notes-line');
+  var noteEl=card.querySelector('.ex-last-note');
+  if(noteEl) noteEl.remove();
   if(lastNote){
-    if(!noteLine){noteLine=document.createElement('div');noteLine.className='last-notes-line';}
-    noteLine.textContent='“'+lastNote+'”';
-    csl.after(noteLine);
-  } else if(noteLine){
-    noteLine.remove();
+    var csl=card.querySelector('.card-status-line');
+    var n=document.createElement('div');
+    n.className='ex-last-note';
+    n.innerHTML='&#128221; Last note: '+lastNote;
+    if(csl) csl.after(n);
   }
 }
 
-// ── SEARCHABLE DROPDOWN ──
 function createSearchableDropdown(card,selectedName){
   var wrap=card.querySelector('.ex-search-wrap');
   var display=card.querySelector('.ex-selected-display');
@@ -2568,21 +2747,19 @@ function addExRow(data){
   html+='<div class="bilat-toggle" id="bt-'+id+'"><button class="bilat-btn active" data-mode="bilateral">Bilateral</button><button class="bilat-btn" data-mode="unilateral">Unilateral</button></div>';
   html+='<div class="bilat-label" id="bl-'+id+'">Load = per limb when Unilateral</div>';
   html+='<div class="card-status-line" id="csl-'+id+'"></div>';
-  html+='<div class="ex-table">';
-  html+='<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div><div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div><div class="th">RPE</div></div>';
-  html+='<div class="ex-row last-row"><span class="row-tag last">Last</span>';
-  html+='<input type="number" class="cell-in" placeholder="—" value="'+(last.load||'')+'" inputmode="decimal">';
-  for(var i=0;i<5;i++) html+='<input type="number" class="cell-in" placeholder="—" value="'+(last.reps[i]||'')+'" inputmode="numeric">';
-  html+='<input type="number" class="cell-in" placeholder="—" value="'+(last.rpe||'')+'" inputmode="decimal" min="1" max="10" step="0.5"></div>';
-  html+='<div class="ex-row this-row"><span class="row-tag this">This</span>';
-  html+='<input type="number" class="cell-in" placeholder="—" value="'+(curr.load||'')+'" inputmode="decimal">';
-  for(var j=0;j<5;j++) html+='<input type="number" class="cell-in" placeholder="—" value="'+(curr.reps[j]||'')+'" inputmode="numeric">';
-  html+='<input type="number" class="cell-in" placeholder="—" value="'+(curr.rpe||'')+'" inputmode="decimal" min="1" max="10" step="0.5"></div>';
-  html+='</div><div class="notes-row"><input type="text" class="notes-in" placeholder="Notes: cues, technique, pain…" value="'+(data.notes||'')+'"></div>';
+  var initSets=(data.sets&&data.sets.length)?data.sets:normalizeSets(data);
+  if(!initSets.length) initSets=[blankSet('W'),blankSet('W')];
+  html+=setsBlockHtml(initSets,unit);
+  html+='<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes: cues, technique, pain…" value="'+(data.notes||'')+'"></div>';
   div.innerHTML=html;
   div.querySelector('.del-btn').addEventListener('click',function(){div.remove();saveCurrentSession();});
   div.querySelectorAll('input').forEach(function(el){el.addEventListener('change',saveCurrentSession);el.addEventListener('input',saveCurrentSession);});
   document.getElementById('ex-list').appendChild(div);
+  wireSetsBlock(div,function(){
+    saveCurrentSession();
+    var nm=div.getExName?div.getExName():(div.getAttribute('data-ex-name')||'');
+    if(nm) showExerciseStatusBar(div,nm);
+  });
   initLoadTypeToggle(div);
   initBilatToggle(div);
   initDragHandle(div);
@@ -2733,21 +2910,29 @@ function saveCurrentSession(){
   currentSession.exercises=[];
   document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
     var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
-    var rows=card.querySelectorAll('.ex-row');
-    var li=rows[0].querySelectorAll('input');var ti=rows[1].querySelectorAll('input');
+    var sets=readSetsFromCard(card);
     var notes=card.querySelector('.notes-in').value;
     var loadType=card.getAttribute('data-load-type')||'standard';
     var bilatMode=card.getAttribute('data-bilat')||'bilateral';
     var equipment=card.getAttribute('data-equipment')||'';
+    // curr is kept as a derived mirror of the top working sets so that any
+    // remaining legacy reader keeps working; sets[] is the source of truth.
+    var ws=workingSets(sets);
+    var topL=topWorkingLoad(sets);
+    var atTop=setsAtTopLoad(sets);
+    var mirrorReps=['','','','',''];
+    atTop.slice(0,5).forEach(function(s,i){mirrorReps[i]=s.r||'';});
+    var mirrorRpe='';
+    for(var q=atTop.length-1;q>=0;q--){if(atTop[q].rpe){mirrorRpe=atTop[q].rpe;break;}}
     currentSession.exercises.push({
       name:name,notes:notes,loadType:loadType,bilat:bilatMode,equipment:equipment,
-      last:{load:li[0].value,reps:[li[1].value,li[2].value,li[3].value,li[4].value,li[5].value],rpe:li[6].value},
-      curr:{load:ti[0].value,reps:[ti[1].value,ti[2].value,ti[3].value,ti[4].value,ti[5].value],rpe:ti[6].value}
+      sets:sets,
+      curr:{load:topL?String(topL):'',reps:mirrorReps,rpe:mirrorRpe}
     });
   });
   lsSet('op-current',currentSession);
   // Draft upsert
-  var hasData=currentSession.exercises.some(function(e){return e.name&&(e.curr.load||e.curr.reps.some(function(r){return r;}));});
+  var hasData=currentSession.exercises.some(function(e){return e.name&&setsHaveData(e.sets);});
   if(hasData&&currentSession.workout){
     if(!draftSessionId) draftSessionId='draft-'+Date.now();
     var draftIdx=sessionHistory.findIndex(function(s){return s.id===draftSessionId;});
@@ -2801,7 +2986,7 @@ document.getElementById('save-btn').addEventListener('click',function(){
   saveCurrentSession();
   var sess=JSON.parse(JSON.stringify(currentSession));
   if(!sess.workout){showToast('Select a workout type');return;}
-  var hasData=sess.exercises.some(function(e){return e.name&&(e.curr.load||e.curr.reps.some(function(r){return r;}));});
+  var hasData=sess.exercises.some(function(e){return e.name&&setsHaveData(e.sets);});
   if(!hasData){showToast('Log at least one exercise');return;}
   if(draftSessionId){sessionHistory=sessionHistory.filter(function(s){return s.id!==draftSessionId;});draftSessionId=null;}
   sess.id=Date.now();sess.status='complete';
@@ -2869,7 +3054,7 @@ document.getElementById('cwm-save').addEventListener('click',function(){
 function showPostSessionModal(sess){
   var exCount=sess.exercises.filter(function(e){return e.name;}).length;
   var totalSets=sess.exercises.reduce(function(a,e){
-    return a+(e.curr.reps||[]).filter(function(r){return r;}).length;
+    return a+countedSets(normalizeSets(e)).filter(function(r){return r;}).length;
   },0);
   document.getElementById('ps-subtitle').textContent=sess.workout+' &bull; '+formatDate(sess.date);
   document.getElementById('ps-stats').innerHTML=
@@ -2945,12 +3130,16 @@ function renderVolumeTab(){
       if(!ex.name) return;
       var lib=allExercises().find(function(e){return e.name===ex.name;});
       var grp=lib?lib.group:'Other';
-      var sets=(ex.curr.reps||[]).filter(function(r){return parseFloat(r)>0;}).length;
-      var totalReps=(ex.curr.reps||[]).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
-      // Direct (primary) volume
-      if(!weekMap[wk].groups[grp]) weekMap[wk].groups[grp]={sets:0,directSets:0,indirectSets:0,exercises:{}};
+      var _s=normalizeSets(ex);
+      var sets=workingSets(_s).length;
+      var dropN=dropSets(_s).length;
+      var totalReps=countedSets(_s).reduce(function(a,s){return a+(parseFloat(s.r)||0);},0);
+      // Direct (primary) volume — working sets count, drop sets counted
+      // separately, warm-ups never count.
+      if(!weekMap[wk].groups[grp]) weekMap[wk].groups[grp]={sets:0,directSets:0,dropSets:0,indirectSets:0,exercises:{}};
       weekMap[wk].groups[grp].sets+=sets;
       weekMap[wk].groups[grp].directSets+=sets;
+      weekMap[wk].groups[grp].dropSets+=dropN;
       if(!weekMap[wk].groups[grp].exercises[ex.name]) weekMap[wk].groups[grp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,totalReps:0};
       weekMap[wk].groups[grp].exercises[ex.name].sets+=sets;
       weekMap[wk].groups[grp].exercises[ex.name].directSets+=sets;
@@ -2960,7 +3149,7 @@ function renderVolumeTab(){
       var exSecondary=SECONDARY_MAP[ex.canonicalName||ex.name]||{};
       Object.keys(exSecondary).forEach(function(secGrp){
         var credit=exSecondary[secGrp]||0;
-        var indirectSets=sets*credit;
+        var indirectSets=(sets+dropN)*credit;
         if(!weekMap[wk].groups[secGrp]) weekMap[wk].groups[secGrp]={sets:0,directSets:0,indirectSets:0,exercises:{}};
         weekMap[wk].groups[secGrp].sets+=indirectSets;
         weekMap[wk].groups[secGrp].indirectSets+=indirectSets;
@@ -3184,7 +3373,7 @@ function renderVolumeTab(){
       html+='<div data-drill="'+exDrillId+'" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;">'+
         '<div style="min-width:100px;font-size:12px;font-weight:500;display:flex;align-items:center;">'+grp+trend+'</div>'+
         '<div style="flex:1;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+mevColor+';border-radius:4px;"></div></div>'+
-        '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+Math.round(directS*10)/10+' direct · '+Math.round(indirectS*10)/10+' indirect</div>'+
+        '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+Math.round(directS*10)/10+' work'+(dropS?' · '+Math.round(dropS*10)/10+' drop':'')+' · '+Math.round(indirectS*10)/10+' indirect</div>'+
         mevTip+
         '<span style="color:var(--muted);font-size:10px;">&#9660;</span>'+
       '</div>';
@@ -3257,15 +3446,17 @@ function buildProgFilterChips(){
 }
 
 function computeModeStats(logs){
-  // Compute PR stats for a single bilat mode's log set
+  // PR detection from WORKING SETS ONLY. Load PR = new heaviest working
+  // load. Rep PR = more reps at the current best load than ever before.
   var bestLoad=0,bestLoadDate=null,maxAvgAtBest=0;
-  var runMaxLoad=0,runMaxAvg=0,lastPRIdx=-1,runL2=0,runA2=0,runMaxLoad2=0;
+  var runMaxLoad=0,lastPRIdx=-1,runL2=0,runA2=0,runMaxLoad2=0;
   logs.forEach(function(l,i){
-    var load=parseFloat(l.load)||0;
-    var reps=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
+    var sets=l.sets||normalizeSets(l);
+    var load=topWorkingLoad(sets);
+    var at=setsAtTopLoad(sets);
+    var reps=at.map(function(s){return parseFloat(s.r)||0;}).filter(function(r){return r>0;});
     var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
     if(load>runMaxLoad){runMaxLoad=load;bestLoad=load;bestLoadDate=l.date;maxAvgAtBest=avg;}
-    if(avg>runMaxAvg) runMaxAvg=avg;
     var isRepPRCandidate=load===runMaxLoad2;
     if(i>0&&load>runL2){lastPRIdx=i;runL2=load;runA2=0;}
     else if(i>0&&isRepPRCandidate&&avg>runA2){lastPRIdx=i;runA2=avg;}
@@ -3279,41 +3470,66 @@ function computeModeStats(logs){
 
 function computeExStats(name,logs){
   var lib=allExercises().find(function(e){return e.name===name;});
-  var muscle=lib?lib.group:'—';
+  var muscle=lib?lib.group:'\u2014';
   var totalSessions=logs.length;
 
-  // Split logs by bilat mode — track PRs independently
-  var bilatLogs=logs.filter(function(l){return (l.bilat||'bilateral')==='bilateral';});
-  var uniLogs=logs.filter(function(l){return l.bilat==='unilateral';});
+  // PRs are tracked per variant: a variant is one (bilat mode x equipment)
+  // combination. A dumbbell incline press and a Smith incline press are the
+  // same movement but not the same lift, so a PR on one is not a PR on the
+  // other. Same for bilateral vs unilateral.
+  var tracks={};
+  logs.forEach(function(l){
+    var key=(l.bilat||'bilateral')+'|'+(l.equipment||'');
+    if(!tracks[key]) tracks[key]=[];
+    tracks[key].push(l);
+  });
 
-  var bilatStats=bilatLogs.length?computeModeStats(bilatLogs):null;
-  var uniStats=uniLogs.length?computeModeStats(uniLogs):null;
+  var variants=[];
+  Object.keys(tracks).forEach(function(key){
+    var st=computeModeStats(tracks[key]);
+    var parts=key.split('|');
+    st.bilat=parts[0];st.equipment=parts[1];st.key=key;
+    variants.push(st);
+  });
 
-  // Best load across both modes (for display)
+  // Headline best load across every variant
   var bestLoad=0,bestLoadDate=null,bestAvgReps=0;
-  if(bilatStats&&bilatStats.bestLoad>bestLoad){bestLoad=bilatStats.bestLoad;bestLoadDate=bilatStats.bestLoadDate;bestAvgReps=bilatStats.bestAvgReps;}
-  if(uniStats&&uniStats.bestLoad>bestLoad){bestLoad=uniStats.bestLoad;bestLoadDate=uniStats.bestLoadDate;bestAvgReps=uniStats.bestAvgReps;}
+  variants.forEach(function(v){
+    if(v.bestLoad>bestLoad){bestLoad=v.bestLoad;bestLoadDate=v.bestLoadDate;bestAvgReps=v.bestAvgReps;}
+  });
 
-  // sincePR = whichever mode has a more recent PR (lower sincePR number)
-  var sincePRBilat=bilatStats?bilatStats.sincePR:totalSessions;
-  var sincePRUni=uniStats?uniStats.sincePR:totalSessions;
-  var sincePR=Math.min(sincePRBilat,sincePRUni);
+  // sincePR = the most recent PR across any variant. Hitting a unilateral
+  // or different-equipment PR still counts as a PR for this exercise.
+  var sincePR=totalSessions;
+  variants.forEach(function(v){ if(v.sincePR<sincePR) sincePR=v.sincePR; });
+
+  // Kept for compatibility with existing callers
+  var bilatV=variants.filter(function(v){return v.bilat==='bilateral';});
+  var uniV=variants.filter(function(v){return v.bilat==='unilateral';});
+  function minSince(arr){var m=totalSessions;arr.forEach(function(v){if(v.sincePR<m)m=v.sincePR;});return m;}
 
   var lastLoad=logs.length?(parseFloat(logs[logs.length-1].load)||0):0;
   return {name:name,muscle:muscle,totalSessions:totalSessions,sincePR:sincePR,
-    sincePRBilat:sincePRBilat,sincePRUni:sincePRUni,
+    sincePRBilat:minSince(bilatV),sincePRUni:minSince(uniV),
     bestLoad:bestLoad,bestLoadDate:bestLoadDate,lastLoad:lastLoad,
-    bestAvgReps:bestAvgReps,bilatStats:bilatStats,uniStats:uniStats};
+    bestAvgReps:bestAvgReps,variants:variants,
+    bilatStats:bilatV[0]||null,uniStats:uniV[0]||null};
 }
-
 function renderProgression(){
   var container=document.getElementById('prog-list');
   var exMap={};
   sessionHistory.forEach(function(sess){
     sess.exercises.forEach(function(ex){
       if(!ex.name) return;
-      if(!exMap[ex.name]) exMap[ex.name]={logs:[],workouts:{}};
-      exMap[ex.name].logs.push({date:sess.date,workout:sess.workout,load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,sessId:sess.id,isDraft:sess.status==='draft'});
+      if(!exMap[ex.name]) exMap[ex.name]={logs:[],workouts:{},equipment:{}};
+      var _xs=normalizeSets(ex);
+      exMap[ex.name].logs.push({date:sess.date,workout:sess.workout,
+        load:topWorkingLoad(_xs),
+        reps:setsAtTopLoad(_xs).map(function(s){return s.r;}),
+        rpe:(function(){var a=setsAtTopLoad(_xs);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})(),
+        sessId:sess.id,isDraft:sess.status==='draft',
+        bilat:ex.bilat||'bilateral',equipment:ex.equipment||'',sets:normalizeSets(ex)});
+      if(ex.equipment) exMap[ex.name].equipment[ex.equipment]=true;
       if(sess.workout) exMap[ex.name].workouts[sess.workout]=true;
     });
   });
@@ -3326,7 +3542,7 @@ function renderProgression(){
     return true;
   });
   var rows=filteredKeys.map(function(name){
-    var logs=exMap[name].logs.filter(function(l){return !l.isDraft&&(l.load||(l.reps&&l.reps.some(function(r){return r;})));});
+    var logs=exMap[name].logs.filter(function(l){return !l.isDraft&&setsHaveData(l.sets);});
     if(!logs.length) return null;
     return computeExStats(name,logs);
   }).filter(Boolean);
@@ -3394,22 +3610,62 @@ function getLogsForExercise(name,bilatFilter,equipment){
     sess.exercises.forEach(function(ex,exIdx){
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
       if(!matchName) return;
-      if(!ex.curr||(! ex.curr.load&&!ex.curr.reps.some(function(r){return r;}))) return;
+      if(!setsHaveData(normalizeSets(ex))) return;
       var mode=ex.bilat||'bilateral';
       if(bilatFilter&&bilatFilter!=='both'&&mode!==bilatFilter) return;
       if(equipment&&ex.equipment&&ex.equipment!==equipment) return;
       // If equipment specified but entry has none (old/untagged), skip to avoid bleed-through
       if(equipment&&!ex.equipment) return;
+      var _sets=normalizeSets(ex);
       logs.push({sessId:sess.id,exIdx:exIdx,date:sess.date,workout:sess.workout,
-        load:ex.curr.load,reps:ex.curr.reps,rpe:ex.curr.rpe,bilat:mode,
-        equipment:ex.equipment||''});
+        sets:_sets,
+        load:topWorkingLoad(_sets),
+        reps:setsAtTopLoad(_sets).map(function(s){return s.r;}),
+        rpe:(function(){var a=setsAtTopLoad(_sets);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})(),
+        bilat:mode,equipment:ex.equipment||''});
     });
   });
   return logs;
 }
 
+function buildModalEquipChips(name){
+  // One chip per equipment variant this exercise has actually been logged
+  // with, so PR history can be read per variant rather than pooled.
+  var row=document.getElementById('modal-equip-row');
+  if(!row) return;
+  var logs=getLogsForExercise(name,'both');
+  var eqs={};
+  logs.forEach(function(l){ if(l.equipment) eqs[l.equipment]=true; });
+  var list=Object.keys(eqs).sort();
+  if(list.length<2){ row.style.display='none'; modalEquip='All'; return; }
+  row.style.display='flex';
+  var opts=['All'].concat(list);
+  row.innerHTML=opts.map(function(eq){
+    var active=(modalEquip===eq);
+    return '<button class="range-chip'+(active?' active':'')+'" data-meq="'+
+      eq.replace(/"/g,'&quot;')+'">'+(eq==='All'?'All equipment':eq)+'</button>';
+  }).join('');
+  row.querySelectorAll('[data-meq]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      modalEquip=btn.getAttribute('data-meq');
+      refreshProgModal();
+    });
+  });
+}
+
+function refreshProgModal(){
+  var name=currentProgExName;
+  if(!name) return;
+  buildModalEquipChips(name);
+  var logs=getLogsForExercise(name,modalBilatMode,modalEquip==='All'?'':modalEquip);
+  var filtered=filterLogsByRange(logs,currentModalRange);
+  var allLogs=getLogsForExercise(name,'both');
+  renderProgModal(name,filtered,allLogs);
+}
+
 function openProgDetail(name){
   currentProgExName=name;
+  modalEquip='All';
   document.getElementById('modal-ex-name').textContent=name;
   var lib=allExercises().find(function(e){return e.name===name;});
   document.getElementById('modal-ex-sub').textContent=lib?(lib.group+' · '+lib.type):'';
@@ -3434,9 +3690,7 @@ function openProgDetail(name){
   currentModalRange=modalRange[name]||'10';
   updateRangeChips();
 
-  var logs=getLogsForExercise(name,modalBilatMode);
-  var filtered=filterLogsByRange(logs,currentModalRange);
-  renderProgModal(name,filtered,allLogs);
+  refreshProgModal();
   document.getElementById('prog-modal').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -3540,6 +3794,10 @@ function renderProgModal(name,logs,allLogs){
       var newRpe=editRow.querySelector('[data-field="rpe"]').value;
       sessionHistory.forEach(function(sess){
         if(sess.id===l.sessId&&sess.exercises[l.exIdx]&&sess.exercises[l.exIdx].name===name){
+          (function(){var _e=sess.exercises[l.exIdx];var _ns=normalizeSets(_e);
+            var _at=setsAtTopLoad(_ns);
+            _at.forEach(function(s,ix){s.l=newLoad;if(newReps[ix]!==undefined)s.r=newReps[ix];});
+            _e.sets=_ns;})();
           sess.exercises[l.exIdx].curr.load=newLoad;sess.exercises[l.exIdx].curr.reps=newReps;sess.exercises[l.exIdx].curr.rpe=newRpe;
         }
       });
@@ -3548,7 +3806,7 @@ function renderProgModal(name,logs,allLogs){
         var cardName=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
         if(cardName===name) populateLastRow(card,name);
       });
-      var updated=getLogsForExercise(name);renderProgModal(name,updated);renderProgression();showToast('Entry updated ✓');
+      refreshProgModal();renderProgression();showToast('Entry updated ✓');
     });
   });
   tbody.querySelectorAll('.del-entry-btn').forEach(function(btn){
@@ -3560,7 +3818,7 @@ function renderProgModal(name,logs,allLogs){
       lsSet('op-history',sessionHistory);
       var updated=getLogsForExercise(name);
       if(!updated.length){document.getElementById('prog-modal').classList.remove('open');document.body.style.overflow='';renderProgression();}
-      else{renderProgModal(name,updated);renderProgression();}
+      else{refreshProgModal();renderProgression();}
       showToast('Entry deleted');
     });
   });
@@ -3775,10 +4033,7 @@ document.getElementById('modal-bilat-toggle').addEventListener('click',function(
       b.classList.add(modalBilatMode==='unilateral'?'active-gold':'active');
     }
   });
-  var allLogs=getLogsForExercise(currentProgExName,'both');
-  var logs=getLogsForExercise(currentProgExName,modalBilatMode);
-  var filtered=filterLogsByRange(logs,currentModalRange);
-  renderProgModal(currentProgExName,filtered,allLogs);
+  refreshProgModal();
 });
 
 // Range filter chips
@@ -3788,10 +4043,7 @@ document.getElementById('modal-range-filter').addEventListener('click',function(
   modalRange[currentProgExName]=currentModalRange; // persist per exercise
   lsSet('op-modal-range',modalRange);
   updateRangeChips();
-  var logs=getLogsForExercise(currentProgExName,modalBilatMode);
-  var filtered=filterLogsByRange(logs,currentModalRange);
-  var allLogs=getLogsForExercise(currentProgExName,'both');
-  renderProgModal(currentProgExName,filtered,allLogs);
+  refreshProgModal();
 });
 
 // ── UTILS ──
@@ -3840,7 +4092,7 @@ function renderPriorSessions(){
 
   container.innerHTML=filtered.map(function(sess){
     var exCount=sess.exercises.filter(function(e){return e.name;}).length;
-    var totalSets=sess.exercises.reduce(function(a,e){return a+(e.curr.reps||[]).filter(function(r){return r;}).length;},0);
+    var totalSets=sess.exercises.reduce(function(a,e){return a+countedSets(normalizeSets(e)).filter(function(r){return r;}).length;},0);
     var muscles=[...new Set(sess.exercises.map(function(e){var lib=allExercises().find(function(l){return l.name===e.name;});return lib?lib.group:null;}).filter(Boolean))];
     return '<div class="prior-sess-card" data-sessid="'+sess.id+'">'+
       '<div class="prior-sess-header">'+
@@ -3937,23 +4189,12 @@ function buildPriorExCard(ex, exIdx, sessId){
     '<button style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--dim);cursor:pointer;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:5px 10px;" id="pequip-'+exIdx+'">'+
     '⚙ Equipment: '+(equipment||'tap to select')+'</button></div>':'';
 
-  var tableHtml='<div class="ex-table">'+
-    '<div class="tbl-head"><div class="th"></div><div class="th">'+unit+'</div>'+
-    '<div class="th">S1</div><div class="th">S2</div><div class="th">S3</div><div class="th">S4</div><div class="th">S5</div>'+
-    '<div class="th">RPE</div></div>'+
-    '<div class="ex-row last-row"><span class="row-tag last">Best</span>'+
-      '<input type="number" class="cell-in" value="'+(last?last.load||'':'')+'" readonly tabindex="-1">'+
-      [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" value="'+(last&&last.reps?last.reps[i]||'':'')+'" readonly tabindex="-1">';}).join('')+
-      '<input type="number" class="cell-in" value="'+(last?last.rpe||'':'')+'" readonly tabindex="-1">'+
-    '</div>'+
-    '<div class="ex-row this-row"><span class="row-tag this">Log</span>'+
-      '<input type="number" class="cell-in" data-field="load" value="'+(curr.load||'')+'" inputmode="decimal" placeholder="—">'+
-      [0,1,2,3,4].map(function(i){return '<input type="number" class="cell-in" data-field="rep'+i+'" value="'+(curr.reps&&curr.reps[i]||'')+'" inputmode="numeric" placeholder="—">';}).join('')+
-      '<input type="number" class="cell-in" data-field="rpe" value="'+(curr.rpe||'')+'" inputmode="decimal" placeholder="—">'+
-    '</div></div>'+
-    '<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes…" value="'+(ex.notes||'')+'"></div>';
-
+  var _psets=normalizeSets(ex);
+  if(!_psets.length) _psets=[blankSet('W')];
+  var tableHtml=setsBlockHtml(_psets,unit)+
+    '<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes\u2026" value="'+(ex.notes||'')+'"></div>';
   card.innerHTML=headerHtml+bilatHtml+lttHtml+equipBtnHtml+tableHtml;
+  wireSetsBlock(card,null);
 
   // Wire Change Exercise button (searchable dropdown)
   card.querySelector('[data-change-ex]').addEventListener('click',function(){
@@ -4167,11 +4408,14 @@ document.getElementById('prior-save-btn').addEventListener('click',function(){
     var loadType=card.getAttribute('data-load-type')||'standard';
     var exIdx=parseInt(card.getAttribute('data-ex-idx'));
     var orig=sess.exercises[exIdx]||{};
-    var thisRow=card.querySelector('.this-row');
-    var inputs=thisRow.querySelectorAll('input');
-    var load=inputs[0].value;
-    var reps=[1,2,3,4,5].map(function(i){return inputs[i].value;});
-    var rpe=inputs[6].value;
+    var psets=readSetsFromCard(card);
+    var pTop=topWorkingLoad(psets);
+    var pAt=setsAtTopLoad(psets);
+    var load=pTop?String(pTop):'';
+    var reps=['','','','',''];
+    pAt.slice(0,5).forEach(function(s,i){reps[i]=s.r||'';});
+    var rpe='';
+    for(var q=pAt.length-1;q>=0;q--){if(pAt[q].rpe){rpe=pAt[q].rpe;break;}}
     var notes=card.querySelector('.notes-in').value;
     var migrated=MIGRATION_MAP[name];
     newExercises.push({
@@ -4179,7 +4423,7 @@ document.getElementById('prior-save-btn').addEventListener('click',function(){
       canonicalName:migrated?migrated.canonical:(orig.canonicalName||name),
       bilat:bilat,equipment:equipment,loadType:loadType,notes:notes,
       _migrated:true,
-      last:orig.last||{load:'',reps:['','','','',''],rpe:''},
+      sets:psets,
       curr:{load:load,reps:reps,rpe:rpe}
     });
   });
@@ -4297,6 +4541,7 @@ function setRestPreset(secs){
   clearInterval(restInterval);
   clearTimeout(restNotifTimeout);restNotifTimeout=null;
   stopRestTrack();
+  restAudioLost=false;resetRestAudioNote();
   document.querySelectorAll('.rest-preset-btn').forEach(function(b){
     b.classList.toggle('active',parseInt(b.getAttribute('data-secs'))===secs);
   });
@@ -4315,6 +4560,7 @@ function toggleRestTimer(){
   document.getElementById('rest-start-btn').textContent=restRunning?'Pause':'Resume';
   if(restRunning){
     requestNotifPermission();
+    resetRestAudioNote();
 
     restStartTime=Date.now();
     var secsRemaining=restSecs-restElapsedAtPause;
@@ -4363,6 +4609,7 @@ function resetRestTimer(){
   clearInterval(restInterval);
   clearTimeout(restNotifTimeout);restNotifTimeout=null;
   stopRestTrack();
+  restAudioLost=false;resetRestAudioNote();
   restRunning=false;restExpired=false;restRemaining=restSecs;
   restStartTime=null;restElapsedAtPause=0;restEndTimestamp=null;
   var startBtn=document.getElementById('rest-start-btn');
@@ -4378,10 +4625,22 @@ function resetRestTimer(){
 
 function onRestExpired(){
   haptic('complete');
-  // The alarm is already sounding — it is baked into the track that
-  // started playing when the timer began, so no JS was needed to fire it.
+  // The alarm is normally already sounding — it is baked into the track
+  // that began playing when the timer started, so no JS was needed.
+  // If another app seized the audio session, that track was silenced:
+  // beep now (we are in the foreground, so this will be heard) and say so.
   restEndTimestamp=null;
   restNotifTimeout=null;
+  restTrackPlaying=false;
+  if(restAudioLost){
+    playRestBeep();
+    var lbl=document.getElementById('rest-audio-note');
+    if(lbl){
+      lbl.textContent='Alarm was silenced by other audio playing';
+      lbl.style.color='var(--gold)';
+      lbl.style.display='block';
+    }
+  }
   // System notification as a visual backup
   if(window.Notification&&Notification.permission==='granted'){
     try{
@@ -4418,6 +4677,17 @@ document.addEventListener('visibilitychange',function(){
       onRestExpired();
       return;
     }
+    // Still counting down. If the audio session was taken while we were
+    // away, the baked-in alarm will not sound — warn now, while there is
+    // still time for the user to do something about it.
+    if(restAudioLost){
+      var lbl=document.getElementById('rest-audio-note');
+      if(lbl){
+        lbl.textContent='Alarm muted by other audio \u2014 restart the timer to re-arm it';
+        lbl.style.color='var(--gold)';
+        lbl.style.display='block';
+      }
+    }
   }
   if(restRunning&&restStartTime){
     var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
@@ -4441,8 +4711,18 @@ document.addEventListener('visibilitychange',function(){
 // in the background, so the beeps land at exactly the right moment
 // with no JS involvement at all.
 
-var restTrackUrl=null;   // object URL of the currently generated track
+var restTrackUrl=null;    // object URL of the currently generated track
+var restTrackPlaying=false; // is the generated track currently sounding
+var restAudioLost=false;    // true if another app took the audio session
 var ALARM_TAIL_SECS=2.4; // length of the alarm portion appended after the silence
+
+function resetRestAudioNote(){
+  var lbl=document.getElementById('rest-audio-note');
+  if(!lbl) return;
+  lbl.textContent='Keep other audio paused so the alarm can sound';
+  lbl.style.color='var(--muted)';
+  lbl.style.display='block';
+}
 
 function buildRestTrack(seconds){
   // Returns an object URL for a mono 8kHz WAV: silence then alarm.
@@ -4498,17 +4778,36 @@ function startRestTrack(secondsRemaining){
   try{
     var el=document.getElementById('rest-track');
     if(!el) return;
+    restAudioLost=false;
     el.loop=false;
     el.volume=1.0;
     el.src=buildRestTrack(secondsRemaining);
     el.load();
+
+    if(!el._opWired){
+      el._opWired=true;
+      // Another app taking the audio session (music, a call, a video)
+      // pauses our track. If that happens mid-countdown, the baked-in
+      // alarm will never sound — record it so we can be honest with
+      // the user rather than silently failing.
+      el.addEventListener('pause',function(){
+        if(restTrackPlaying&&restRunning&&!restExpired) restAudioLost=true;
+      });
+      el.addEventListener('ended',function(){
+        restTrackPlaying=false;
+      });
+    }
+
     var p=el.play();
-    if(p&&p.catch) p.catch(function(){});
+    if(p&&p.then) p.then(function(){restTrackPlaying=true;})
+                   .catch(function(){restTrackPlaying=false;restAudioLost=true;});
+    else restTrackPlaying=true;
   }catch(e){}
 }
 
 function stopRestTrack(){
   try{
+    restTrackPlaying=false;
     var el=document.getElementById('rest-track');
     if(!el) return;
     el.pause();

@@ -137,6 +137,55 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .today-target-macro-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
 .today-target-adaptive{font-size:10px;color:var(--cyan);margin-top:10px;}
 .today-target-switch{font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;margin-top:10px;display:inline-block;}
+/* Rate gap — target rate vs the rate actually being achieved */
+.rate-gap{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.rate-gap-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px;font-variant-numeric:tabular-nums;}
+.rate-gap-pair{display:flex;align-items:baseline;gap:5px;}
+.rate-gap-key{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.rate-gap-verdict{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:auto;}
+.rg-ontrack{background:rgba(0,200,150,0.14);color:var(--green);}
+.rg-behind{background:rgba(255,184,0,0.14);color:var(--gold);}
+.rg-ahead{background:rgba(255,140,0,0.14);color:var(--orange);}
+.rg-wrong{background:rgba(255,77,77,0.14);color:var(--red);}
+.rg-neutral{background:var(--surface2);color:var(--dim);}
+.rate-gap-note{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.45;}
+.rate-gap-bar{height:6px;border-radius:4px;background:var(--surface2);margin-top:9px;position:relative;overflow:hidden;}
+.rate-gap-bar-fill{position:absolute;top:0;bottom:0;border-radius:4px;}
+.rate-gap-bar-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--dim);}
+/* Chart range toggle + legends */
+.range-row{display:flex;gap:6px;margin-bottom:10px;}
+.range-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 11px;transition:all 0.15s;}
+.range-btn.active{background:var(--cyan);border-color:var(--cyan);color:#000;}
+.chart-legend{display:flex;gap:14px;margin-top:9px;flex-wrap:wrap;font-size:10px;color:var(--muted);}
+.chart-legend .lg{display:inline-flex;align-items:center;gap:5px;cursor:pointer;}
+.chart-legend .lg.off{opacity:0.35;}
+.chart-legend .lg i{display:inline-block;width:9px;height:9px;border-radius:50%;}
+.chart-legend .lg.line i{width:18px;height:2px;border-radius:0;}
+/* Execution score */
+.score-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+.score-head{display:flex;align-items:center;gap:14px;}
+.score-ring{flex-shrink:0;}
+.score-headline{flex:1;min-width:0;}
+.score-tier{font-size:16px;font-weight:700;}
+.score-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45;}
+.score-breakdown{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:9px;}
+.score-line{display:flex;align-items:center;gap:9px;}
+.score-line-label{font-size:11px;color:var(--dim);width:92px;flex-shrink:0;}
+.score-line-track{flex:1;height:6px;border-radius:4px;background:var(--surface2);overflow:hidden;}
+.score-line-fill{height:100%;border-radius:4px;}
+.score-line-val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);width:34px;text-align:right;font-variant-numeric:tabular-nums;}
+/* Body composition */
+.comp-split{display:flex;gap:10px;margin-bottom:12px;}
+.comp-cell{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center;}
+.comp-cell-val{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;}
+.comp-cell-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:3px;}
+.comp-cell-delta{font-size:10px;margin-top:4px;}
+.method-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:var(--surface3);color:var(--dim);}
+/* Diet break banner */
+.banner-break{background:rgba(255,140,0,0.09);border:1px solid rgba(255,140,0,0.32);}
+.banner-break .banner-title{color:var(--orange);}
+.break-actions{display:flex;gap:8px;margin-top:11px;}
+.break-btn{background:none;border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px 12px;}
 .confidence-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.06em;}
 .badge-confirmed{background:rgba(0,200,150,0.15);color:var(--green);}
 .badge-estimated{background:rgba(255,184,0,0.15);color:var(--gold);}
@@ -253,6 +302,7 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
 <div class="page active" id="page-daily">
   <div id="today-target-card"></div>
   <div id="recal-banner-daily"></div>
+  <div id="break-banner-daily"></div>
   <div class="add-day-form">
     <div class="add-day-title" id="form-title">+ Log Today</div>
     <div class="field-row" style="margin-bottom:10px;">
@@ -293,6 +343,22 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
       <div class="field fibre-field" style="margin-bottom:0;display:none;">
         <label class="field-label">Fibre (g)</label>
         <input type="number" class="field-input" id="log-fibre" placeholder="0" inputmode="numeric" min="0">
+      </div>
+    </div>
+    <div class="field-row bf-field" style="margin-bottom:10px;display:none;">
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">Body Fat %</label>
+        <input type="number" class="field-input" id="log-bf" placeholder="optional" inputmode="decimal" min="0" max="70" step="0.1">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">Measured By</label>
+        <select class="field-input" id="log-bf-method">
+          <option value="scale">Smart scale (BIA)</option>
+          <option value="calipers">Calipers</option>
+          <option value="dexa">DEXA</option>
+          <option value="bodpod">BodPod</option>
+          <option value="visual">Visual estimate</option>
+        </select>
       </div>
     </div>
     <div class="field-row" style="margin-bottom:10px;">
@@ -336,7 +402,14 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
 <div class="page" id="page-progress">
   <div id="recal-banner-progress"></div>
   <div id="plateau-banner"></div>
+  <div id="break-banner-progress"></div>
   <div class="dash-grid" id="dash-grid"></div>
+  <div style="padding:16px 16px 0;">
+    <div class="section-title">Are You On Pace?</div>
+    <div class="card"><div class="card-body" id="rate-gap-full"></div></div>
+    <div class="section-title">Execution Score</div>
+    <div id="exec-score-display"></div>
+  </div>
   <div id="eta-display"></div>
   <div style="padding:16px 16px 0;">
     <div class="section-title">Phase History</div>
@@ -369,7 +442,21 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
     </div>
     <div class="section-title">Weight Trend</div>
     <div class="chart-wrap">
-      <svg class="chart-svg" id="weight-chart" height="150"></svg>
+      <div class="range-row" id="weight-range-row">
+        <button class="range-btn" data-range="30">30d</button>
+        <button class="range-btn active" data-range="90">90d</button>
+        <button class="range-btn" data-range="0">All</button>
+      </div>
+      <svg class="chart-svg" id="weight-chart" height="170"></svg>
+      <div class="chart-legend" id="weight-chart-legend"></div>
+    </div>
+    <div id="composition-section" style="display:none;">
+      <div class="section-title">Body Composition</div>
+      <div class="card"><div class="card-body" id="composition-summary"></div></div>
+      <div class="chart-wrap">
+        <svg class="chart-svg" id="bf-chart" height="170"></svg>
+        <div class="chart-legend" id="bf-chart-legend"></div>
+      </div>
     </div>
     <div class="section-title">Maintenance History</div>
     <div class="card"><div class="card-body" id="recal-history-list"></div></div>
@@ -507,6 +594,14 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
       </div></div>
 
       <div class="card"><div class="card-body">
+        <div class="field">
+          <label class="field-label">Body Composition Tracking <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— log body fat % alongside weight</span></label>
+          <div class="toggle-group"><button class="toggle-opt active" id="bf-track-off" data-bftrack="off">Off</button><button class="toggle-opt" id="bf-track-on" data-bftrack="on">On</button></div>
+          <div class="info-box" style="margin-top:6px;">Adds an optional body fat % field to your daily log, each reading tagged with how it was measured. Methods are never averaged together — a DEXA scan and a bathroom scale estimate are plotted as separate series, because mixing them produces a trend line that means nothing. With this on, the app splits your weight change into fat and lean mass, and uses your recent readings to sharpen the calorie calculation.</div>
+        </div>
+      </div></div>
+
+      <div class="card"><div class="card-body">
         <div class="field-row" style="margin-bottom:0">
           <div class="field">
             <label class="field-label">Calories (kcal)</label>
@@ -581,7 +676,17 @@ var CONFIG={
   RECAL_MIN_CONFIRMED_DAYS:10,     // need this many confirmed days with weight+cal in the window
   RECAL_TRIGGER_KCAL:220,          // minimum kcal/day divergence before we act (~0.2kg/week)
   KCAL_PER_KG:7700,
-  DAILY_PAGE_SIZE:20                // Daily tab shows this many most-recent entries before "Show all" — keeps re-render fast once history is long
+  DAILY_PAGE_SIZE:20,               // Daily tab shows this many most-recent entries before "Show all" — keeps re-render fast once history is long
+  TREND_WINDOW_DAYS:28,             // regression window used to estimate the real weekly rate of change
+  TREND_MIN_POINTS:4,               // fewer weigh-ins than this in the window and no rate is claimed
+  EMA_ALPHA:0.2,                    // smoothing factor for the trend line (~9-day effective window)
+  RATE_TOLERANCE_KG:0.15,           // inside this much of target rate counts as on track
+  RATE_TOLERANCE_PCT:0.35,          // ...or inside this fraction of the target rate, whichever is wider
+  BF_WORKING_WINDOW_DAYS:30,        // how recent a logged body fat reading must be to drive the BMR calc
+  BREAK_MIN_DEFICIT_WEEKS:8,        // weeks in an unbroken cut before a diet break is worth raising
+  BREAK_ADAPTATION_PCT:0.08,        // adaptive maintenance this far under the formula estimate flags adaptation
+  BREAK_SNOOZE_DAYS:14,             // how long a dismissed diet-break suggestion stays quiet
+  SCORE_WEIGHTS:{calories:0.40,protein:0.30,consistency:0.20,honesty:0.10}
 };
 
 var GOAL_CONFIG = {
@@ -597,7 +702,7 @@ var GOAL_CONFIG = {
 // ══════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════
-var settings={name:'',age:'',sex:'male',height:'',weight:'',unit:'kg',bf:'',goal:'maintain',goalWeight:'',trainingDays:4,weeklySchedule:null,activity:1.5,customCal:'',customProtein:'',customCarbs:'',customFat:'',fibre:false,_kgNormalized:false};
+var settings={name:'',age:'',sex:'male',height:'',weight:'',unit:'kg',bf:'',goal:'maintain',goalWeight:'',trainingDays:4,weeklySchedule:null,activity:1.5,customCal:'',customProtein:'',customCarbs:'',customFat:'',fibre:false,trackBodyFat:false,_kgNormalized:false};
 var dailyLog=[];
 var phases=[]; // {id,label,goal,startDate,endDate(null=active),startWeightKg,createdAt}
 var editingDate=null;
@@ -643,6 +748,7 @@ function loadAll(){
   // the user taps away and back.
   renderDaily();
   renderRecalBanner('recal-banner-daily');
+  renderBreakBanner('break-banner-daily');
   renderTodayTarget();
 }
 
@@ -720,6 +826,23 @@ function describeWeightDelta(deltaKg,unit){
   if(Math.abs(d)<0.05) return 'roughly no change';
   return (deltaKg<0?'a loss of ':'a gain of ')+Math.abs(d)+' '+unit;
 }
+// Weekly rates need two decimals — fromKgToUnit rounds to one, which would flatten the
+// difference between 0.12 and 0.18 kg/wk into the same displayed number.
+function rateInUnit(kgPerWeek,unit){
+  if(kgPerWeek==null||isNaN(kgPerWeek)) return null;
+  var v=unit==='lbs'?kgPerWeek/KG_PER_LB:kgPerWeek;
+  return Math.round(v*100)/100;
+}
+function fmtRate(kgPerWeek,unit,withUnit){
+  var r=rateInUnit(kgPerWeek,unit);
+  if(r==null) return '—';
+  return (r>0?'+':r<0?'−':'')+Math.abs(r).toFixed(2)+(withUnit===false?'':' '+unit+'/wk');
+}
+function fmtMass(kg,unit,dp){
+  if(kg==null||isNaN(kg)) return '—';
+  var v=unit==='lbs'?kg/KG_PER_LB:kg;
+  return v.toFixed(dp==null?1:dp);
+}
 function formatDate(str){
   if(!str) return '';
   var d=new Date(str+'T00:00:00');
@@ -754,18 +877,24 @@ function formulaTDEE(){
   var unit=settings.unit||'kg';
   var avgWeightData=get7DayAvgWeight(); // canonical kg already — dailyLog weight is always kg
   var weightKg=avgWeightData?avgWeightData.avg:(parseFloat(settings.weight)||0);
-  var bf=parseFloat(settings.bf)||0;
+  // Body fat drives the Katch-McArdle path. When composition tracking is on, recent logged
+  // readings beat the static profile number — as body fat actually changes through a diet, lean
+  // mass changes with it, and so does BMR. A stale profile figure quietly drifts out of date.
+  var bfInfo=getWorkingBodyFat();
+  var bf=bfInfo.pct||0;
   var activity=parseFloat(settings.activity)||1.5;
   var trainingDays=weeklyScheduleTrainingCount();
   // Hard guard: a mistyped negative or zero age/height/weight must never reach a calculation —
   // it would otherwise silently produce a nonsensical (or unsafe-looking) target with no warning.
   if(!age||age<=0||!height||height<=0||!weightKg||weightKg<=0) return null;
-  var bmr,lbmKg;
+  var bmr,lbmKg=null;
   if(bf>0){lbmKg=weightKg*(1-bf/100);bmr=370+21.6*lbmKg;}
   else{if(settings.sex==='male') bmr=10*weightKg+6.25*height-5*age+5; else bmr=10*weightKg+6.25*height-5*age-161;}
   var trainingBonus=(trainingDays*300)/7;
   var tdee=Math.round(bmr*activity+trainingBonus);
   return {tdee:tdee,bmr:Math.round(bmr),weightKg:weightKg,weight:fromKgToUnit(weightKg,unit),unit:unit,
+    bfPct:bf||null,bfSource:bfInfo.source,bfMethod:bfInfo.method,
+    leanKg:lbmKg,fatKg:lbmKg!=null?weightKg-lbmKg:null,
     workingWeightSource:avgWeightData?('7-day avg ('+avgWeightData.count+' readings)'):'from profile'};
 }
 
@@ -784,23 +913,34 @@ function calcTargets(){
   var safetyFloor=Math.round(f.bmr*1.2);
   var floorApplied=false;
   if(calTarget<safetyFloor){calTarget=safetyFloor;floorApplied=true;}
+
+  // Manual overrides are applied HERE — before anything is derived from the calorie target —
+  // so the training/rest day split, the macro split and the projected weekly change all describe
+  // the number the user is actually eating to, not the one the formula would have picked.
+  var customApplied=[];
+  var customBelowFloor=false;
+  if(settings.customCal){
+    calTarget=parseInt(settings.customCal);
+    customApplied.push('calories');
+    if(calTarget<safetyFloor) customBelowFloor=true;
+  }
+
   var swing=gc.cycle;
   var trainingCal=calTarget+swing;
   var restCal=calTarget-swing;
 
   var protein=Math.round(f.weightKg*gc.protein);
+  if(settings.customProtein){protein=parseInt(settings.customProtein);customApplied.push('protein');}
   var fat=Math.round(f.weightKg*1.0);
+  if(settings.customFat){fat=parseInt(settings.customFat);customApplied.push('fat');}
   var carbCals=calTarget-(protein*4)-(fat*9);
   var carbs=Math.max(0,Math.round(carbCals/4));
-
-  var weeklyDeficit=(calTarget-effectiveTDEE)*7;
-  var weeklyChange=Math.round(weeklyDeficit/77)/100;
-
-  var customApplied=[];
-  if(settings.customCal){calTarget=parseInt(settings.customCal);customApplied.push('calories');}
-  if(settings.customProtein){protein=parseInt(settings.customProtein);customApplied.push('protein');}
   if(settings.customCarbs){carbs=parseInt(settings.customCarbs);customApplied.push('carbs');}
-  if(settings.customFat){fat=parseInt(settings.customFat);customApplied.push('fat');}
+
+  // Signed kg/week the current calorie target is aiming to produce. This is the number the
+  // rate-gap readout compares real, observed weight change against.
+  var weeklyDeficit=(calTarget-effectiveTDEE)*7;
+  var weeklyChange=Math.round(weeklyDeficit/(CONFIG.KCAL_PER_KG/100))/100;
 
   var goalDirWarning=null;
   if(settings.goalWeight&&settings.weight){
@@ -813,9 +953,9 @@ function calcTargets(){
     tdee:effectiveTDEE,formulaTDEE:f.tdee,usingAdaptive:usingAdaptive,
     calTarget:calTarget,trainingCal:trainingCal,restCal:restCal,floorApplied:floorApplied,safetyFloor:safetyFloor,
     protein:protein,carbs:carbs,fat:fat,weeklyChange:weeklyChange,
-    bmr:f.bmr,goalLabel:gc.label,swing:swing,
+    bmr:f.bmr,goalLabel:gc.label,swing:swing,goalMultiplier:gc.multiplier,
     workingWeight:f.weight,workingWeightSource:f.workingWeightSource,unit:settings.unit,
-    customApplied:customApplied,goalDirWarning:goalDirWarning
+    customApplied:customApplied,customBelowFloor:customBelowFloor,goalDirWarning:goalDirWarning
   };
 }
 
@@ -907,6 +1047,7 @@ function renderTodayTarget(){
       '<div class="today-target-macro"><div class="today-target-macro-val">'+tgt.carbs+'g</div><div class="today-target-macro-label">Carbs</div></div>'+
       '<div class="today-target-macro"><div class="today-target-macro-val">'+tgt.fat+'g</div><div class="today-target-macro-label">Fat</div></div>'+
     '</div>'+
+    rateGapHtml(true)+
     adaptiveNote+
     '<span class="today-target-switch" id="today-target-switch-btn">Not a typical day? Log today as '+(otherType==='training'?'Training':'Rest')+' instead</span>'+
   '</div>';
@@ -1040,16 +1181,20 @@ function calcComplianceStreak(){
 }
 
 // ══════════════════════════════════════════════════════════════
-// GOAL ETA
+// TREND ENGINE — the real, observed rate of weight change
+// ──────────────────────────────────────────────────────────────
+// A least-squares fit across every weigh-in in the window. Every reading carries equal
+// leverage, so a single heavy or light morning can't swing the answer the way it would if
+// we simply compared the first reading to the last. Deliberately independent of goal weight:
+// the rate is worth knowing whether or not a goal has been set.
 // ══════════════════════════════════════════════════════════════
-function computeGoalETA(){
-  if(!settings.goalWeight) return null;
-  var goalKg=parseFloat(settings.goalWeight);
-  var cutoff=addDays(todayStr(),-28);
+function computeTrendRate(windowDays){
+  var days=windowDays||CONFIG.TREND_WINDOW_DAYS;
+  var cutoff=addDays(todayStr(),-(days-1));
   var pts=dailyLog.filter(function(d){return d.date>=cutoff&&d.weight&&parseFloat(d.weight)>0;})
     .map(function(d){return {x:dateOrdinal(d.date),y:parseFloat(d.weight)};})
     .sort(function(a,b){return a.x-b.x;});
-  if(pts.length<4) return {status:'insufficient'};
+  if(pts.length<CONFIG.TREND_MIN_POINTS) return null;
   var x0=pts[0].x;
   var xs=pts.map(function(p){return p.x-x0;});
   var ys=pts.map(function(p){return p.y;});
@@ -1058,9 +1203,209 @@ function computeGoalETA(){
   var sumXY=0,sumXX=0;
   for(var i=0;i<n;i++){sumXY+=xs[i]*ys[i];sumXX+=xs[i]*xs[i];}
   var denom=(n*sumXX-sumX*sumX)||1;
-  var slope=(n*sumXY-sumX*sumY)/denom; // kg per day
-  var currentKg=ys[ys.length-1];
-  var weeklyRate=Math.round(slope*7*100)/100;
+  var slope=(n*sumXY-sumX*sumY)/denom;          // kg per day
+  var intercept=(sumY-slope*sumX)/n;
+  // The fitted value at the most recent weigh-in, NOT that morning's raw number — using the raw
+  // reading here would put all the daily water noise straight back into every figure downstream.
+  var trendNowKg=intercept+slope*xs[xs.length-1];
+  return {
+    slopePerDayKg:slope,
+    weeklyRateKg:Math.round(slope*7*100)/100,
+    trendNowKg:trendNowKg,
+    points:n,
+    spanDays:xs[xs.length-1]+1,
+    firstDate:pts[0].x,
+    lastDate:pts[pts.length-1].x
+  };
+}
+
+// Compares the rate the current calorie target is aiming for against the rate actually being
+// achieved. This is the difference between an app that records and an app that coaches.
+function computeRateGap(){
+  var t=calcTargets();
+  if(!t) return null;
+  var trend=computeTrendRate();
+  if(!trend) return {status:'insufficient',targetRate:t.weeklyChange,needed:CONFIG.TREND_MIN_POINTS};
+  var target=t.weeklyChange;
+  var actual=trend.weeklyRateKg;
+  var gap=actual-target;
+  // Two separate thresholds. The proportional band is what counts as "close enough" on a target
+  // big enough to measure. The noise floor is the smallest weekly rate difference a month of
+  // bathroom-scale readings can honestly resolve at all — day-to-day water movement is larger
+  // than the signal below this, whatever the maths says.
+  var band=Math.abs(target)*CONFIG.RATE_TOLERANCE_PCT;
+  var noiseFloor=CONFIG.RATE_TOLERANCE_KG;
+  var tol=Math.max(band,noiseFloor);
+  var status;
+  if(Math.abs(gap)<=tol){
+    // Inside the band — but if the target rate is itself smaller than what the scale can resolve,
+    // claiming success would be claiming a measurement we can't actually make.
+    status=(Math.abs(target)>0&&Math.abs(target)<noiseFloor&&Math.abs(gap)>band)?'unresolved':'on-track';
+  }
+  else if(target<0) status=(actual>0)?'wrong-way':(actual>target?'behind':'ahead');   // cutting
+  else if(target>0) status=(actual<0)?'wrong-way':(actual<target?'behind':'ahead');   // gaining
+  else status='drifting';                                                             // maintaining
+  return {
+    status:status,targetRate:target,actualRate:actual,gapKg:Math.round(gap*100)/100,
+    toleranceKg:Math.round(tol*100)/100,points:trend.points,spanDays:trend.spanDays,
+    trendNowKg:trend.trendNowKg
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// BODY COMPOSITION
+// ──────────────────────────────────────────────────────────────
+// Body fat readings are only comparable against readings taken the same way. A DEXA scan and a
+// bathroom-scale BIA estimate can differ by 8+ percentage points on the same body on the same
+// morning, so every reading carries its method and methods are never pooled into one trend.
+// ══════════════════════════════════════════════════════════════
+// validDays is how long a reading from each method keeps driving the calorie maths. A quarterly
+// DEXA stays authoritative for months precisely because it's accurate; a daily BIA reading goes
+// stale fast. Without this the working figure would lurch every time a good scan aged out and a
+// noisy scale estimate took over.
+var BF_METHODS={
+  dexa:     {label:'DEXA',            short:'DEXA',     color:'#00B4D8', rank:1, validDays:120},
+  bodpod:   {label:'BodPod',          short:'BodPod',   color:'#7B61FF', rank:2, validDays:120},
+  calipers: {label:'Calipers',        short:'Calipers', color:'#00C896', rank:3, validDays:45},
+  scale:    {label:'Smart scale (BIA)',short:'Scale',   color:'#FFB800', rank:4, validDays:30},
+  visual:   {label:'Visual estimate', short:'Visual',   color:'#FF8C00', rank:5, validDays:30}
+};
+function bfMethodInfo(key){return BF_METHODS[key]||{label:'Unspecified',short:'Other',color:'#999',rank:9,validDays:CONFIG.BF_WORKING_WINDOW_DAYS};}
+
+function bfEntries(){
+  return dailyLog.filter(function(d){return d.bf!=null&&parseFloat(d.bf)>0&&d.weight&&parseFloat(d.weight)>0;})
+    .slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+}
+function bfEntriesInRange(start,end){
+  return bfEntries().filter(function(d){return d.date>=start&&(!end||d.date<=end);});
+}
+
+// The body fat figure that drives the Katch-McArdle calculation: recent readings only, and only
+// from a single method, so a one-off scan doesn't jerk the maintenance estimate around.
+function getWorkingBodyFat(){
+  if(!settings.trackBodyFat) return {pct:parseFloat(settings.bf)||0,source:'profile',method:null};
+  var today=todayStr();
+  // Each reading is kept only while it's still inside its own method's validity window.
+  var live=bfEntries().filter(function(d){
+    return dateDiffDays(d.date,today)<=bfMethodInfo(d.bfMethod).validDays;
+  });
+  if(!live.length){
+    var fallback=parseFloat(settings.bf)||0;
+    return {pct:fallback,source:fallback?'profile':'none',method:null};
+  }
+  var best=null;
+  live.forEach(function(d){
+    var r=bfMethodInfo(d.bfMethod).rank;
+    if(best==null||r<best) best=r;
+  });
+  var chosen=live.filter(function(d){return bfMethodInfo(d.bfMethod).rank===best;});
+  // For the most reliable method available, average only its most recent readings — an old scan
+  // and a new one shouldn't be blended into a figure that matches neither.
+  chosen=chosen.slice(-3);
+  var pct=avg(chosen.map(function(d){return parseFloat(d.bf);}));
+  return {pct:Math.round(pct*10)/10,source:'logged',method:chosen[0].bfMethod,count:chosen.length,asOf:chosen[chosen.length-1].date};
+}
+
+function compositionForEntry(entry){
+  if(!entry||entry.bf==null||!entry.weight) return null;
+  var kg=parseFloat(entry.weight),bf=parseFloat(entry.bf);
+  if(!(kg>0)||!(bf>0)) return null;
+  return {weightKg:kg,bf:bf,fatKg:kg*bf/100,leanKg:kg*(1-bf/100),method:entry.bfMethod||null,date:entry.date};
+}
+
+// Splits a weight change across a date range into fat and lean, using only readings taken the
+// same way at both ends. Returns a mixedMethods flag rather than quietly comparing across methods.
+function compositionDelta(startDate,endDate){
+  var list=bfEntriesInRange(startDate,endDate);
+  if(list.length<2) return null;
+  var first=list[0],last=list[list.length-1];
+  var mixed=(first.bfMethod||null)!==(last.bfMethod||null);
+  if(mixed){
+    // Try to find a matched pair on the most reliable method that appears at least twice.
+    var byMethod={};
+    list.forEach(function(d){var k=d.bfMethod||'other';(byMethod[k]=byMethod[k]||[]).push(d);});
+    var candidates=Object.keys(byMethod).filter(function(k){return byMethod[k].length>=2;})
+      .sort(function(a,b){return bfMethodInfo(a).rank-bfMethodInfo(b).rank;});
+    if(candidates.length){
+      var arr=byMethod[candidates[0]];
+      first=arr[0];last=arr[arr.length-1];mixed=false;
+    }
+  }
+  var a=compositionForEntry(first),b=compositionForEntry(last);
+  if(!a||!b) return null;
+  return {
+    fatDeltaKg:b.fatKg-a.fatKg,leanDeltaKg:b.leanKg-a.leanKg,weightDeltaKg:b.weightKg-a.weightKg,
+    startBf:a.bf,endBf:b.bf,method:b.method,mixedMethods:mixed,
+    startDate:a.date,endDate:b.date,spanDays:dateDiffDays(a.date,b.date)
+  };
+}
+
+// Renders the gap as a block. compact=true is the Daily-tab version (no bar, shorter copy).
+function rateGapHtml(compact){
+  var g=computeRateGap();
+  if(!g) return '';
+  var unit=settings.unit;
+  if(g.status==='insufficient'){
+    return '<div class="rate-gap"><div class="rate-gap-key">Actual vs target rate</div>'+
+      '<div class="rate-gap-note">Log bodyweight on at least '+g.needed+' days within any '+CONFIG.TREND_WINDOW_DAYS+'-day stretch and your real rate of change will be measured against this target here.</div></div>';
+  }
+  var tgtTxt=fmtRate(g.targetRate,unit),actTxt=fmtRate(g.actualRate,unit);
+  var gapAbs=Math.abs(rateInUnit(g.gapKg,unit)).toFixed(2);
+  var monthly=Math.abs(rateInUnit(g.gapKg*4.345,unit)).toFixed(1);
+  var cls,verdict,note;
+  if(g.status==='on-track'){
+    cls='rg-ontrack';verdict='ON TRACK';
+    note='Your measured rate is within '+Math.abs(rateInUnit(g.toleranceKg,unit)).toFixed(2)+' '+unit+'/wk of what this calorie target is set to produce. Nothing to change.';
+  } else if(g.status==='unresolved'){
+    cls='rg-neutral';verdict='TOO CLOSE TO CALL';
+    note='This target aims for '+Math.abs(rateInUnit(g.targetRate,unit)).toFixed(2)+' '+unit+'/wk, which is smaller than the week-to-week noise in bodyweight. Over '+g.spanDays+' days the scale genuinely can\'t separate hitting that from missing it — give it another two or three weeks, or pick a more aggressive target if you want faster feedback.';
+  } else if(g.status==='behind'){
+    cls='rg-behind';verdict='BEHIND';
+    note='You\'re moving '+gapAbs+' '+unit+'/wk slower than this target intends — about '+monthly+' '+unit+' a month less than planned. If that holds for another week or two the adaptive engine will correct your maintenance number on its own; no need to cut further yet.';
+  } else if(g.status==='ahead'){
+    cls='rg-ahead';verdict='FASTER THAN PLANNED';
+    note=(g.targetRate<0)
+      ? 'You\'re losing '+gapAbs+' '+unit+'/wk faster than this target intends. Faster isn\'t automatically better — the quicker the loss, the more of it tends to come from lean mass rather than fat.'
+      : 'You\'re gaining '+gapAbs+' '+unit+'/wk faster than this target intends. Beyond a point the extra gain is fat rather than muscle.';
+  } else if(g.status==='wrong-way'){
+    cls='rg-wrong';verdict='WRONG DIRECTION';
+    note='Your weight is trending the opposite way to this target. The most common cause is under-logging rather than a broken metabolism — worth weighing portions for a week before changing anything.';
+  } else {
+    cls='rg-behind';verdict='DRIFTING';
+    note='You\'re set to hold weight, but the trend is moving '+Math.abs(rateInUnit(g.actualRate,unit)).toFixed(2)+' '+unit+'/wk.';
+  }
+  var bar='';
+  if(!compact&&Math.abs(g.targetRate)>0.01){
+    var scale=Math.max(Math.abs(g.targetRate),Math.abs(g.actualRate))*1.35||1;
+    var actPct=Math.min(100,Math.abs(g.actualRate)/scale*100);
+    var tgtPct=Math.min(100,Math.abs(g.targetRate)/scale*100);
+    var fillColor=cls==='rg-ontrack'?'var(--green)':cls==='rg-wrong'?'var(--red)':cls==='rg-ahead'?'var(--orange)':'var(--gold)';
+    bar='<div class="rate-gap-bar"><div class="rate-gap-bar-fill" style="left:0;width:'+actPct.toFixed(1)+'%;background:'+fillColor+';"></div>'+
+      '<div class="rate-gap-bar-tick" style="left:'+tgtPct.toFixed(1)+'%;" title="target rate"></div></div>'+
+      '<div class="rate-gap-note" style="margin-top:5px;">Bar shows your measured rate; the notch marks the target. Based on '+g.points+' weigh-ins across '+g.spanDays+' days.</div>';
+  }
+  return '<div class="rate-gap">'+
+    '<div class="rate-gap-row">'+
+      '<span class="rate-gap-pair"><span class="rate-gap-key">Target</span>'+tgtTxt+'</span>'+
+      '<span class="rate-gap-pair"><span class="rate-gap-key">Actual</span>'+actTxt+'</span>'+
+      '<span class="rate-gap-verdict '+cls+'">'+verdict+'</span>'+
+    '</div>'+
+    '<div class="rate-gap-note">'+note+'</div>'+
+    bar+
+  '</div>';
+}
+
+// ══════════════════════════════════════════════════════════════
+// GOAL ETA
+// ══════════════════════════════════════════════════════════════
+function computeGoalETA(){
+  if(!settings.goalWeight) return null;
+  var goalKg=parseFloat(settings.goalWeight);
+  var trend=computeTrendRate();
+  if(!trend) return {status:'insufficient'};
+  var slope=trend.slopePerDayKg;
+  var currentKg=trend.trendNowKg;
+  var weeklyRate=trend.weeklyRateKg;
   if(Math.abs(slope)<0.0007) return {status:'flat',weeklyRate:weeklyRate,currentKg:currentKg,goalKg:goalKg};
   var daysNeeded=(goalKg-currentKg)/slope;
   if(daysNeeded<0) return {status:'wrong-direction',weeklyRate:weeklyRate,currentKg:currentKg,goalKg:goalKg};
@@ -1147,6 +1492,22 @@ function renderPhaseHistory(){
     var weightChangeDisp=(startW!=null&&endW!=null)?fromKgToUnit(endW-startW,settings.unit):null;
     var avgCalPhase=phaseEntries.length?Math.round(avg(phaseEntries.map(function(d){return d.cal;}))):null;
     var gc=GOAL_CONFIG[p.goal]||GOAL_CONFIG.maintain;
+    // The line that turns "weight lost" into "quality of weight lost" — only shown when there
+    // are body fat readings at both ends of the phase to support it.
+    var compHtml='';
+    if(settings.trackBodyFat){
+      var cd=compositionDelta(p.startDate,rangeEnd);
+      if(cd&&cd.spanDays>0){
+        var u=settings.unit;
+        compHtml='<div class="working-weight-note" style="margin-top:10px;border-left-color:'+(cd.fatDeltaKg<0?'var(--green)':'var(--gold)')+';">'+
+          '<strong>Composition:</strong> '+fmtMass(Math.abs(cd.fatDeltaKg),u,1)+' '+u+' of fat '+(cd.fatDeltaKg<0?'lost':'gained')+
+          ', '+fmtMass(Math.abs(cd.leanDeltaKg),u,1)+' '+u+' of lean mass '+(cd.leanDeltaKg<0?'lost':'gained')+
+          ' &nbsp;·&nbsp; '+cd.startBf.toFixed(1)+'% → '+cd.endBf.toFixed(1)+'% body fat'+
+          ' <span class="method-badge">'+esc(bfMethodInfo(cd.method).short)+'</span>'+
+          (cd.mixedMethods?'<br><span style="color:var(--gold);">Start and end readings used different methods — indicative only.</span>':'')+
+        '</div>';
+      }
+    }
     return '<div class="week-card" style="'+(isActive?'border-color:var(--cyan-border);':'')+'">'+
       '<div class="week-header"><div><div class="week-num">'+esc(p.label)+(isActive?'<span class="phase-tag">ACTIVE</span>':'')+
         '</div><div class="week-dates">'+formatDate(p.startDate)+' → '+endLabel+' &nbsp;·&nbsp; '+daysInPhase+' days</div></div>'+
@@ -1157,6 +1518,7 @@ function renderPhaseHistory(){
         '<div class="week-stat"><div class="week-stat-label">Avg Calories</div><div class="week-stat-value tier-avg">'+(avgCalPhase||'—')+'</div></div>'+
         '<div class="week-stat"><div class="week-stat-label">Compliance</div><div class="week-stat-value tier-avg">'+(rangeStats.compliancePct!=null?rangeStats.compliancePct+'%':'—')+'</div></div>'+
       '</div>'+
+      compHtml+
     '</div>';
   }).join('');
   el.querySelectorAll('[data-phase-id]').forEach(function(btn){
@@ -1252,7 +1614,7 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
     // worst case that one tab's content is incomplete and logged to console, but the tab still
     // becomes active and every other tab keeps working normally.
     try{
-      if(page==='daily'){renderDaily();renderRecalBanner('recal-banner-daily');renderTodayTarget();}
+      if(page==='daily'){renderDaily();renderRecalBanner('recal-banner-daily');renderBreakBanner('break-banner-daily');renderTodayTarget();}
       if(page==='weekly') renderWeekly();
       if(page==='progress') renderProgress();
       if(page==='settings') renderTargets();
@@ -1281,6 +1643,7 @@ function applySettings(){
   // settings.weight/goalWeight themselves are always stored in kg (see migrateWeightUnits).
   setUnit(settings.unit||'kg',false);
   setFibre(!!settings.fibre,false);
+  setBfTracking(!!settings.trackBodyFat,false);
   if(settings.bf||settings.customCal||settings.customProtein||settings.customCarbs||settings.customFat||settings.fibre){
     document.getElementById('optional-section').setAttribute('open','');
   }
@@ -1362,6 +1725,18 @@ function setFibre(on,save){
 }
 document.getElementById('fibre-on').addEventListener('click',function(){setFibre(true);});
 document.getElementById('fibre-off').addEventListener('click',function(){setFibre(false);});
+
+function setBfTracking(on,save){
+  settings.trackBodyFat=on;
+  document.getElementById('bf-track-on').classList.toggle('active',on);
+  document.getElementById('bf-track-off').classList.toggle('active',!on);
+  document.querySelectorAll('.bf-field').forEach(function(el){el.style.display=on?'flex':'none';});
+  var compSec=document.getElementById('composition-section');
+  if(compSec) compSec.style.display=on?'block':'none';
+  if(save!==false) saveSettings();
+}
+document.getElementById('bf-track-on').addEventListener('click',function(){setBfTracking(true);});
+document.getElementById('bf-track-off').addEventListener('click',function(){setBfTracking(false);});
 document.getElementById('unit-kg').addEventListener('click',function(){setUnit('kg');});
 document.getElementById('unit-lbs').addEventListener('click',function(){setUnit('lbs');});
 ['s-name','s-age','s-height','s-weight','s-bf','s-goal-weight','s-custom-cal','s-custom-protein','s-custom-carbs','s-custom-fat'].forEach(function(id){
@@ -1403,7 +1778,10 @@ function renderTargets(){
 // EXPORT / IMPORT
 // ══════════════════════════════════════════════════════════════
 document.getElementById('export-btn').addEventListener('click',function(){
-  var data={settings:settings,dailyLog:dailyLog,recal:recal,exportedAt:new Date().toISOString(),schema:2};
+  // schema 3 adds phases (the permanent diet-phase archive) and settings.weeklySchedule.
+  // Anything omitted here is permanently lost the moment someone restores onto a new device,
+  // so every persisted key must appear in this object.
+  var data={settings:settings,dailyLog:dailyLog,recal:recal,phases:phases,exportedAt:new Date().toISOString(),schema:3};
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');a.href=url;a.download='op-nutrition-backup.json';a.click();
@@ -1420,8 +1798,21 @@ document.getElementById('import-file').addEventListener('change',function(e){
       if(data.settings) settings=Object.assign(settings,data.settings);
       if(data.dailyLog) dailyLog=data.dailyLog;
       if(data.recal) recal=Object.assign(recal,data.recal);
-      lsSet('opn-settings',settings);lsSet('opn-daily',dailyLog);lsSet('opn-recal',recal);
-      applySettings();checkRecalibration();showToast('Data restored ✓');
+      if(data.phases) phases=data.phases;
+      lsSet('opn-settings',settings);lsSet('opn-daily',dailyLog);lsSet('opn-recal',recal);lsSet('opn-phases',phases);
+      // A schema-2 backup predates phases and the weekly schedule, so rebuild anything the
+      // restored file couldn't carry — otherwise a restore lands with an empty phase history
+      // and every day silently defaulting to Training.
+      ensureWeeklySchedule();
+      ensureInitialPhase();
+      applySettings();
+      checkRecalibration();
+      document.getElementById('log-type').value=getDayTypeForDate(todayStr());
+      renderDaily();
+      renderRecalBanner('recal-banner-daily');
+      renderBreakBanner('break-banner-daily');
+      renderTodayTarget();
+      showToast('Data restored ✓');
     }catch(err){showToast('Import failed — invalid file');}
   };
   reader.readAsText(file);e.target.value='';
@@ -1492,6 +1883,8 @@ function setEditMode(entry){
   document.getElementById('log-carbs').value=entry.carbs;
   document.getElementById('log-fat').value=entry.fat;
   document.getElementById('log-fibre').value=entry.fibre!=null?entry.fibre:'';
+  document.getElementById('log-bf').value=entry.bf!=null?entry.bf:'';
+  document.getElementById('log-bf-method').value=entry.bfMethod||'scale';
   if(entry.processed){document.getElementById('log-proc-yes').classList.add('active');document.getElementById('log-proc-no').classList.remove('active');}
   else{document.getElementById('log-proc-no').classList.add('active');document.getElementById('log-proc-yes').classList.remove('active');}
   if(entry.confidence==='estimated'){document.getElementById('log-conf-estimated').classList.add('active');document.getElementById('log-conf-confirmed').classList.remove('active');}
@@ -1508,6 +1901,7 @@ function clearForm(){
   document.getElementById('log-type').value=getDayTypeForDate(todayStr());
   document.getElementById('log-weight').value='';
   document.getElementById('log-fibre').value='';
+  document.getElementById('log-bf').value='';
   document.getElementById('log-proc-no').classList.add('active');document.getElementById('log-proc-yes').classList.remove('active');
   document.getElementById('log-conf-confirmed').classList.add('active');document.getElementById('log-conf-estimated').classList.remove('active');
   document.getElementById('log-cal').value='';
@@ -1536,8 +1930,20 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
   if(logWeightRaw!==''&&parseFloat(logWeightRaw)<=0){showToast('Bodyweight must be greater than zero');return;}
   var logWeight=logWeightRaw===''?null:Math.round(toKgFromUnit(logWeightRaw,settings.unit)*100)/100;
   var fibre=settings.fibre?(parseFloat(document.getElementById('log-fibre').value)||0):null;
+  var bfRaw=settings.trackBodyFat?document.getElementById('log-bf').value:'';
+  var logBf=null,logBfMethod=null;
+  if(bfRaw!==''){
+    var bfNum=parseFloat(bfRaw);
+    if(!(bfNum>0)||bfNum>70){showToast('Body fat % must be between 0 and 70');return;}
+    // A body fat reading is meaningless without the weight it applies to — fat mass is the
+    // product of the two, so refuse the pair rather than storing half of it.
+    if(logWeight==null){showToast('Log bodyweight too — body fat % needs it to work out fat and lean mass');return;}
+    logBf=Math.round(bfNum*10)/10;
+    logBfMethod=document.getElementById('log-bf-method').value||'scale';
+  }
   var tgt=getActiveTarget(type);
   var entry={date:date,type:type,cal:cal,protein:protein,carbs:carbs,fat:fat,weight:logWeight,processed:processed,confidence:confidence,fibre:fibre,
+    bf:logBf,bfMethod:logBfMethod,
     targetCal:tgt?tgt.cal:null,targetProtein:tgt?tgt.protein:null,targetCarbs:tgt?tgt.carbs:null,targetFat:tgt?tgt.fat:null};
   // If we were editing an existing entry and the date field was changed to a different day,
   // remove the original entry first — otherwise it's left behind as an orphaned duplicate.
@@ -1556,6 +1962,7 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
     renderDaily();
     checkRecalibration();
     renderRecalBanner('recal-banner-daily');
+    renderBreakBanner('break-banner-daily');
     renderTodayTarget();
   }catch(err){console.error('Post-save render failed',err);}
   nudgeRepaint();
@@ -1599,7 +2006,8 @@ function renderDaily(){
     var typeBadge=d.type==='training'?'<span class="day-type-badge badge-training">Training</span>':'<span class="day-type-badge badge-rest">Rest</span>';
     var confBadge=d.confidence==='estimated'?'<span class="confidence-badge badge-estimated">Estimated</span>':'<span class="confidence-badge badge-confirmed">Confirmed</span>';
     var procBadge=d.processed?'<span class="confidence-badge badge-processed">Processed</span>':'';
-    var weightHtml=d.weight?'<div style="font-size:11px;color:var(--dim);padding:0 14px 8px;"><span class="weight-dot"></span>'+fromKgToUnit(parseFloat(d.weight),unit)+unit+'</div>':'';
+    var bfHtml=(d.bf!=null&&settings.trackBodyFat)?' &nbsp;·&nbsp; '+d.bf+'% BF <span class="method-badge">'+esc(bfMethodInfo(d.bfMethod).short)+'</span>':'';
+    var weightHtml=d.weight?'<div style="font-size:11px;color:var(--dim);padding:0 14px 8px;"><span class="weight-dot"></span>'+fromKgToUnit(parseFloat(d.weight),unit)+unit+bfHtml+'</div>':'';
     var fibreHtml=d.fibre!=null&&settings.fibre?'<div class="macro-cell"><div class="macro-label">Fibre</div><div style="font-size:15px;font-weight:700;padding:4px 0;">'+d.fibre+'g</div></div>':'';
     return '<div class="day-entry">'+
       '<div class="day-header"><span class="day-date">'+compDot+formatDate(d.date)+'</span>'+typeBadge+
@@ -1761,6 +2169,13 @@ function renderWeekly(){
     var wholeHtml=wholeFoodPct!==null?'<span style="font-size:10px;color:'+(wholeFoodPct>=70?'var(--green)':'var(--dim)')+';margin-left:8px;">'+wholeFoodPct+'% whole food</span>':'';
 
     var startDate=getWeekStartDate(w.key);
+    var wkScore=computeExecutionScore(startDate,getWeekEndDate(w.key));
+    var scoreHtml=wkScore?('<div style="padding:0 14px 12px;display:flex;align-items:center;gap:12px;">'+
+      scoreRingSvg(wkScore.score,wkScore.tierColor,52)+
+      '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:'+wkScore.tierColor+'">'+wkScore.tier+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px;">Execution score · calories '+Math.round(wkScore.parts.calories*100)+
+      ' · protein '+Math.round(wkScore.parts.protein*100)+' · consistency '+Math.round(wkScore.parts.consistency*100)+
+      ' · weighed '+Math.round(wkScore.parts.honesty*100)+'</div></div></div>'):'';
     var div=document.createElement('div');
     div.className='week-card';
     div.innerHTML='<div class="week-header"><div><div class="week-num">'+w.key+'</div><div class="week-dates">w/c '+formatDate(startDate)+'</div></div>'+complianceHTML+'</div>'+
@@ -1770,6 +2185,7 @@ function renderWeekly(){
         (avgWeight!==null?'<div class="week-stat"><div class="week-stat-label">Avg Bodyweight</div><div class="week-stat-value tier-avg">'+avgWeight+' '+settings.unit+'</div></div>':'<div class="week-stat"><div class="week-stat-label">Avg Bodyweight</div><div class="week-stat-value" style="color:var(--muted)">—</div></div>')+
         '<div class="week-stat"><div class="week-stat-label">Days Logged</div><div class="week-stat-value">'+days.length+' <span style="font-size:11px;color:var(--muted)">/ 7</span></div></div>'+
       '</div>'+
+      scoreHtml+
       '<div style="padding:6px 14px 12px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">'+confHtml+wholeHtml+'</div>';
     container.appendChild(div);
   });
@@ -1815,6 +2231,15 @@ function renderHeatmap(){
   }
   document.getElementById('heatmap-grid').innerHTML=cells;
 }
+document.getElementById('weight-range-row').querySelectorAll('.range-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    weightChartRange=parseInt(btn.getAttribute('data-range'))||0;
+    document.getElementById('weight-range-row').querySelectorAll('.range-btn').forEach(function(b){
+      b.classList.toggle('active',b===btn);
+    });
+    drawSmartWeightChart();
+  });
+});
 document.getElementById('heatmap-prev').addEventListener('click',function(){
   if(!heatmapMonth){var t=new Date();heatmapMonth={y:t.getFullYear(),m:t.getMonth()};}
   heatmapMonth.m--;
@@ -1872,6 +2297,8 @@ function renderProgress(){
   var avgCarbs=recentDays.length?Math.round(avg(recentDays.map(function(d){return d.carbs;}))):null;
   var avgFat=recentDays.length?Math.round(avg(recentDays.map(function(d){return d.fat;}))):null;
 
+  var trendSnapshot=computeTrendRate();
+  var trendNow=trendSnapshot?trendSnapshot.trendNowKg:null;
   var complianceStreak=calcComplianceStreak();
   var comp7=getComplianceForRange(addDays(todayStr(),-6),todayStr());
   var comp30=getComplianceForRange(addDays(todayStr(),-29),todayStr());
@@ -1882,16 +2309,21 @@ function renderProgress(){
     (comp7.compliancePct!==null?'<div class="dash-cell full" style="border-color:'+complianceColor+';text-align:center;padding:16px;"><div class="dash-kind">TARGET COMPLIANCE</div><div style="font-size:40px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+complianceColor+';">'+comp7.compliancePct+'%</div><div style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.1em;">Last 7 Days &nbsp;·&nbsp; '+comp30.compliancePct+'% last 30 &nbsp;·&nbsp; '+complianceStreak+'-day streak</div></div>':'')+
     '<div class="dash-cell cyan"><div class="dash-kind">ACTUAL, 7-DAY AVG</div><div class="dash-label">Avg Daily Calories</div><div class="dash-value">'+(avgCal||'—')+'</div><div class="dash-unit">'+(t?'Target: '+t.calTarget+' kcal':'Set profile in Settings')+'</div></div>'+
     '<div class="dash-cell"><div class="dash-kind">ACTUAL, 7-DAY AVG</div><div class="dash-label">Avg Protein</div><div class="dash-value">'+(avgProt||'—')+'</div><div class="dash-unit">'+(t?'Target: '+t.protein+'g':'—')+'</div></div>'+
-    '<div class="dash-cell"><div class="dash-kind">LATEST LOGGED</div><div class="dash-label">Current Weight</div><div class="dash-value">'+(latestWeight||'—')+'</div><div class="dash-unit">'+(settings.unit)+(weightChange!==null?' · '+(weightChange>0?'+':'')+weightChange+' '+settings.unit+' since first log':'')+'</div></div>'+
+    '<div class="dash-cell"><div class="dash-kind">'+(trendNow!=null?'TREND WEIGHT':'LATEST LOGGED')+'</div><div class="dash-label">Current Weight</div><div class="dash-value">'+(trendNow!=null?fromKgToUnit(trendNow,settings.unit):(latestWeight||'—'))+'</div><div class="dash-unit">'+(settings.unit)+(trendNow!=null?' · smoothed, last scale reading '+latestWeight:'')+(weightChange!==null?' · '+(weightChange>0?'+':'')+weightChange+' '+settings.unit+' since first log':'')+'</div></div>'+
     '<div class="dash-cell"><div class="dash-kind">LOGGING</div><div class="dash-label">Consistency (30d)</div><div class="dash-value">'+(comp30.consistencyPct!=null?comp30.consistencyPct+'%':'—')+'</div><div class="dash-unit">'+comp30.loggedDays+' of last 30 days logged</div></div>';
 
   renderRecalBanner('recal-banner-progress');
   renderPlateauBanner();
+  renderBreakBanner('break-banner-progress');
+  var rgEl=document.getElementById('rate-gap-full');
+  if(rgEl) rgEl.innerHTML=t?rateGapHtml(false):'<p style="font-size:12px;color:var(--muted);">Complete your profile in Settings to compare your real rate of change against a target.</p>';
+  renderExecScore();
   renderETA();
   renderPhaseHistory();
   renderHeatmap();
   drawCalChart(weeks,t);
   drawSmartWeightChart();
+  renderComposition();
   renderRecalHistory();
 
   var macroEl=document.getElementById('macro-status');
@@ -1909,66 +2341,476 @@ function renderProgress(){
   '</div>';
 }
 
+var weightChartRange=90; // days shown on the weight chart; 0 = entire history
+
+// ══════════════════════════════════════════════════════════════
+// WEIGHT TREND CHART
+// ──────────────────────────────────────────────────────────────
+// Raw weigh-ins are plotted faint, positioned by their real date, and the prominent line is a
+// gap-aware exponential moving average. The EMA's responsiveness scales with how long it has
+// been since the last reading, so logging sporadically doesn't leave the trend stuck on stale
+// data, and a week's silence doesn't compress into the same horizontal space as a single day.
+// ══════════════════════════════════════════════════════════════
 function drawSmartWeightChart(){
   var svg=document.getElementById('weight-chart');
-  var W=svg.parentElement.clientWidth-32;var H=150;
+  if(!svg) return;
+  var W=Math.max(260,(svg.parentElement?svg.parentElement.clientWidth:320)-32);var H=170;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML='';
   var ns='http://www.w3.org/2000/svg';
-  var sevenDaysAgoStr=addDays(todayStr(),-6);
-
   var unit=settings.unit;
-  var dailyPts=dailyLog.filter(function(d){return d.date>=sevenDaysAgoStr&&d.weight&&parseFloat(d.weight)>0;})
-    .map(function(d){return {date:d.date,val:fromKgToUnit(parseFloat(d.weight),unit),type:'daily'};})
-    .sort(function(a,b){return a.date.localeCompare(b.date);});
+  var legendEl=document.getElementById('weight-chart-legend');
+  if(legendEl) legendEl.innerHTML='';
 
-  var weekMap={};
-  dailyLog.filter(function(d){return d.date<sevenDaysAgoStr&&d.weight&&parseFloat(d.weight)>0;}).forEach(function(d){
-    var wk=getISOWeek(d.date);
-    if(!weekMap[wk]) weekMap[wk]=[];
-    weekMap[wk].push(parseFloat(d.weight));
-  });
-  var weeklyPts=Object.keys(weekMap).sort().map(function(wk){
-    var vals=weekMap[wk];var a=fromKgToUnit(avg(vals),unit);
-    return {date:getWeekStartDate(wk),label:wk.slice(5),val:a,type:'weekly'};
+  function addEl(tag,attrs){
+    var e=document.createElementNS(ns,tag);
+    Object.keys(attrs).forEach(function(k){e.setAttribute(k,attrs[k]);});
+    svg.appendChild(e);return e;
+  }
+  function addText(x,y,s,size,fill,anchor){
+    var e=addEl('text',{x:x,y:y,fill:fill||'#666','font-size':size||9,'text-anchor':anchor||'middle'});
+    e.textContent=s;return e;
+  }
+  function empty(msg){
+    addText(W/2,H/2,msg,12,'#555','middle');
+  }
+
+  var todayOrd=dateOrdinal(todayStr());
+  var pts=dailyLog.filter(function(d){return d.weight&&parseFloat(d.weight)>0;})
+    .map(function(d){return {ord:dateOrdinal(d.date),date:d.date,kg:parseFloat(d.weight)};})
+    .filter(function(p){return weightChartRange?p.ord>=todayOrd-(weightChartRange-1):true;})
+    .sort(function(a,b){return a.ord-b.ord;});
+
+  if(pts.length<2){empty(pts.length?'One weigh-in so far — log a few more to see a trend':'Log bodyweight to see your trend');return;}
+
+  // Collapse multiple readings on the same calendar day, then walk the EMA forward.
+  var byOrd={};
+  pts.forEach(function(p){if(!byOrd[p.ord]) byOrd[p.ord]=[];byOrd[p.ord].push(p.kg);});
+  var ordKeys=Object.keys(byOrd).map(Number).sort(function(a,b){return a-b;});
+  var ema=null,lastOrd=null,trend=[];
+  ordKeys.forEach(function(o){
+    var dayKg=avg(byOrd[o]);
+    if(ema==null){ema=dayKg;}
+    else{
+      // A longer gap means the previous estimate deserves less weight, so the effective
+      // smoothing factor grows with the number of days skipped.
+      var gap=o-lastOrd;
+      var a=1-Math.pow(1-CONFIG.EMA_ALPHA,gap);
+      ema=ema+a*(dayKg-ema);
+    }
+    lastOrd=o;
+    trend.push({ord:o,kg:ema});
   });
 
-  var allPts=weeklyPts.concat(dailyPts);
-  if(allPts.length<2){
-    svg.innerHTML='<text x="50%" y="50%" fill="#555" font-size="12" text-anchor="middle">Log bodyweight daily to see trend</text>';
+  var minOrd=ordKeys[0],maxOrd=ordKeys[ordKeys.length-1];
+  var goalKg=settings.goalWeight?parseFloat(settings.goalWeight):null;
+
+  // Only project forward when the goal is close enough that it doesn't squash the history.
+  var projOrd=null,projKg=null,projDateStr=null;
+  if(goalKg!=null){
+    var eta=computeGoalETA();
+    if(eta&&eta.status==='ok'){
+      var etaOrd=dateOrdinal(eta.etaDate);
+      if(etaOrd>maxOrd&&etaOrd-maxOrd<=60){projOrd=etaOrd;projKg=goalKg;projDateStr=eta.etaDate;maxOrd=etaOrd;}
+    }
+  }
+
+  var vals=pts.map(function(p){return fromKgToUnit(p.kg,unit);})
+    .concat(trend.map(function(p){return fromKgToUnit(p.kg,unit);}));
+  if(goalKg!=null) vals.push(fromKgToUnit(goalKg,unit));
+  var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
+  var span=(maxV-minV)||1;
+  minV-=span*0.12;maxV+=span*0.12;
+
+  var pad={l:38,r:10,t:14,b:26};
+  function xp(ord){return pad.l+((ord-minOrd)/((maxOrd-minOrd)||1))*(W-pad.l-pad.r);}
+  function yp(v){return pad.t+(1-(v-minV)/(maxV-minV))*(H-pad.t-pad.b);}
+
+  [0,0.5,1].forEach(function(f){
+    var yy=pad.t+(1-f)*(H-pad.t-pad.b);
+    addEl('line',{x1:pad.l,x2:W-pad.r,y1:yy,y2:yy,stroke:'rgba(255,255,255,0.05)','stroke-width':1});
+    addText(pad.l-5,yy+3.5,(minV+(maxV-minV)*f).toFixed(1),9,'#555','end');
+  });
+
+  if(goalKg!=null){
+    var gy=yp(fromKgToUnit(goalKg,unit));
+    if(gy>pad.t-1&&gy<H-pad.b+1){
+      addEl('line',{x1:pad.l,x2:W-pad.r,y1:gy,y2:gy,stroke:'#FFB800','stroke-width':1,'stroke-dasharray':'5,4',opacity:0.75});
+      addText(W-pad.r,gy-5,'Goal',8,'#FFB800','end');
+    }
+  }
+
+  if(projOrd!=null){
+    var lastTrend=trend[trend.length-1];
+    addEl('line',{x1:xp(lastTrend.ord),y1:yp(fromKgToUnit(lastTrend.kg,unit)),x2:xp(projOrd),y2:yp(fromKgToUnit(projKg,unit)),
+      stroke:'#00C896','stroke-width':1.5,'stroke-dasharray':'4,4',opacity:0.5});
+    addEl('circle',{cx:xp(projOrd),cy:yp(fromKgToUnit(projKg,unit)),r:3.5,fill:'none',stroke:'#00C896','stroke-width':1.5,opacity:0.8});
+  }
+
+  // Raw readings sit behind, deliberately faint — they are the noise, not the signal.
+  pts.forEach(function(p){
+    addEl('circle',{cx:xp(p.ord),cy:yp(fromKgToUnit(p.kg,unit)),r:2.4,fill:'#8aa0b5',opacity:0.34});
+  });
+
+  addEl('polyline',{points:trend.map(function(p){return xp(p.ord)+','+yp(fromKgToUnit(p.kg,unit));}).join(' '),
+    fill:'none',stroke:'#00C896','stroke-width':2.4,'stroke-linejoin':'round','stroke-linecap':'round'});
+
+  var lastT=trend[trend.length-1];
+  addEl('circle',{cx:xp(lastT.ord),cy:yp(fromKgToUnit(lastT.kg,unit)),r:4,fill:'#00C896'});
+
+  // Label dates are taken from real logged days (and the ETA date) rather than converted back
+  // from ordinals, so no timezone round-tripping can shift them by a day.
+  var firstDateStr=pts[0].date;
+  var lastDateStr=pts[pts.length-1].date;
+  var spanDays=pts[pts.length-1].ord-pts[0].ord;
+  var midDateStr=addDays(firstDateStr,Math.round(spanDays/2));
+  addText(pad.l,H-pad.b+15,formatDate(firstDateStr),8,'#555','start');
+  if(spanDays>10) addText(xp(dateOrdinal(midDateStr)),H-pad.b+15,formatDate(midDateStr),8,'#555','middle');
+  addText(W-pad.r,H-pad.b+15,formatDate(projDateStr||lastDateStr),8,projDateStr?'#00C896':'#555','end');
+
+  if(legendEl){
+    legendEl.innerHTML='<span class="lg"><i style="background:#8aa0b5;opacity:0.5"></i>Each weigh-in</span>'+
+      '<span class="lg line"><i style="background:#00C896"></i>Trend ('+Math.round(2/CONFIG.EMA_ALPHA-1)+'-day smoothing)</span>'+
+      (goalKg!=null?'<span class="lg line"><i style="background:#FFB800"></i>Goal weight</span>':'')+
+      (projOrd!=null?'<span class="lg line"><i style="background:#00C896;opacity:0.5"></i>Projected to goal</span>':'');
+  }
+}
+
+var bfHiddenMethods={}; // methods toggled off via the chart legend
+
+// ══════════════════════════════════════════════════════════════
+// DIET BREAK / REFEED PROMPTING
+// ──────────────────────────────────────────────────────────────
+// Three independent signals that a cut has run long enough to be worth interrupting: elapsed
+// time in an unbroken deficit phase, measured downward drift of maintenance against the formula
+// estimate, and a stalled scale despite good adherence. Any one raises it; the message names
+// which. Deliberately honest about the evidence — diet breaks are well supported for adherence,
+// much less settled on whether they protect metabolic rate.
+// ══════════════════════════════════════════════════════════════
+function computeDietBreakSuggestion(){
+  var t=calcTargets();
+  if(!t) return null;
+  if(t.goalMultiplier>=1.0) return null;              // only relevant inside a deficit
+  var active=getActivePhase();
+  if(!active) return null;
+
+  var weeksIn=Math.floor(dateDiffDays(active.startDate,todayStr())/7);
+  var reasons=[];
+
+  if(weeksIn>=CONFIG.BREAK_MIN_DEFICIT_WEEKS){
+    reasons.push({key:'duration',text:'You\'ve been in this deficit phase for '+weeksIn+' weeks without a break.'});
+  }
+
+  var adaptationPct=null;
+  if(recal.workingMaintenance&&t.formulaTDEE){
+    adaptationPct=(t.formulaTDEE-recal.workingMaintenance)/t.formulaTDEE;
+    if(adaptationPct>=CONFIG.BREAK_ADAPTATION_PCT){
+      reasons.push({key:'adaptation',text:'Your measured maintenance has settled about '+Math.round(adaptationPct*100)+'% below what the formula predicts for your size ('+recal.workingMaintenance+' vs '+t.formulaTDEE+' kcal).'});
+    }
+  }
+
+  var comp14=getComplianceForRange(addDays(todayStr(),-13),todayStr());
+  if(recal.plateauActive&&comp14.compliancePct!=null&&comp14.compliancePct>=80){
+    reasons.push({key:'plateau',text:'Your weight has stalled across the last couple of weeks while you were hitting '+comp14.compliancePct+'% of your targets — so this isn\'t an adherence problem.'});
+  }
+
+  if(!reasons.length) return null;
+
+  var snoozed=lsGet('opn-break-snooze');
+  if(snoozed&&dateDiffDays(snoozed,todayStr())<CONFIG.BREAK_SNOOZE_DAYS) return null;
+
+  return {weeksIn:weeksIn,adaptationPct:adaptationPct,reasons:reasons,maintenanceCal:recal.workingMaintenance||t.formulaTDEE};
+}
+
+function renderBreakBanner(targetId){
+  var el=document.getElementById(targetId);
+  if(!el) return;
+  var s=computeDietBreakSuggestion();
+  if(!s){el.innerHTML='';return;}
+  var reasonsHtml=s.reasons.map(function(r){return '<li style="margin-bottom:4px;">'+r.text+'</li>';}).join('');
+  el.innerHTML='<div class="banner banner-break"><div class="banner-title">Worth considering a diet break <span class="tag">COACHING</span></div>'+
+    '<div class="banner-body"><ul style="margin:0 0 8px 16px;padding:0;">'+reasonsHtml+'</ul>'+
+    'A diet break means eating at maintenance — around '+s.maintenanceCal+' kcal on a training day — for one to two weeks, deliberately, then returning to the deficit. The evidence here is worth stating plainly: breaks are well supported for adherence, appetite and training quality, and the evidence that they protect metabolic rate is mixed rather than settled. The practical case is that a planned break you control tends to beat the unplanned one that eventually happens anyway.</div>'+
+    '<div class="break-actions"><button class="break-btn" id="break-snooze-btn">Not now</button>'+
+    '<button class="break-btn" id="break-start-btn" style="border-color:var(--orange);color:var(--orange);">Start a maintenance phase</button></div></div>';
+  var snooze=document.getElementById('break-snooze-btn');
+  if(snooze) snooze.addEventListener('click',function(){
+    lsSet('opn-break-snooze',todayStr());
+    renderBreakBanner(targetId);
+    showToast('Noted — this won\'t come up again for '+CONFIG.BREAK_SNOOZE_DAYS+' days');
+  });
+  var start=document.getElementById('break-start-btn');
+  if(start) start.addEventListener('click',function(){
+    showModal({title:'Start a maintenance phase?',
+      body:'This closes your current phase and starts a new one at maintenance calories, so the break is recorded in your history as a deliberate block rather than looking like you fell off. You can start a new cut whenever you\'re ready.',
+      confirmText:'Start break',cancelText:'Cancel',onConfirm:function(){
+        settings.goal='maintain';
+        document.getElementById('s-goal').value='maintain';
+        lsSet('opn-break-snooze',todayStr());
+        saveSettings();
+        startNewPhase('maintain');
+        showToast('Maintenance phase started');
+      }});
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXECUTION SCORE
+// ──────────────────────────────────────────────────────────────
+// Binary compliance ("did you hit target, yes or no") throws away most of what happened. This
+// scores four things that actually differ between people who get results and people who don't,
+// and shows the breakdown so a low score tells you which lever to pull.
+// ══════════════════════════════════════════════════════════════
+function computeExecutionScore(startDate,endDate){
+  var days=dailyLog.filter(function(d){return d.date>=startDate&&d.date<=endDate;});
+  // Never count days that haven't happened yet. Scoring the current week against a full seven
+  // days would mark someone down on Tuesday for not having logged Saturday.
+  var today=todayStr();
+  var effectiveEnd=endDate>today?today:endDate;
+  var totalDays=Math.max(1,dateDiffDays(startDate,effectiveEnd)+1);
+  if(!days.length) return null;
+  var withTarget=days.filter(function(d){return d.targetCal;});
+  if(!withTarget.length) return null;
+
+  // Calories: full marks inside a few percent of target, tapering to zero at 25% out.
+  var calScores=withTarget.map(function(d){
+    var err=Math.abs(d.cal-d.targetCal)/d.targetCal;
+    return Math.max(0,Math.min(1,1-(err/0.25)));
+  });
+  var calories=avg(calScores);
+
+  // Protein: hitting 90%+ of target is full marks; below that it falls away to zero at half.
+  var protDays=withTarget.filter(function(d){return d.targetProtein;});
+  var protein=protDays.length?avg(protDays.map(function(d){
+    var ratio=d.protein/d.targetProtein;
+    if(ratio>=0.9) return 1;
+    if(ratio<=0.5) return 0;
+    return (ratio-0.5)/0.4;
+  })):0;
+
+  var consistency=Math.min(1,days.length/totalDays);
+  var confirmed=days.filter(function(d){return d.confidence==='confirmed';}).length;
+  var honesty=days.length?confirmed/days.length:0;
+
+  var w=CONFIG.SCORE_WEIGHTS;
+  var total=calories*w.calories+protein*w.protein+consistency*w.consistency+honesty*w.honesty;
+  var score=Math.round(total*100);
+  var tier,tierColor,tierNote;
+  if(score>=90){tier='Dialled In';tierColor='var(--green)';tierNote='This is the level where results stop being a question of effort and start being a question of time.';}
+  else if(score>=75){tier='Strong';tierColor='var(--cyan)';tierNote='Solid execution. The breakdown below shows the one place there\'s still room.';}
+  else if(score>=60){tier='Inconsistent';tierColor='var(--gold)';tierNote='Enough good days to work, enough off days to slow it down. The lowest bar below is worth more than any change to your targets.';}
+  else {tier='Off Track';tierColor='var(--red)';tierNote='Before changing calories, fix whichever bar below is lowest — a target you aren\'t hitting isn\'t the target that\'s wrong.';}
+
+  return {score:score,tier:tier,tierColor:tierColor,tierNote:tierNote,
+    parts:{calories:calories,protein:protein,consistency:consistency,honesty:honesty},
+    loggedDays:days.length,totalDays:totalDays,confirmedDays:confirmed};
+}
+
+function scoreRingSvg(score,color,size){
+  var s=size||62,r=(s/2)-5,c=2*Math.PI*r;
+  var off=c*(1-Math.max(0,Math.min(100,score))/100);
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'" class="score-ring">'+
+    '<circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+r+'" fill="none" stroke="var(--surface2)" stroke-width="5"/>'+
+    '<circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="5" stroke-linecap="round" '+
+      'stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+(s/2)+' '+(s/2)+')"/>'+
+    '<text x="50%" y="50%" dy="5" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="700" font-family="JetBrains Mono,monospace">'+score+'</text>'+
+  '</svg>';
+}
+
+function scoreBreakdownHtml(parts){
+  var labels={calories:'Calories',protein:'Protein',consistency:'Consistency',honesty:'Weighed food'};
+  var w=CONFIG.SCORE_WEIGHTS;
+  return '<div class="score-breakdown">'+Object.keys(labels).map(function(k){
+    var v=Math.round(parts[k]*100);
+    var color=v>=85?'var(--green)':v>=65?'var(--cyan)':v>=45?'var(--gold)':'var(--red)';
+    return '<div class="score-line"><span class="score-line-label">'+labels[k]+' <span style="color:var(--muted)">'+Math.round(w[k]*100)+'%</span></span>'+
+      '<span class="score-line-track"><span class="score-line-fill" style="width:'+v+'%;background:'+color+';"></span></span>'+
+      '<span class="score-line-val">'+v+'</span></div>';
+  }).join('')+'</div>';
+}
+
+function renderExecScore(){
+  var el=document.getElementById('exec-score-display');
+  if(!el) return;
+  var s=computeExecutionScore(addDays(todayStr(),-6),todayStr());
+  if(!s){
+    el.innerHTML='<div class="score-card"><p style="font-size:12px;color:var(--muted);margin:0;">Log a few days with targets set and your execution score for the week will appear here — calories, protein, consistency and how much of it was weighed rather than estimated.</p></div>';
+    return;
+  }
+  el.innerHTML='<div class="score-card">'+
+    '<div class="score-head">'+scoreRingSvg(s.score,s.tierColor,66)+
+      '<div class="score-headline"><div class="score-tier" style="color:'+s.tierColor+'">'+s.tier+'</div>'+
+      '<div class="score-sub">Last 7 days · '+s.loggedDays+' of '+s.totalDays+' days logged, '+s.confirmedDays+' weighed. '+s.tierNote+'</div></div>'+
+    '</div>'+
+    scoreBreakdownHtml(s.parts)+
+  '</div>';
+}
+
+function renderComposition(){
+  var sec=document.getElementById('composition-section');
+  if(!sec) return;
+  if(!settings.trackBodyFat){sec.style.display='none';return;}
+  sec.style.display='block';
+  var el=document.getElementById('composition-summary');
+  var unit=settings.unit;
+  var list=bfEntries();
+
+  if(list.length<1){
+    el.innerHTML='<p style="font-size:12px;color:var(--muted);">Log a body fat % on the Daily tab and your fat mass, lean mass, and the split of any weight change will appear here. One reading starts it; two readings on the same method start the trend.</p>';
+    drawBodyFatChart();
     return;
   }
 
-  var vals=allPts.map(function(p){return p.val;});
-  var minV=Math.min.apply(null,vals)*0.995,maxV=Math.max.apply(null,vals)*1.005;
-  if(minV===maxV){minV=minV*0.995;maxV=maxV*1.005;}
-  var pad={l:36,r:8,t:10,b:24};var n=allPts.length;
-  function xp(i){return pad.l+i*(W-pad.l-pad.r)/(n-1);}
-  function yp(v){return pad.t+(1-(v-minV)/(maxV-minV))*(H-pad.t-pad.b);}
+  // Split the change across whatever span we have matched-method readings for.
+  var span=compositionDelta(list[0].date,list[list.length-1].date);
 
-  [0,0.5,1].forEach(function(t2){
-    var yy=pad.t+(1-t2)*(H-pad.t-pad.b);
-    var line=document.createElementNS(ns,'line');line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);line.setAttribute('y1',yy);line.setAttribute('y2',yy);line.setAttribute('stroke','rgba(255,255,255,0.05)');line.setAttribute('stroke-width','1');svg.appendChild(line);
-    var txt=document.createElementNS(ns,'text');txt.setAttribute('x',pad.l-4);txt.setAttribute('y',yy+4);txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');txt.setAttribute('text-anchor','end');txt.textContent=(minV+(maxV-minV)*t2).toFixed(1);svg.appendChild(txt);
-  });
-
-  if(weeklyPts.length>0&&dailyPts.length>0){
-    var divX=xp(weeklyPts.length-0.5);
-    var dLine=document.createElementNS(ns,'line');dLine.setAttribute('x1',divX);dLine.setAttribute('x2',divX);dLine.setAttribute('y1',pad.t);dLine.setAttribute('y2',H-pad.b);dLine.setAttribute('stroke','rgba(255,255,255,0.1)');dLine.setAttribute('stroke-width','1');dLine.setAttribute('stroke-dasharray','3,3');svg.appendChild(dLine);
-    var wkLabel=document.createElementNS(ns,'text');wkLabel.setAttribute('x',pad.l+4);wkLabel.setAttribute('y',pad.t+12);wkLabel.setAttribute('fill','#555');wkLabel.setAttribute('font-size','8');wkLabel.textContent='Wk avg';svg.appendChild(wkLabel);
-    var dayLabel=document.createElementNS(ns,'text');dayLabel.setAttribute('x',divX+4);dayLabel.setAttribute('y',pad.t+12);dayLabel.setAttribute('fill','#555');dayLabel.setAttribute('font-size','8');dayLabel.textContent='Daily (7d)';svg.appendChild(dayLabel);
+  // The headline tiles must come from the SAME method the change below is measured on, or the
+  // card shows a body fat % from one instrument directly above a change measured on another.
+  var headlineEntry=list[list.length-1];
+  if(span&&span.method){
+    var sameMethod=list.filter(function(d){return (d.bfMethod||null)===span.method;});
+    if(sameMethod.length) headlineEntry=sameMethod[sameMethod.length-1];
+  }
+  var latest=compositionForEntry(headlineEntry);
+  var mi=bfMethodInfo(latest.method);
+  var deltaFatHtml='',deltaLeanHtml='';
+  if(span&&span.spanDays>0){
+    var fatCls=span.fatDeltaKg<0?'color:var(--green)':'color:var(--gold)';
+    var leanCls=span.leanDeltaKg<0?'color:var(--red)':'color:var(--green)';
+    deltaFatHtml='<div class="comp-cell-delta" style="'+fatCls+'">'+(span.fatDeltaKg>0?'+':'−')+fmtMass(Math.abs(span.fatDeltaKg),unit,1)+'</div>';
+    deltaLeanHtml='<div class="comp-cell-delta" style="'+leanCls+'">'+(span.leanDeltaKg>0?'+':'−')+fmtMass(Math.abs(span.leanDeltaKg),unit,1)+'</div>';
   }
 
-  var poly=document.createElementNS(ns,'polyline');
-  poly.setAttribute('points',allPts.map(function(p,i){return xp(i)+','+yp(p.val);}).join(' '));
-  poly.setAttribute('fill','none');poly.setAttribute('stroke','#00C896');poly.setAttribute('stroke-width','2');svg.appendChild(poly);
+  var unitSuffix='<span style="font-size:11px;color:var(--muted);font-weight:500;"> '+unit+'</span>';
+  var html='<div class="comp-split">'+
+    '<div class="comp-cell"><div class="comp-cell-val">'+fmtMass(latest.fatKg,unit,1)+unitSuffix+'</div><div class="comp-cell-label">Fat Mass</div>'+deltaFatHtml+'</div>'+
+    '<div class="comp-cell"><div class="comp-cell-val">'+fmtMass(latest.leanKg,unit,1)+unitSuffix+'</div><div class="comp-cell-label">Lean Mass</div>'+deltaLeanHtml+'</div>'+
+    '<div class="comp-cell"><div class="comp-cell-val">'+latest.bf.toFixed(1)+'%</div><div class="comp-cell-label">Body Fat</div><div class="comp-cell-delta"><span class="method-badge">'+esc(mi.short)+'</span></div></div>'+
+  '</div>';
 
-  allPts.forEach(function(p,i){
-    var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(i));c.setAttribute('cy',yp(p.val));
-    c.setAttribute('r',p.type==='daily'?4:5);
-    c.setAttribute('fill',p.type==='daily'?'#00C896':'#00B4D8');c.setAttribute('opacity','0.9');svg.appendChild(c);
-    var lbl=document.createElementNS(ns,'text');lbl.setAttribute('x',xp(i));lbl.setAttribute('y',H-pad.b+14);lbl.setAttribute('fill','#555');lbl.setAttribute('font-size','8');lbl.setAttribute('text-anchor','middle');
-    lbl.textContent=p.type==='daily'?p.date.slice(8):p.label;svg.appendChild(lbl);
+  if(span&&span.spanDays>0){
+    var wl=span.weightDeltaKg;
+    var sentence;
+    if(Math.abs(wl)<0.2&&Math.abs(span.fatDeltaKg)>=0.3){
+      sentence='Your weight barely moved over these '+span.spanDays+' days, but the composition did: '+
+        (span.fatDeltaKg<0?'fat down ':'fat up ')+fmtMass(Math.abs(span.fatDeltaKg),unit,1)+' '+unit+' and '+
+        (span.leanDeltaKg>0?'lean up ':'lean down ')+fmtMass(Math.abs(span.leanDeltaKg),unit,1)+' '+unit+
+        '. That is recomposition — the scale is the wrong instrument for seeing it.';
+    } else {
+      sentence='Over '+span.spanDays+' days your weight moved '+(wl>0?'+':'−')+fmtMass(Math.abs(wl),unit,1)+' '+unit+
+        ' — '+fmtMass(Math.abs(span.fatDeltaKg),unit,1)+' '+unit+' of that '+(span.fatDeltaKg<0?'came off as fat':'went on as fat')+
+        ' and '+fmtMass(Math.abs(span.leanDeltaKg),unit,1)+' '+unit+' was lean mass '+(span.leanDeltaKg<0?'lost':'gained')+'.';
+      if(span.fatDeltaKg<0&&span.leanDeltaKg<-0.5){
+        sentence+=' Losing that much lean alongside the fat usually points to too steep a deficit, too little protein, or not enough resistance training.';
+      } else if(span.fatDeltaKg<0&&span.leanDeltaKg>=-0.2){
+        sentence+=' Holding lean mass through a fat loss phase is the outcome you want.';
+      }
+    }
+    html+='<p style="font-size:12px;color:var(--dim);line-height:1.55;">'+sentence+'</p>';
+    html+='<p style="font-size:11px;color:var(--muted);margin-top:8px;">Measured '+formatDate(span.startDate)+' → '+formatDate(span.endDate)+
+      ' using '+esc(bfMethodInfo(span.method).label)+'.'+
+      (span.mixedMethods?' <span style="color:var(--gold);">These two readings used different methods, so treat the split as indicative only — methods disagree with each other far more than bodies change.</span>':'')+'</p>';
+  } else if(list.length===1){
+    html+='<p style="font-size:12px;color:var(--muted);">One reading so far. Log a second using the same method and the app will split your weight change into fat and lean.</p>';
+  }
+
+  var wbf=getWorkingBodyFat();
+  if(wbf.source==='logged'){
+    html+='<div class="working-weight-note" style="margin-top:10px;border-left-color:var(--green);">Your calorie maths is using '+wbf.pct+'% body fat from '+
+      (wbf.count>1?wbf.count+' recent '+esc(bfMethodInfo(wbf.method).label)+' readings':'your latest '+esc(bfMethodInfo(wbf.method).label)+' reading')+
+      ', not the static figure in your profile — so as your composition changes, your BMR estimate follows it.</div>';
+  }
+  el.innerHTML=html;
+  drawBodyFatChart();
+}
+
+// ══════════════════════════════════════════════════════════════
+// BODY FAT CHART — one series per measurement method, never pooled
+// ══════════════════════════════════════════════════════════════
+function drawBodyFatChart(){
+  var svg=document.getElementById('bf-chart');
+  if(!svg) return;
+  var W=Math.max(260,(svg.parentElement?svg.parentElement.clientWidth:320)-32);var H=170;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML='';
+  var ns='http://www.w3.org/2000/svg';
+  var legendEl=document.getElementById('bf-chart-legend');
+  if(legendEl) legendEl.innerHTML='';
+
+  function addEl(tag,attrs){
+    var e=document.createElementNS(ns,tag);
+    Object.keys(attrs).forEach(function(k){e.setAttribute(k,attrs[k]);});
+    svg.appendChild(e);return e;
+  }
+  function addText(x,y,s,size,fill,anchor){
+    var e=addEl('text',{x:x,y:y,fill:fill||'#666','font-size':size||9,'text-anchor':anchor||'middle'});
+    e.textContent=s;return e;
+  }
+
+  var all=bfEntries();
+  if(!all.length){addText(W/2,H/2,'Log body fat % to see it plotted here',12,'#555');return;}
+
+  var groups={};
+  all.forEach(function(d){
+    var k=d.bfMethod||'other';
+    (groups[k]=groups[k]||[]).push({ord:dateOrdinal(d.date),date:d.date,bf:parseFloat(d.bf)});
   });
+  var methodKeys=Object.keys(groups).sort(function(a,b){return bfMethodInfo(a).rank-bfMethodInfo(b).rank;});
+  var visibleKeys=methodKeys.filter(function(k){return !bfHiddenMethods[k];});
+  if(!visibleKeys.length) visibleKeys=methodKeys.slice(0,1);
+
+  var shown=[];
+  visibleKeys.forEach(function(k){shown=shown.concat(groups[k]);});
+  var minOrd=Math.min.apply(null,shown.map(function(p){return p.ord;}));
+  var maxOrd=Math.max.apply(null,shown.map(function(p){return p.ord;}));
+  var bfs=shown.map(function(p){return p.bf;});
+  var minV=Math.min.apply(null,bfs),maxV=Math.max.apply(null,bfs);
+  var spanV=(maxV-minV)||2;
+  minV-=spanV*0.18;maxV+=spanV*0.18;
+
+  var pad={l:34,r:10,t:14,b:26};
+  function xp(o){return pad.l+((o-minOrd)/((maxOrd-minOrd)||1))*(W-pad.l-pad.r);}
+  function yp(v){return pad.t+(1-(v-minV)/(maxV-minV))*(H-pad.t-pad.b);}
+
+  [0,0.5,1].forEach(function(f){
+    var yy=pad.t+(1-f)*(H-pad.t-pad.b);
+    addEl('line',{x1:pad.l,x2:W-pad.r,y1:yy,y2:yy,stroke:'rgba(255,255,255,0.05)','stroke-width':1});
+    addText(pad.l-5,yy+3.5,(minV+(maxV-minV)*f).toFixed(1)+'%',9,'#555','end');
+  });
+
+  visibleKeys.forEach(function(k){
+    var info=bfMethodInfo(k);
+    var series=groups[k].slice().sort(function(a,b){return a.ord-b.ord;});
+    // Only connect a method's readings once there are enough of them to call it a trend.
+    if(series.length>=3){
+      addEl('polyline',{points:series.map(function(p){return xp(p.ord)+','+yp(p.bf);}).join(' '),
+        fill:'none',stroke:info.color,'stroke-width':2,'stroke-linejoin':'round',opacity:0.9});
+    } else if(series.length===2){
+      addEl('line',{x1:xp(series[0].ord),y1:yp(series[0].bf),x2:xp(series[1].ord),y2:yp(series[1].bf),
+        stroke:info.color,'stroke-width':1.5,'stroke-dasharray':'4,3',opacity:0.6});
+    }
+    series.forEach(function(p){
+      addEl('circle',{cx:xp(p.ord),cy:yp(p.bf),r:4,fill:info.color,opacity:0.95});
+    });
+  });
+
+  var firstShown=shown.slice().sort(function(a,b){return a.ord-b.ord;})[0];
+  var lastShown=shown.slice().sort(function(a,b){return b.ord-a.ord;})[0];
+  addText(pad.l,H-pad.b+15,formatDate(firstShown.date),8,'#555','start');
+  if(lastShown.ord!==firstShown.ord) addText(W-pad.r,H-pad.b+15,formatDate(lastShown.date),8,'#555','end');
+
+  if(legendEl){
+    legendEl.innerHTML=methodKeys.map(function(k){
+      var info=bfMethodInfo(k);
+      var n=groups[k].length;
+      return '<span class="lg'+(bfHiddenMethods[k]?' off':'')+'" data-bfm="'+esc(k)+'"><i style="background:'+info.color+'"></i>'+esc(info.label)+' ('+n+')</span>';
+    }).join('')+(methodKeys.length>1?'<span style="color:var(--muted);">Tap to show or hide a method</span>':'');
+    legendEl.querySelectorAll('[data-bfm]').forEach(function(sp){
+      sp.addEventListener('click',function(){
+        var k=sp.getAttribute('data-bfm');
+        bfHiddenMethods[k]=!bfHiddenMethods[k];
+        drawBodyFatChart();
+      });
+    });
+  }
 }
 
 function drawCalChart(weeks,t){

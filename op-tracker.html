@@ -360,9 +360,9 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .set-del:hover{color:var(--red);}
 .add-set-btn{background:var(--surface2);border:1px dashed var(--border);border-radius:7px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.04em;margin-top:2px;padding:7px;width:100%;}
 .add-set-btn:active{background:var(--cyan-dim);color:var(--cyan);}
-.last-sets{background:rgba(255,255,255,0.02);border-radius:7px;font-size:10px;color:var(--dim);padding:6px 9px;margin-bottom:7px;line-height:1.5;}
+.last-sets{background:rgba(0,180,216,0.05);border:1px solid rgba(0,180,216,0.18);border-radius:8px;color:var(--dim);padding:8px 10px;margin-bottom:9px;}
 .last-sets b{color:var(--text);font-weight:700;}
-.last-sets .ls-tag{color:var(--muted);font-size:9px;letter-spacing:0.05em;text-transform:uppercase;margin-right:5px;}
+.last-sets .ls-tag{color:var(--cyan);font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;}
 
 /* ── REP RANGE CHIP ── */
 .rep-range-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--cyan);font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 7px;margin-left:5px;vertical-align:middle;}
@@ -729,7 +729,6 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
         <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);border:1px solid var(--gold);margin-right:3px;vertical-align:middle;"></span>Load PR</span>
         <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:3px;vertical-align:middle;"></span>Rep PR</span>
         <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:3px;vertical-align:middle;"></span>Both</span>
-        <span style="font-size:9px;color:var(--muted)">Dot size = avg reps</span>
       </div>
     </div>
     <div class="modal-summary-strip" id="modal-summary"></div>
@@ -1697,6 +1696,8 @@ function setUnit(u,save){
   document.getElementById('unit-kg').classList.toggle('active',u==='kg');
   document.getElementById('unit-lbs').classList.toggle('active',u==='lbs');
   if(save!==false) saveSettings();
+  // Re-label set tables and refresh Last panels in the live session
+  try{ refreshSessionUnits(); }catch(err){}
 }
 document.getElementById('unit-kg').addEventListener('click',function(){setUnit('kg');});
 document.getElementById('unit-lbs').addEventListener('click',function(){setUnit('lbs');});
@@ -2399,7 +2400,7 @@ function setRowHtml(idx,s){
 function setsBlockHtml(sets,unit){
   var rows=sets.map(function(s,i){return setRowHtml(i,s);}).join('');
   return '<div class="sets-wrap">'+
-    '<div class="last-sets" data-last-sets><span class="ls-tag">Last</span><span data-last-text>\u2014</span></div>'+
+    '<div class="last-sets" data-last-sets><div class="ls-tag">Last Session</div><div data-last-text></div></div>'+
     '<div class="sets-head">'+
       '<div class="sh"></div><div class="sh">Type</div><div class="sh">'+unit+'</div>'+
       '<div class="sh">Reps</div><div class="sh">RPE</div><div class="sh"></div>'+
@@ -2474,23 +2475,46 @@ function wireSetsBlock(card,onChange){
   });
 }
 
+function refreshSessionUnits(){
+  var unit=settings.unit||'kg';
+  document.querySelectorAll('#ex-list .ex-card, #prior-edit-ex-list .ex-card').forEach(function(card){
+    var head=card.querySelector('.sets-head');
+    if(head){
+      var ths=head.querySelectorAll('.sh');
+      if(ths[2]) ths[2].textContent=unit;
+    }
+    var nm=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+    if(nm){ populateLastRow(card,nm); showExerciseStatusBar(card,nm); }
+  });
+}
+
 function renderLastSetsLine(card,sets,unit){
+  // Renders the previous session as a compact table so the user can see
+  // exactly what to beat, set by set.
   var el=card.querySelector('[data-last-text]');
   if(!el) return;
-  if(!sets||!setsHaveData(sets)){el.textContent='\u2014 no previous session';return;}
-  var ws=workingSets(sets),ds=dropSets(sets);
-  var parts=[];
-  // Group consecutive working sets by load
-  var groups=[];
-  ws.forEach(function(s){
-    var l=s.l||'';
-    var g=groups[groups.length-1];
-    if(g&&g.l===l) g.reps.push(s.r||'0');
-    else groups.push({l:l,reps:[s.r||'0']});
-  });
-  groups.forEach(function(g){parts.push('<b>'+g.l+unit+'</b> \u00d7 '+g.reps.join(', '));});
-  if(ds.length) parts.push('<span style="color:#c77dff;">drop '+ds.map(function(s){return (s.l||'')+unit+'\u00d7'+(s.r||'');}).join(', ')+'</span>');
-  el.innerHTML=parts.join(' \u00b7 ')||'\u2014';
+  var counted=sets?countedSets(sets):[];
+  if(!counted.length){
+    el.innerHTML='<span style="color:var(--muted);">No previous session</span>';
+    return;
+  }
+  var rows=counted.map(function(s,i){
+    var isDrop=s.t==='D';
+    var tag=isDrop?'<span style="color:#c77dff;font-size:9px;font-weight:700;">D</span>':String(i+1);
+    return '<tr>'+
+      '<td style="color:var(--muted);font-size:10px;padding:2px 0;width:26px;">'+tag+'</td>'+
+      '<td style="font-weight:700;color:var(--text);padding:2px 6px;">'+(s.l||'\u2014')+unit+'</td>'+
+      '<td style="color:var(--dim);padding:2px 6px;">'+(s.r||'\u2014')+'</td>'+
+      '<td style="color:var(--muted);padding:2px 0;">'+(s.rpe||'\u2014')+'</td>'+
+    '</tr>';
+  }).join('');
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:JetBrains Mono,monospace;">'+
+    '<tr style="border-bottom:1px solid rgba(255,255,255,0.07);">'+
+      '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding-bottom:3px;">SET</th>'+
+      '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding:0 6px 3px;">LOAD</th>'+
+      '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding:0 6px 3px;">REPS</th>'+
+      '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding-bottom:3px;">RPE</th>'+
+    '</tr>'+rows+'</table>';
 }
 
 function getLastBilatForExercise(name){
@@ -3359,6 +3383,7 @@ function renderVolumeTab(){
     html+='<div id="'+weekDrillId+'" style="display:'+(isCurrentWk?'block':'none')+';">';
     Object.keys(groups).sort().forEach(function(grp){
       var gData=groups[grp];var sets=gData.sets;var pct=Math.round(sets/maxSets*100);
+      var directS=gData.directSets||0,dropS=gData.dropSets||0,indirectS=gData.indirectSets||0;
       var prevSets=prevGroups[grp]?prevGroups[grp].sets:null;
       var trend='';
       if(prevSets!==null){
@@ -3367,7 +3392,7 @@ function renderVolumeTab(){
         else trend='<span style="color:var(--muted);font-size:10px;margin-left:3px;">&mdash;</span>';
       }
       var mevColor=directS>=MEV?'var(--cyan)':'var(--muted)';
-      var mevTip=sets<MEV?'<span style="font-size:9px;color:var(--muted);margin-left:4px;">'+(MEV-sets)+' to MEV</span>':'';
+      var mevTip=directS<MEV?'<span style="font-size:9px;color:var(--muted);margin-left:4px;">'+(Math.round((MEV-directS)*10)/10)+' to MEV</span>':'';
       var exDrillId='exdrill-'+wk.replace('-','_')+'-'+grp.replace(/[^a-z0-9]/gi,'_');
       html+='<div style="border-bottom:1px solid var(--border);">';
       html+='<div data-drill="'+exDrillId+'" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;">'+
@@ -3843,10 +3868,17 @@ function showChartTooltip(evt,load,reps,date,unit,rpe){
   tip.innerHTML='<div class="chart-tooltip-date">'+(date||'')+'</div>'+
     '<div class="chart-tooltip-load">'+(load||'')+(unit||'kg')+'</div>'+
     '<div class="chart-tooltip-reps">'+repsArr.join(', ')+' reps'+(rpe?' · RPE '+rpe:'')+'</div>';
-  var tw=tip.offsetWidth||140;
   tip.style.display='block';
-  tip.style.left=Math.min(evt.clientX-tw/2,window.innerWidth-tw-8)+'px';
-  tip.style.top=Math.max(8,evt.clientY-80)+'px';
+  var tw=tip.offsetWidth||150;
+  var th=tip.offsetHeight||64;
+  // Clamp to both edges so a dot at the far left or right stays readable
+  var left=evt.clientX-tw/2;
+  if(left<8) left=8;
+  if(left+tw>window.innerWidth-8) left=window.innerWidth-tw-8;
+  var top=evt.clientY-th-14;
+  if(top<8) top=evt.clientY+18;
+  tip.style.left=left+'px';
+  tip.style.top=top+'px';
   clearTimeout(tip._t);tip._t=setTimeout(function(){tip.style.display='none';},3000);
 }
 
@@ -3884,7 +3916,7 @@ function drawChartBoth(bilatLogs,uniLogs){
   // X axis: session index (0-based), each variant independent
   var maxSess=Math.max(bLogs.length,uLogs.length);
   if(maxSess<1) return;
-  var pad={l:32,r:8,t:20,b:28};
+  var pad={l:36,r:20,t:22,b:28};
 
   function xp(i,total){
     if(total<=1) return pad.l+(W-pad.l-pad.r)/2;
@@ -3967,7 +3999,7 @@ function drawChart(logs){
   var loads=logs.map(function(l){return l.load;});
   var minL=Math.min.apply(null,loads)*0.92,maxL=Math.max.apply(null,loads)*1.05||1;
   if(minL===maxL){minL=minL*0.9;maxL=maxL*1.1;}
-  var n=logs.length;var pad={l:32,r:8,t:8,b:22};
+  var n=logs.length;var pad={l:36,r:20,t:10,b:24};
   function xp(i){return pad.l+i*(W-pad.l-pad.r)/(Math.max(n-1,1));}
   function yp(v){return pad.t+(1-((v-minL)/(maxL-minL)))*(H-pad.t-pad.b);}
   [0,0.5,1].forEach(function(t){
@@ -4275,6 +4307,8 @@ function buildPriorExCard(ex, exIdx, sessId){
       equipBtn.textContent='⚙ Equipment: '+(eq||'tap to select');
       var chip=card.querySelector('.equip-label-chip');
       if(chip) chip.textContent=eq;
+      var _le=getLastEntryForExercise(ex.name,card.getAttribute('data-bilat')||'bilateral',eq||'');
+      renderLastSetsLine(card,_le?_le.sets:null,settings.unit||'kg');
     });
   });
 

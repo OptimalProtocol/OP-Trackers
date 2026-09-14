@@ -346,16 +346,17 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 
 /* ── PER-SET ROWS ── */
 .sets-wrap{padding:4px 12px 8px;}
-.sets-head{display:grid;grid-template-columns:22px 62px 1fr 1fr 52px 26px;gap:5px;padding:0 2px 4px;}
+.sets-head{display:grid;grid-template-columns:20px 78px 1fr 1fr 46px 24px;gap:4px;padding:0 2px 4px;}
 .sets-head .sh{font-size:8px;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;text-align:center;}
-.set-row{display:grid;grid-template-columns:22px 62px 1fr 1fr 52px 26px;gap:5px;align-items:center;margin-bottom:5px;}
+.set-row{display:grid;grid-template-columns:20px 78px 1fr 1fr 46px 24px;gap:4px;align-items:center;margin-bottom:5px;}
 .set-idx{font-size:10px;font-weight:700;color:var(--muted);text-align:center;font-family:'JetBrains Mono',monospace;}
-.set-type{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--cyan);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;padding:7px 2px;text-align:center;-webkit-appearance:none;appearance:none;text-align-last:center;}
+.set-type{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--cyan);font-family:'Inter',sans-serif;font-size:9.5px;font-weight:700;padding:7px 1px;text-align:center;-webkit-appearance:none;appearance:none;text-align-last:center;}
 .set-type[data-t="U"]{color:var(--gold);}
 .set-type[data-t="D"]{color:#c77dff;}
 .set-in{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;padding:7px 2px;text-align:center;width:100%;box-sizing:border-box;}
 .set-in:focus{border-color:var(--cyan);outline:none;}
 .set-in.rpe{font-size:11px;}
+.set-in.disabled-rpe{background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.05);color:var(--muted);opacity:0.45;cursor:not-allowed;}
 .set-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px;}
 .set-del:hover{color:var(--red);}
 .add-set-btn{background:var(--surface2);border:1px dashed var(--border);border-radius:7px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.04em;margin-top:2px;padding:7px;width:100%;}
@@ -363,6 +364,35 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .last-sets{background:rgba(0,180,216,0.05);border:1px solid rgba(0,180,216,0.18);border-radius:8px;color:var(--dim);padding:8px 10px;margin-bottom:9px;}
 .last-sets b{color:var(--text);font-weight:700;}
 .last-sets .ls-tag{color:var(--cyan);font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;}
+
+
+/* ── PLATE CALCULATOR ── */
+.plate-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:10500;display:flex;align-items:flex-start;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.plate-overlay.open{opacity:1;pointer-events:all;}
+.plate-sheet{background:var(--surface);border-radius:0 0 20px 20px;width:100%;max-height:88vh;overflow-y:auto;padding:16px 16px 28px;}
+.plate-vis{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap;padding:16px 0;min-height:76px;}
+.plate-chip{border-radius:3px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;padding:2px;}
+.plate-bar{background:linear-gradient(180deg,#8a8f98,#5a6069);border-radius:2px;height:7px;width:34px;}
+.plate-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding:9px 2px;}
+.plate-row:last-child{border-bottom:none;}
+.plate-avail{display:flex;flex-wrap:wrap;gap:6px;}
+.plate-toggle{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--dim);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:6px 9px;}
+.plate-toggle.on{background:var(--cyan-dim);border-color:var(--cyan-border);color:var(--cyan);}
+.plate-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.04em;padding:5px 8px;}
+
+/* ── e1RM ── */
+.e1rm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:0 0 12px;padding:13px 15px;}
+.e1rm-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:3px;}
+.e1rm-val{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;line-height:1;}
+.e1rm-delta{font-size:11px;font-weight:700;}
+.e1rm-sub{color:var(--muted);font-size:10px;letter-spacing:0.04em;text-transform:uppercase;}
+
+/* ── ROUTINES ── */
+.routine-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.routine-head{display:flex;align-items:center;gap:10px;padding:12px 14px;}
+.routine-name{color:var(--text);flex:1;font-size:13px;font-weight:700;}
+.routine-meta{color:var(--muted);font-size:10px;}
+.routine-ex{border-top:1px solid var(--border);color:var(--dim);font-size:11px;padding:8px 14px;line-height:1.7;}
 
 /* ── REP RANGE CHIP ── */
 .rep-range-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--cyan);font-size:9px;font-weight:700;letter-spacing:0.06em;padding:2px 7px;margin-left:5px;vertical-align:middle;}
@@ -421,6 +451,13 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .rest-expired-msg{font-size:20px;font-weight:700;color:var(--red);margin-bottom:6px;text-align:center;}
 .rest-expired-sub{font-size:12px;color:var(--dim);margin-bottom:20px;text-align:center;}
 </style>
+
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIk9wdGltYWwgUHJvdG9jb2wgVHJhY2tlciIsICJzaG9ydF9uYW1lIjogIk9QIFRyYWNrZXIiLCAiZGVzY3JpcHRpb24iOiAiUHJvZ3Jlc3NpdmUgb3ZlcmxvYWQgdHJhY2tlciIsICJzdGFydF91cmwiOiAiLiIsICJzY29wZSI6ICIuIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwRDFCMkEiLCAidGhlbWVfY29sb3IiOiAiIzBEMUIyQSIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQU1BQUFBREFDQVlBQUFCUzNHd0hBQUFFZmtsRVFWUjQydTNkM1cwYk1SQkY0Vmp3cXlwSUJ5bEhUYWdtTitIbVhFRHlGQ0FRRXNUeWNyano4NTEzeStUeUhzNnNscEplcnQ5Ly9Qd0dET1hpRW9BQUFBRUFBZ0FFQUFnQUVBQWdBRUFBZ0FBQUFRQUNBQVFBQ0FBUUFDQUFRQUNBQUFBQkFBSUFCQUFJQUJBQUlBQkFBSUFBQUFFQUFnQUVBQWdBRUFBZ0FFQUFnQUFBQVFBQ0FBUUFWdkhxRXNUeThmWis2Tyt2OTV1TEdNaUxuMG5ORTNaU0VFRGdDVUVBb1NjREFRU2ZDQVFRZWpJUVFQQ0pFSWJuQUVQQzMzMXVLb0J3cUFZRUVId2lhSUdFM3pVZ2dJVjNMYlJBRmx0THBBSUl2MnVrQXB5NnNGL2RWU3VPbVFEQ0h4YWVMdk1nUUxQd254V1V6bk1qUUlHQVpBbkhsSGtTSUVrb3NnWmk0cHdKc0RFSVZVSXdmZjZqQlloWS9Lb0w3MW9NRTJEMWduZFpiTmRsZ0FEZEYvblorVDJPbndSL3g5ZWlKRjNjbzRGOS9QdnIvZVpKZU5jS3NHcGh6dzYrengwVFlHVDRLKy9NMVNVb0xVRDE4UHZRdlh1QWtZdW5GODlEMmVQUUswSWsvT1kwdGdMc0RyOWRYd1VZRzZZSjRhODZ4OHZFQzcxejk1KzA4MWVjNjdnUHhRcy8vcVRVMjZDVmZteml6SU5vWjR0WDZXMVJSeUVTaC8rclFZbytCOVNKTVFMczJwVXkzcVA4ZmowaUZHNkJLclEvVlZvMG55VWVkaE5jWVRGMmp0RVg0eGFyQUoxMy84NG5VQ3VJMXI0Q0NMOXFNTDRGMHBhUm9Ld0FSMHAwMXQwL1krQWl4bFRoWFNjVndHNDd1aEpjQkszM0RnY1Z3QTZyQ3RRVUlQTU9lL1JyU3FaSWtMMUtxZ0RRQW1rMXRCVlRXeUVWd00ydkNnQTc2ZFFxa0ZZQXU2eUtxUUxZdFVBQXV4a0lvQnFaQXdFQUFnQUVBQWdBRUFBZ0FFQUFnQUFBQVFBQ0pLRERzWW51Uno4SThDUU8yeEhBamdVQzJHblJZUzIxUUNyUzZHcEtBTlZKQzJUWHRaTk92WmRTQWFBQ2FEWGl4MVpwUjEwNTF1enRvZ3FnclJqWityUVh3QS9CUVFXd3c5cjlxd3R3WkpmTldnVXlCdTNNWDdZbmdFcGdMQVNZZHkrUUlYalR6MDZOK0tYNENyL0F2cnRkaUE2K1g0clhicVFkb3hPekJTdkFoQ29RUGRaZHdhLzA5dkNZbStCS2kvL3g5cjUwdkt0ZnJ4T3ZMa0dNQkNzQzkvZ2FuNVZMMkp1MlFDc1dkMmQ1bmhqRWFrL0h4ejBIMkJsS1J5VUlrTGJISm9HNWxxMEExUzcwQkFtcXpuSHNVWWpkL2ZuMWZ0TVNFV0J1SzlTNUdsU2UwL2pEY0x1ZndIcUxrZ0RwZGg2aG5GdlJMaGFBQkpQYnVZdUZ5TmVpUkFScjlXdDJ1WmR4Rk9JZklweTl3SS8vLzFreGovNzlGTW9kaGRqWnhxeVc0TFBqTyt2L1R0djkyN1JBa2NHcC90MmV3ajlJZ0tnRnFpWkMxSGc3UHNObytSd2c4Z01sMmIvV0pHcDhYWjlpdDMwUUZybGcyVVNJSGsvbkl4eXRud1JITDl6Wkl1ejQvOTNQTDdWL0czVFZwN1ArRjhSZExWaW5EWVFBalNTSUVPTE02akxsNUdxcjV3Q1pBNlYxZEE5Z1lWMGpGVUExRUh3VndJSzdGZ1N3OEs2QkZraExKUGdFSUlMZ2E0RUV4TnhVQU5WQThBbEFCcUVuQUJFRW53QmtFSG9DRUVMZ0NUQldDbUVud0RnWmhINGZuZ09BQUlBV0NGQUJBQUlBQkFBSUFCQUFJQUJBQUlBQUFBRUFBZ0FFQUFnQUVBQWdBRUFBZ0FBQUFRQUNBQVFBQ0FBUUFDQUFRQUNBQUFBQkFBSUFCQUFJQUJBQUlBQkFBSUFBQUFFQUFnREwrQVd3UkVaMTA3c3hjd0FBQUFCSlJVNUVya0pnZ2c9PSIsICJzaXplcyI6ICIxOTJ4MTkyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIiwgInB1cnBvc2UiOiAiYW55In0sIHsic3JjIjogImRhdGE6aW1hZ2UvcG5nO2Jhc2U2NCxpVkJPUncwS0dnb0FBQUFOU1VoRVVnQUFBZ0FBQUFJQUNBWUFBQUQwZU5UNkFBQU5ZVWxFUVZSNDJ1M2QwWFhhU2hTR1VXRHBWUlhRQWVYUUJEVzVDVGZuQXNpVFYwZ3NNQ0FKWnM2L2R3RjMzV2hHY3o1SmpyTWQ5NGZ6QmdDSXNuTUpBRUFBQUFBQ0FBQVFBQUNBQUFBQUJBQUFJQUFBQUFFQUFBZ0FBRUFBQUFBQ0FBQVFBQUNBQUFBQUJBQUFJQUFBQUFFQUFBZ0FBRUFBQUlBQUFBQUVBQUFnQUFBQUFRQUFDQUFBUUFBQUFBSUFBQkFBQUlBQUFBQUVBQUFnQUFBQUFRQUFDQUFBUUFBQUFBSUFBQkFBQUlBQUFBQUJBQUFJQUFCQUFBQUFBZ0FBRUFBQWdBQUFBQVFBQUNBQUFBQUJBQUFJQUFCQUFBQUFBZ0FBRUFBQWdBQUFBQVFBQUNBQUFBQUJBQUFDQUFBUUFBQ0FBQUFBQkFBQUlBQUFBQUVBQUFnQUFFQUFBQUFDQUFBUUFBQ0FBQUFBQkFBQUlBQUFBQUVBQUFnQUFFQUFBQUFDQUFBRUFBQWdBQUFBQVFBQUNBQUFRQUFBQUFJQUFCQUFBSUFBQUFBRUFBQWdBQUFBQVFBQUNBQUFRQUFBQUFJQUFCQUFBSUFBQUFBRUFBQUlBSmNBQUFRQUFDQUFBQUFCQUFBSUFBQkFBQUFBQWdBQUVBQUFnQUFBQUFRQUFDQUFBQUFCQUFBSUFBQkFBQUFBQWdBQStNM2dFa0FkWHgrZnEvNzN4OVBSUllZaXR1UCtjSFlad0hBWENTQUFBRU5lSElBQUFBeDdVUUFDQUREd0JRRUlBTURBRndRZ0FNRFFSd3lBQUFCREh6RUFBZ0FNZmNRQUNBQXc5QkVESUFEQTBFY01nQUFBZ3g4aEFBSUFESDNFQUFnQU1QZ1JBaUFBd09CSENJQUFBSU1mSVFBQ0FBeCtoQUFJQUF4K0VBSUlBQUdBd1E5Q0FBRUFCajhJQVFRQUdQd2dCQ2hvNXhKZytJTzloamNBNERBR2J3TVFBR0R3Z3hDZ0lwOEFNUHpCbnNRYkFIRElncmNCZUFNQWhqL1lxM2dEQUE1VDhEWUFid0RBOEFkN0dBRUFEazZ3bCttRlR3QTRMT0ZGZkJMQUd3QXcvTEhIUVFDQWd4RjdIVjdMSndBY2h2QW1QZ25nRFFDR1A3Z0hRQURnNEFQM0FnZ0FISGpnbm9DRitSa0FISExRRUQ4WGdBREE4S2VwQVdJTlJRQUNBQXdPdzhFNml3QUVBQmdLaG9EMXQvNElBSEQ0Ty9EdENYc0NBWURoajhQZFByRlBFQUE0MUIzbURuUDd4cjVCQU9BUWQzaGpIOWxIQ0FBYzJnNXI3Q3Y3Q2dHQVE5cmhqSDFtbnlFQWNDZzdrTEhuN0RrRUFBNWloN0Q5Wi8rQkFNRGg2K0MxRisxRkVBQTRjQjIyOXFWOUNRSUFoNndEMWg2MVIwRUE0R0IxcU5xdjlpc0NRQURnTUhXUTJydjJMbUVHbHdBY25pbnI2cThQd2w4N2x3QlBVSWEvd0hPdmtzY25BT0lQRklQZnZyYXZFUUFRZEVnNklMSEhTZVlUQUE1R29sWGVDejRIY0lzZkFzU0JUNmxCOWN6NmpxZWpZVWtjbndDSWVYSXcrTzJwZS9hQXZZOEF3RUh0QUNSZ0QwM3REZmNBQWdBSHQ0T1BzSDFUK1hjR3VCZTQ1R2NBS010aForalAvWFA1MlFDOEFjQ0Jidml6OFZQbDdnMEVBQTUyQjV5OWdYc0VBWUFEM3NGbVQrQmVvUzkrQmdBSEdnWS9lQU9BQTkvZ3R3OFF6UWdBSFBvT01Ic0FFVUJKUGdIZzRETDRBVzhBTUFBTWYrdU9tQ2FCZnczUUVIQllXWGZzRFJjaGtFOEFHUDRPZHlDUVR3Q0dnZUZ2cmNFOUZzZ25BQnhNaGo4Z0FEQVU2SDJOclRQT0NBUUFKVzVzVC84T2Ird2pCQUJoREgrSE5yQU9Qd1JvT0JqKzFoYmNmOTRBZ01QSDhBY0VBSWFFNFc5ZHNjY1FBSUNER1JBQUdCU2UvcTBwOWhzQ0FBeC9oekVnQURBc0RIL0RIM3NQQVFBNGdBRUJnSUhoNmQvd3h6NUVBSkRLOEhmb0FnS0FzS0ZoK0J2KzJKTUlBTUJCQzd5UWZ3dkE0UEQwYncxTDdBdmg1TjdsTVlOTEFJWi9oU0Z5N2I4cERNQWJBTVBERTRUMXMrYUN3RDJNTndBNE9BeWt4TFcrL1A4U0F3Z0F3UEFQRER3eFFES2ZBQXdSdzhIYVdkZmlZV2JkOFFZQURCa0Q0SUUvbXhEQUd3QU1FY1BDOEE5ZVN5RmdMMVRrRndHQlllTEE5K2Nta0U4QU9EeXhoZzljQTI4RHFNSW5BRStTaG9jMXMzWUJhMm1QOEQrZkFIQTRHQmpXenZVaGtFOEFnTUUyODFwNUc0QTNBSGlhTkVpNmZ2cTNacTViMWIyTkFBQUhwQ0htK29FQXdHR0k5WElkeWVSdkFYaWlkQkFHcjVWMXlyNVA3U1Z2QU1CQllKMXdmUkVBUVBVblFNUEpkUVlCWUtnNDhBd2xYTy95WnhNQ0FLSVBROFBmZFFjQkFBQUNBRStWbm5JOC9lUDYxejZqRUFCZytHQWRFQUF1QWRSK0FqSjByQWNJQUJ4cTFnWHJBZ0xBa3lYV0NOd0hBZ0R3bEluMVFRQ0FnOHlhWUowUUFNQU5YbnNDQWdEREJVK1ZSSytYTTBzQTRQQVNhTllENjRZQUFBQUVBT0FwRXV1SEFJQWUrZFlKQ0FEaUJvd25GbXVCZFJUSEFnQUFFQUNBcDBhc0p3SUFDdktLRXhBQWVFb0JRQUFBUWd6cmlnQ0FjcnorQndRQWhneWVFckcrempBQkFBQUlBRHlaQUNBQUFCR0dkVVlBUUlkODF3UUVBQUFnQUFBQUFRQ3N3SGRoNncwQ0FBQVFBSlg0UVRQQVdZWUFvQmxlUndJSUFQQTBBeUFBQUFBQkFDek9KeGpyRGdJQUFCQUFBSUFBQUFBRUFBQWdBQUJBQUFBQUFnQUFFQUFBZ0FBQUFBUUFBQ0FBQUFBQkFBQUlBQUJBQUFBQUFnQUFFQURBVDE4Zm55NkNkUWNCQUFBSUFGamRlRHE2Q0lBQUlJOVhrUUFDQUUrYUFNNHlBUUFBQ0FCZ0ZUN0RXRzhRQUFDQUFBQUFCQUNzd2c4MUFRSUFlQXZmaGEwekNBQWNTZ0FJQUFCQUFIVE50Mlp1OFNiRytqckRFQURnWUFNUUFPQXBFZXNLQWdBSEZBQUNBSmJoTXdBZ0FJQzM4VGJHZW9JQUFBQUVRQVV0djJiMnBHSXRzSTQ5bmwwSUFIRElBUUlBOFBTSTlVTUFBQUFDQUR5MVhOUFNad0RyNFQ0Q0FXREFZSmhndlp4WkNBQnc0QUVJQUR6QldCT3NFd0lBTUZ5d1BnZ0FHdVFWc3pVQzl3RUNBRTh6V0JmckFnSUFQUDBZTm9ZL0NBREEwTEVPSUFBOFhUcmNySlAxY2YyZFVRZ0FBRUFBZ0xjQXVPNElBQXdXQjUxaGhPdGQ4R3hDQUlBRFVRUzR6aUFBY09oWkoxeGZNbTNIL2VIc01qaGNrcDUrclpYMU12anRIN3dCd0NHSTlYSWRFUUJBN3RPUjRlWDZJUUF3VkJ5SUlnRFhyZFRlNXFmQkpRQ21ocG1EM2VESEd3QndRQVkrS1ZrNzE0ZmEvQzBBaDVEQlo4MnNvY0Z2WDNnREFBNU1wdGN3ZlIxZEF3UUFFUHZVbERvQURYNHE4Z25BNFdUd1dUZnJhZkJiZjI4QUFBZm8vY094Nm9EMHVoOXZBUENrWXVoWnQ1RDFOZkRkeDJuOEhnQjQ4MEZhYWZCYy9sbjhzaXJ3QmdBSG1hZUg4RUhVMHBvYit1NWhCSUFoNGdDeGZnSHJiK0M3ZDVubUV3QTBkTENtREt0cmY4NDV3OFdnQjI4QVBFVjZrckNHNEo3bEYvNGFJRGhrQVFHQTRlRkoxenFDUFNrQVFBUTRjQUVCZ01FaEFxd2w5aUVDQUhENEFnSUFROE5iQU91SnZZY0FBQkhnSUFZRUFBYUdDQkFCMkc4SUFNQ2hEQWdBREF0dkFVUUE5aGdDZ0hnaXdBRU5yTXUvQldDZ0duTFdGOXgzM2dDQXdlYkFCZ1FBQm9RSXNNYllSd2dBM05pMHY4YldHV2NFQW9BeXZBVndrQVBMOGtPQWhxbkJacjNCdmVVTkFCaG1GUTkyaHpzZ0FPaCtHSWdBVDNqWUc4em5FNENuYVllV3RjZndKOURnRXREekVITjRHZXpBYzN3Q1VQNEdIamdERUFBNEFQcU1BQ0VBaGo4Q2dGQWlBRUFBRVBva0lBTEEwejhDQUJFQUdQNElBRVFBUyt5UnBGOHNWTzNQYWZoenlWOERwS3p2Q0hEb3JUOU1LZ1hYOTUvTEQ1ZFNuVjhFUk1UVGMwb0VyTDEyOTE3SG52YlExSi9KUFlBQVFBUTRBSzNiUXRld2hUMTF6Lysvdlk4QVFBUVVmZjFaK1RCc09RQmU5Zi85N1Arai9VNGFQd05BWk5nNEZBMnBoT0VQdC9oYkFIaFNKajRJM2NNSUFBaUxBQ0dRUGZnTmZ3UUFCQjhrUXNEZ2Q4OGlBQ0Q0UUJFQkcydnNYaVdJSHdLRWlRSGhFRFg0d1JzQUNIeXk4Rm5BT3JwSEVRQVFmTUFJQWV2bTNrUUFRUEJCSXdTc2szc1NBUURCQjQ0UXNDN3VSUVFBSWlENDRCRUMxc0U5aUFCQUJCaEFOb0xyN3Q1REFPQWdNcEJ3bmQxenRNL3ZBV0N4QThuQi9PL2ZOM2RJTDM5TnNhOFFBSWdBTVdEb0cvNGdBQkFCWXNEUU4veEJBQ0FDeElDaGIvaURBRUFFOURJQUUvN2xSUXgvQkFBaWdPSkJZUDBOZndRQUlvQ0ZCbWlyUThFNkcvNzBaVHZ1RDJlWEFjTUJESCt5K0VWQU9OREF2WUkzQU9CdEFCajhlQU1BRGpwd1R5QUF3SUVIN2dVRUFEajR3RDFBcC93TUFFM3djd0VZL09BTkFBNUVzTmRCQU9CZ0JIc2NsdVlUQUUzeVNRQ0RIN3dCd0lFSjlqSUlBQnljWUEvRFhENEIwQVdmQkRENHdSc0FIS2hncjRJM0FIZ2JBQVkvZUFPQWd4YnNTZkFHQUc4RHdPQUhBWUFRQUlNZk5qNEI0RUFHZXcxdkFNRGJBREQ0RVFBZ0JERDREWDRFQUFnQkRINFFBQ0FFTVBoQkFJQVF3T0FIQVFCQ0FJTWZCQUFJQVF4K0VBQWdCREQ0UVFDQUdNRFFCd0VBUWdDREh3UUFpQUVNZlJBQUlBWXc5RUVBZ0JndzlBRUJBR0xBMEFjRUFJZ0JReDhRQUNBSURIeEFBSUFnTVBCQkFBQ2l3TEFIQVFDSUEwTWVCQUFnRWd4M0tHVG5FZ0NBQUFBQUJBQUFJQUFBQUFFQUFBZ0FBRUFBQUFBQ0FBQm9obDhFQkFEZUFBQUFBZ0FBRUFBQWdBQUFBQVFBQUNBQUFBQUJBQUFJQUFCQUFBQUFBZ0FBRUFBQWdBQUFBQVFBQUNBQUFBQUJBQUFJQUFCQUFBQ0FBQUFBQkFBQUlBQUFBQUVBQUFnQUFFQUFBQUFDQUFBUUFBQ0FBQUFBQkFBQUlBQUFBQUVBQUFnQUFFQUFBQUFDQUFBUUFBQ0FBQUFBQVFBQUNBQUFRQUFBQUFJQUFCQUFBSUFBQUFBRUFBQWdBQUFBQVFBQUNBQUFRQUFBQUFJQUFCQUFBSUFBQUFBRUFBQWdBQUFBQVFBQUFnQUFFQUFBZ0FBQUFBUUFBQ0FBQUFBQkFBQUlBQUJBQUFBQUFnQUFFQUFBZ0FBQUFBUUFBQ0FBQUFBQkFBQUlBQUJBQUFBQUFnQUFCQUFBSUFBQUFBRUFBQWdBQUVBQUFBQUNBQUFRQUFDQUFBQUFCQUFBSUFBQUFBRUFBQWdBQUVBQUFBQUNBQUFRQUFDQUFBQUFCQUFBSUFBQVFBQUFBQUlBQUJBQUFJQUFBQUFFQUFBZ0FBQUFBUUFBdE9NUGY1Yk5MR242NEcwQUFBQUFTVVZPUks1Q1lJST0iLCAic2l6ZXMiOiAiNTEyeDUxMiIsICJ0eXBlIjogImltYWdlL3BuZyIsICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSJ9XX0=">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAENElEQVR42u3dzW3bUBBFYZrwVhWkg5TjJlyTmlBzKiBZBTAMI7Zl/szc+c5e0nucw8sh+UQ+XX79/rMAIaw2AQgNEBogNEBoEBogNEBogNAAoUFogNAAoQFCA4QGoQFCA4QGCA0QGoQGCA0QGiA0QGgQGiA0QGiA0AChQWiA0AChAUIDhEYazzbBdtyvt4c/e3l9sQE34MlLg46Xl+SEHiEwwQkdLzG5CR0tMrEJHSkysQkdKTKxCR0pMrEHC50s8nSxVzKbL6EV17y1HAqqBZHQZLY9JPSZxXskAbuMk9DhMu8phcVPhD5EhjMkSJsPoQsUv0Lhk+dG6IMKXrHYU+Y5Wuiti9yhwBPnPELoLQvbsajT5x8ldFoxvzOft+MldYDQWxXxzAJuLWLCNvkJ4//1nXQZzl3Rxgm9RfGOlrmbcB1TuqXQ3WT21y5CR8ic0gJ0knrcAn8yZ9NK6J9KQub8+YxJaDLPoE0PXf1BiBNE7tBLe5wumaN4Them47XUr4z5jJ3ofr2V357Rdwq7tBqPjPP9ZxwlmvTQldO54lWX6X/dik3oyjLvObZ/3z01sUufFFYtSoeevvsfeCOFTjskHj2uiQ9sdNnuoHQ6Sy4PayROnFRdTz4ldMGdrMoONiWpo4SuVjTjIXRc7wxCR8gz4UpLxTrFJHQlgaof2pNbDy2HdoPQAKGH0OVwntp2lBPa4V07Nj6hpy7EgZbDYTy87SA0CA0QGiA0QGgQGiA0QGiA0AChj6fbbfLE2/qE/oSJz7YgtKQBoTMTscvOlfqCTi0HJLQ+GoQeRPW2I/mcYyXRLGnST6BLCu2Bi1oxLYc0HJ/OcULvXbBHEqmKRFOu1UvoATJNuvFUVuhH+7OKKX2mVHv9btVzCgkdnJQTlwSsxDk2nY6SbOr6ltgXb3Z4i6wXb0roqMLer7fNxrnld0nowSm9x85T9eX11dN5WcJfXn+/3lre4ZO04S1H9ZOwKbfFO8zTZbsNi229B6FjUjo9rbvMa0xCk1pCx6UEqfPnMq6HdqdOQselBdlyjzTr1I1M6sy2aZ28sc+Ueo/LfFt+Z9dzgOg7hV+V+szivf/t7+xkH417+pGnxVqOo1J2S7E/G9fWO1HV7aDlKCyhnZrQLaXu9Hw6MgcKvdchvPLDYs5Yskro5lJXE3uvsSTd1Yy7U7hXcc4Ue8/fTlt3EnnZ7vL6spsAb793Txms4yb0YVL/T7ouT1dKXRHY/jp0RVmmtmV6aMWzPSS0tCby4ISW1rPmvSqu+Wo5tCBEJjSxiUxoYhOZ0JPEJjKhI8QmMqHby01iQrcWnMCEbis5eQndWm4C74PH6UJCAxIaIDRAaBAaIDRAaIDQAKFBaIDQAKEBQgOEBqEBQgOEBggNEBqEBggNEBogNEBoEBogNEBogNAAoUFogNAAoQFCA8uyLH8Bx+kdse4n5H8AAAAASUVORK5CYII=">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OP Tracker">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0D1B2A">
 </head>
 <body>
 
@@ -506,6 +543,18 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     </div></div>
   </div>
     <div class="section">
+    <div class="section-title">Volume Landmarks</div>
+    <div class="card"><div class="card-body">
+      <p style="font-size:10px;color:var(--muted);line-height:1.55;margin:0 0 10px;">
+        Weekly <b style="color:var(--dim);">direct working sets</b> per muscle.
+        MEV is the minimum for growth, MAV the productive range, MRV the most you can recover from.
+        Indirect volume is shown in Insights but never counts toward these.
+      </p>
+      <div id="landmark-list"></div>
+      <button class="btn btn-secondary btn-full" id="landmark-reset" style="margin-top:12px;">Reset to defaults</button>
+    </div></div>
+  </div>
+  <div class="section">
     <div class="section-title">RPE Reference</div>
     <div class="card"><div class="card-body" style="padding:0;">
       <table class="rpe-table">
@@ -524,8 +573,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
         <tr><td>Rep increment</td><td>+1 rep per working set. Keep load fixed until ceiling is hit</td></tr>
         <tr><td>Load increase</td><td>All sets at rep ceiling &times; 2 consecutive sessions</td></tr>
         <tr><td>Load amount</td><td>Smallest available increment (e.g. 2.5 kg each side)</td></tr>
-        <tr><td>Stall</td><td>No rep improvement &times; 2 consecutive sessions &mdash; check RPE first</td></tr>
-        <tr><td>Deload trigger</td><td>No progression &times; 3+ consecutive weeks at RPE 9</td></tr>
+        <tr><td>Stall</td><td>No load or rep improvement &times; 5 consecutive sessions at RPE 9+</td></tr>
+        <tr><td>Deload trigger</td><td>No progression &times; 5 consecutive sessions at RPE 9+</td></tr>
         <tr><td>Deload protocol</td><td>50% of working sets at RPE 6&ndash;7. Return at full load next week</td></tr>
       </table>
     </div></div>
@@ -579,6 +628,14 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 <!-- TAB 3: SESSION -->
 <div class="page" id="page-session">
   <!-- Sub-tab toggle -->
+  <div id="backup-nag" style="display:none;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.3);border-radius:10px;margin:0 16px 12px;padding:11px 13px;">
+    <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:0.04em;margin-bottom:4px;">BACK UP YOUR DATA</div>
+    <div style="font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:9px;" id="backup-nag-text"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" id="backup-nag-export" style="flex:1;">Export now</button>
+      <button class="btn btn-secondary btn-sm" id="backup-nag-dismiss">Later</button>
+    </div>
+  </div>
   <div class="sess-toggle">
     <button class="sess-toggle-btn active" id="sess-tab-current" onclick="switchSessTab('current')">Current Session</button>
     <button class="sess-toggle-btn" id="sess-tab-prior" onclick="switchSessTab('prior')">Prior Sessions</button>
@@ -591,6 +648,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <!-- Session controls: duration + rest timer icon -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 0;">
     <div class="sess-duration" id="sess-duration-display" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;">00:00</div>
+    <button onclick="openRoutines()" id="routine-btn" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px 13px;margin-right:8px;">☰ Routines</button>
+    <button onclick="openPlateCalc()" id="plate-calc-btn" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px 13px;margin-right:8px;">⚖ Plates</button>
     <button onclick="openRestTimer()" id="rest-timer-btn" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;padding:5px 12px;display:flex;align-items:center;gap:5px;transition:all 0.15s;">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span id="rest-bubble-time">REST</span>
@@ -808,6 +867,89 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
       <button class="btn btn-primary" style="flex:2" id="cwm-save">Save Workout Type</button>
       <button class="btn btn-secondary" style="flex:1" id="cwm-cancel">Cancel</button>
     </div>
+  </div>
+</div>
+
+<div id="storage-warning" style="display:none;position:fixed;top:0;left:0;right:0;z-index:11000;background:#5c1a1a;color:#fff;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;line-height:1.4;padding:10px 14px;text-align:center;"></div>
+
+<div id="install-gate" style="display:none;position:fixed;inset:0;z-index:12000;background:var(--bg);overflow-y:auto;padding:32px 22px 40px;">
+  <div style="max-width:420px;margin:0 auto;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">Before you start</div>
+    <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:14px;">Add to your Home Screen</div>
+    <div style="font-size:13px;color:var(--dim);line-height:1.65;margin-bottom:18px;">
+      Your training data is stored on this device, not on a server. That keeps it private and free forever &mdash; but it means
+      <b style="color:var(--text);">browsers delete it after about a week of not opening the app</b>.
+      Installing to your Home Screen protects it permanently.
+    </div>
+    <div id="install-ios" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--cyan);margin-bottom:12px;">ON IPHONE / IPAD</div>
+      <div style="font-size:13px;color:var(--dim);line-height:2;">
+        1. Tap the <b style="color:var(--text);">Share</b> button at the bottom of Safari<br>
+        2. Scroll and tap <b style="color:var(--text);">Add to Home Screen</b><br>
+        3. Tap <b style="color:var(--text);">Add</b><br>
+        4. Open OP Tracker from your new icon
+      </div>
+    </div>
+    <div id="install-android" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--cyan);margin-bottom:12px;">ON ANDROID</div>
+      <div style="font-size:13px;color:var(--dim);line-height:2;">
+        1. Tap the <b style="color:var(--text);">⋮</b> menu in Chrome<br>
+        2. Tap <b style="color:var(--text);">Install app</b> or <b style="color:var(--text);">Add to Home screen</b><br>
+        3. Confirm, then open from your new icon
+      </div>
+      <button class="btn btn-primary btn-full" id="install-prompt-btn" style="display:none;margin-top:14px;">Install now</button>
+    </div>
+    <div id="install-desktop" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--dim);line-height:1.7;">You&#39;re on a desktop browser. The tracker works here, but it&#39;s built for phones &mdash; open it on your phone and install it there for the best experience.</div>
+    </div>
+    <button class="btn btn-secondary btn-full" id="install-skip-btn" style="margin-top:4px;">Continue in browser anyway</button>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6;">
+      If you continue in the browser, export a backup regularly from Settings.
+    </div>
+  </div>
+</div>
+
+
+<div class="plate-overlay" id="plate-overlay">
+  <div class="plate-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--cyan);">PLATE CALCULATOR</div>
+      <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;" id="plate-close">&times;</button>
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label class="field-label">Target Load</label>
+      <input type="number" class="field-input" id="plate-target" inputmode="decimal" placeholder="100">
+    </div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Bar Weight</label>
+        <input type="number" class="field-input" id="plate-bar" inputmode="decimal" value="20"></div>
+      <div class="field"><label class="field-label">Collars (each)</label>
+        <input type="number" class="field-input" id="plate-collar" inputmode="decimal" value="0"></div>
+    </div>
+    <div class="plate-vis" id="plate-vis"></div>
+    <div id="plate-result"></div>
+    <div style="margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--muted);">PLATES AVAILABLE (PER SIDE)</div>
+        <button class="plate-btn" id="plate-reset-avail">Reset</button>
+      </div>
+      <div class="plate-avail" id="plate-avail"></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="plate-overlay" id="routine-overlay">
+  <div class="plate-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--cyan);">MY ROUTINES</div>
+      <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;" id="routine-close">&times;</button>
+    </div>
+    <div style="font-size:11px;color:var(--dim);line-height:1.55;margin-bottom:14px;">
+      Save the exercises from a session as a reusable routine. Loading a routine fills in the exercises, equipment and set structure &mdash; not the loads, which always come from your history.
+    </div>
+    <button class="btn btn-primary btn-full" id="routine-save-current" style="margin-bottom:14px;">Save current session as routine</button>
+    <div id="routine-list"></div>
   </div>
 </div>
 
@@ -1549,7 +1691,27 @@ var modalRange={}; // per-exercise range preference: {exName: '5'|'10'|'20'|'all
 var currentModalRange='10'; // active range for current modal
 
 function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
-function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+var storageFailed=false;
+function lsSet(k,v){
+  try{
+    localStorage.setItem(k,JSON.stringify(v));
+    if(storageFailed){storageFailed=false;var b=document.getElementById('storage-warning');if(b)b.style.display='none';}
+    return true;
+  }catch(e){
+    // Storage full, or blocked (private browsing). Silently losing data here
+    // would be far worse than telling the user, so surface it loudly.
+    if(!storageFailed){
+      storageFailed=true;
+      var banner=document.getElementById('storage-warning');
+      if(banner){
+        banner.style.display='block';
+        banner.textContent='⚠ Could not save — device storage is full or blocked. Export your data now from Settings.';
+      }
+      try{showToast('Save failed — export your data');}catch(e2){}
+    }
+    return false;
+  }
+}
 function allExercises(){return BUILT_IN.concat(customExercises);}
 
 // ── LOAD ALL ──
@@ -1608,14 +1770,20 @@ function loadAll(){
   if(draft) draftSessionId=draft.id;
   var mr=lsGet('op-modal-range');if(mr) modalRange=mr;
   var crr=lsGet('op-custom-rr');if(crr) customRepRanges=crr;
-  // Check if first launch
-  if(!lsGet('op-launched')){
+  // Install gate comes first: if the app isn't installed, the user's data
+  // is at risk of browser eviction, so that's the thing to resolve before
+  // anything else. Onboarding follows once it's handled or dismissed.
+  var gated=maybeShowInstallGate();
+  if(!lsGet('op-launched')&&!gated){
     document.getElementById('onboard-overlay').style.display='flex';
   }
   migrateSessionHistory();
   applySettings();
   initSession();
   loadCustomWorkoutTypes();
+  loadRoutines();
+  renderLandmarkSettings();
+  checkBackupNag();
 }
 
 // ── ONBOARDING ──
@@ -1653,7 +1821,7 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
     btn.classList.add('active');
     document.getElementById('header-sub').textContent=PAGE_LABELS[page]||page;
     if(page==='library') renderLibrary();
-    if(page==='session') requestNotifPermission();
+    if(page==='session'){ requestNotifPermission(); checkBackupNag(); }
     if(page==='progress'){
       renderProgression();
       var ps=document.getElementById('prog-search');
@@ -1705,11 +1873,18 @@ document.getElementById('unit-lbs').addEventListener('click',function(){setUnit(
 
 // ── EXPORT / IMPORT ──
 document.getElementById('export-btn').addEventListener('click',function(){
-  var data={settings:settings,customExercises:customExercises,sessionHistory:sessionHistory,currentSession:currentSession};
+  var data={version:4,exportedAt:new Date().toISOString(),
+    settings:settings,customExercises:customExercises,
+    customRepRanges:customRepRanges,
+    customWorkouts:lsGet('op-custom-workouts')||[],
+    routines:routines,
+    landmarks:lsGet('op-landmarks')||{},
+    sessionHistory:sessionHistory,currentSession:currentSession};
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');a.href=url;a.download='op-tracker-backup.json';a.click();
   URL.revokeObjectURL(url);
+  markExported();
   showToast('Data exported ✓');
 });
 document.getElementById('import-btn').addEventListener('click',function(){document.getElementById('import-file').click();});
@@ -1721,11 +1896,18 @@ document.getElementById('import-file').addEventListener('change',function(e){
       var data=JSON.parse(ev.target.result);
       if(data.settings) settings=data.settings;
       if(data.customExercises) customExercises=data.customExercises;
+      if(data.customRepRanges) customRepRanges=data.customRepRanges;
       if(data.sessionHistory) sessionHistory=data.sessionHistory;
       if(data.currentSession) currentSession=data.currentSession;
       lsSet('op-settings',settings);lsSet('op-custom',customExercises);
+      lsSet('op-custom-rr',customRepRanges);
+      if(data.customWorkouts) lsSet('op-custom-workouts',data.customWorkouts);
+      if(data.routines){routines=data.routines;saveRoutines();}
+      if(data.landmarks) lsSet('op-landmarks',data.landmarks);
       lsSet('op-history',sessionHistory);lsSet('op-current',currentSession);
-      applySettings();initSession();showToast('Data restored ✓');
+      migrateSessionHistory();
+      applySettings();loadCustomWorkoutTypes();initSession();
+      renderLibrary();showToast('Data restored ✓');
     }catch(err){showToast('Import failed');}
   };
   reader.readAsText(file);e.target.value='';
@@ -1896,7 +2078,7 @@ function dismissBanner(btn){
   if(banner) banner.remove();
 }
 
-function showStallBanner(card,exName){
+function showStallBanner_legacy(card,exName){
   var existing=card.querySelector('.stall-banner');if(existing) existing.remove();
   var stall=getStallCount(exName);
   if(stall<4) return;
@@ -2307,6 +2489,749 @@ function initLoadTypeToggle(card){
 }
 
 // ── EXERCISE LOOKUP ──
+// ── INSTALL / DATA SAFETY ───────────────────────────────────────
+// Data lives in localStorage. Browsers evict that after ~7 days of no
+// interaction, but storage for a Home-Screen-installed web app is exempt.
+// So installation is a data-safety requirement, not a nicety.
+
+var deferredInstallPrompt=null;
+
+function isStandalone(){
+  return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone===true;
+}
+function isIOS(){
+  var ua=navigator.userAgent||'';
+  if(/iPad|iPhone|iPod/.test(ua)&&!window.MSStream) return true;
+  // iPadOS 13+ reports a Mac UA; distinguish it by touch support
+  if(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1) return true;
+  return false;
+}
+function isAndroid(){ return /Android/.test(navigator.userAgent||''); }
+function isMobile(){
+  var ua=navigator.userAgent||'';
+  return isIOS()||isAndroid()||/Mobi|Phone|Tablet/.test(ua)||
+    (navigator.maxTouchPoints>1&&window.innerWidth<1100);
+}
+
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  var b=document.getElementById('install-prompt-btn');
+  if(b) b.style.display='block';
+});
+
+function showInstallGate(){
+  var gate=document.getElementById('install-gate');
+  if(!gate) return;
+  var ios=isIOS(),android=isAndroid(),mobile=isMobile();
+  // If we can't identify the platform but it looks like a phone, show both
+  // sets of instructions rather than leaving the user with nothing.
+  var showIOS=ios||(mobile&&!android);
+  var showAndroid=android||(mobile&&!ios);
+  document.getElementById('install-ios').style.display=showIOS?'block':'none';
+  document.getElementById('install-android').style.display=showAndroid?'block':'none';
+  document.getElementById('install-desktop').style.display=mobile?'none':'block';
+  gate.style.display='block';
+}
+function hideInstallGate(){
+  var gate=document.getElementById('install-gate');
+  if(gate) gate.style.display='none';
+}
+
+function maybeShowInstallGate(){
+  if(isStandalone()) return false;          // already installed
+  if(lsGet('op-install-dismissed')) return false;
+  showInstallGate();
+  return true;
+}
+
+// ── BACKUP REMINDER ──
+var BACKUP_NAG_DAYS=14;
+function markExported(){ lsSet('op-last-export',Date.now()); hideBackupNag(); }
+function hideBackupNag(){
+  var n=document.getElementById('backup-nag');
+  if(n) n.style.display='none';
+}
+function checkBackupNag(){
+  var n=document.getElementById('backup-nag');
+  if(!n) return;
+  if(!sessionHistory||sessionHistory.length<3){ n.style.display='none'; return; }
+  if(lsGet('op-backup-nag-snoozed')){
+    var snoozed=lsGet('op-backup-nag-snoozed');
+    if(Date.now()-snoozed < 3*24*60*60*1000){ n.style.display='none'; return; }
+  }
+  var last=lsGet('op-last-export');
+  var msg=document.getElementById('backup-nag-text');
+  if(!last){
+    msg.textContent='You have '+sessionHistory.length+' sessions logged and have never exported a backup. If this device is lost or storage is cleared, that data is gone.';
+    n.style.display='block';
+    return;
+  }
+  var days=Math.floor((Date.now()-last)/(24*60*60*1000));
+  if(days>=BACKUP_NAG_DAYS){
+    msg.textContent='Your last backup was '+days+' days ago. Export again to keep it current.';
+    n.style.display='block';
+  } else {
+    n.style.display='none';
+  }
+}
+
+// ── PLATE CALCULATOR ────────────────────────────────────────────
+var PLATES_KG=[25,20,15,10,5,2.5,1.25,0.5];
+var PLATES_LB=[45,35,25,10,5,2.5];
+var PLATE_COLOUR={25:'#d32f2f',20:'#1565c0',15:'#f9a825',10:'#2e7d32',5:'#eceff1',
+  2.5:'#d32f2f',1.25:'#78909c',0.5:'#546e7a',
+  45:'#1565c0',35:'#f9a825','25lb':'#2e7d32'};
+
+function plateSet(){ return (settings.unit==='lbs')?PLATES_LB:PLATES_KG; }
+function availablePlates(){
+  var saved=lsGet('op-plates-'+(settings.unit||'kg'));
+  if(saved&&saved.length) return saved;
+  return plateSet().slice();
+}
+function savePlates(list){ lsSet('op-plates-'+(settings.unit||'kg'),list); }
+
+function computePlates(target,bar,collar,avail){
+  // Greedy fill per side. Returns the plates used and any shortfall, so the
+  // user is told honestly when a load can't be made rather than shown a
+  // configuration that doesn't add up.
+  var perSide=(target-bar-(collar*2))/2;
+  if(perSide<0) return {error:'Target is below bar weight',perSide:perSide};
+  var sorted=avail.slice().sort(function(a,b){return b-a;});
+  var remaining=perSide,used=[];
+  sorted.forEach(function(p){
+    while(remaining>=p-0.0001){ used.push(p); remaining=Math.round((remaining-p)*1000)/1000; }
+  });
+  return {perSide:perSide,used:used,shortfall:Math.round(remaining*1000)/1000,
+    achieved:Math.round((bar+(collar*2)+(perSide-remaining)*2)*1000)/1000};
+}
+
+function renderPlateResult(){
+  var unit=settings.unit||'kg';
+  var target=parseFloat(document.getElementById('plate-target').value)||0;
+  var bar=parseFloat(document.getElementById('plate-bar').value)||0;
+  var collar=parseFloat(document.getElementById('plate-collar').value)||0;
+  var vis=document.getElementById('plate-vis');
+  var res=document.getElementById('plate-result');
+  if(!target){ vis.innerHTML=''; res.innerHTML='<div style="text-align:center;color:var(--muted);font-size:11px;padding:6px;">Enter a target load</div>'; return; }
+  var r=computePlates(target,bar,collar,availablePlates());
+  if(r.error){ vis.innerHTML=''; res.innerHTML='<div style="text-align:center;color:var(--red);font-size:12px;padding:6px;">'+r.error+'</div>'; return; }
+
+  // Visual: bar with plates stacked outward
+  var maxP=Math.max.apply(null,availablePlates().concat([1]));
+  vis.innerHTML='<div class="plate-bar"></div>'+r.used.map(function(p){
+    var h=Math.round(34+(p/maxP)*38);
+    var col=PLATE_COLOUR[p]||'#455a64';
+    var dark=(col==='#eceff1');
+    return '<div class="plate-chip" style="height:'+h+'px;width:15px;background:'+col+';color:'+(dark?'#222':'#fff')+';">'+p+'</div>';
+  }).join('')+'<div class="plate-bar"></div>';
+
+  var html='<div class="plate-row"><span style="font-size:11px;color:var(--muted);">Per side</span>'+
+    '<span style="font-family:JetBrains Mono,monospace;font-weight:700;color:var(--text);">'+
+    (r.used.length?r.used.join(' + '):'\u2014')+'</span></div>';
+  html+='<div class="plate-row"><span style="font-size:11px;color:var(--muted);">Bar + collars</span>'+
+    '<span style="font-family:JetBrains Mono,monospace;color:var(--dim);">'+(bar+collar*2)+unit+'</span></div>';
+  if(r.shortfall>0.0001){
+    html+='<div class="plate-row"><span style="font-size:11px;color:var(--gold);">Closest achievable</span>'+
+      '<span style="font-family:JetBrains Mono,monospace;font-weight:700;color:var(--gold);">'+r.achieved+unit+'</span></div>'+
+      '<div style="font-size:10px;color:var(--muted);padding:6px 2px;line-height:1.5;">'+
+      r.shortfall+unit+' per side short \u2014 you can\u2019t make exactly '+target+unit+' with the plates selected.</div>';
+  } else {
+    html+='<div class="plate-row"><span style="font-size:11px;color:var(--green);">Exact match</span>'+
+      '<span style="font-family:JetBrains Mono,monospace;font-weight:700;color:var(--green);">'+r.achieved+unit+'</span></div>';
+  }
+  res.innerHTML=html;
+}
+
+function renderPlateAvail(){
+  var wrap=document.getElementById('plate-avail');
+  var avail=availablePlates();
+  wrap.innerHTML=plateSet().map(function(p){
+    var on=avail.indexOf(p)>-1;
+    return '<button class="plate-toggle'+(on?' on':'')+'" data-plate="'+p+'">'+p+'</button>';
+  }).join('');
+  wrap.querySelectorAll('[data-plate]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var p=parseFloat(b.getAttribute('data-plate'));
+      var list=availablePlates();
+      var i=list.indexOf(p);
+      if(i>-1) list.splice(i,1); else list.push(p);
+      savePlates(list);
+      renderPlateAvail(); renderPlateResult();
+    });
+  });
+}
+
+function openPlateCalc(prefill){
+  document.getElementById('plate-bar').value=lsGet('op-bar-'+(settings.unit||'kg'))||(settings.unit==='lbs'?45:20);
+  document.getElementById('plate-collar').value=lsGet('op-collar-'+(settings.unit||'kg'))||0;
+  if(prefill) document.getElementById('plate-target').value=prefill;
+  renderPlateAvail(); renderPlateResult();
+  document.getElementById('plate-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePlateCalc(){
+  document.getElementById('plate-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// ── ESTIMATED 1RM ───────────────────────────────────────────────
+// Epley is the default: 1RM = w * (1 + reps/30). It is the most widely
+// used formula and is accurate enough in the 1-10 rep range that matters
+// here. Brzycki is offered because it reads lower at high reps and some
+// lifters prefer it. Estimates above ~12 reps get unreliable fast, so we
+// only compute from the heaviest working set and flag low confidence.
+
+function e1rmEpley(w,r){ return w*(1+r/30); }
+function e1rmBrzycki(w,r){ return r>=37?0:w*(36/(37-r)); }
+
+function calcE1RM(load,reps){
+  var w=parseFloat(load)||0,r=parseFloat(reps)||0;
+  if(!w||!r) return 0;
+  if(r===1) return w;
+  var f=(settings.e1rmFormula==='brzycki')?e1rmBrzycki:e1rmEpley;
+  var v=f(w,r);
+  return v>0?Math.round(v*10)/10:0;
+}
+
+function bestE1RMForLog(l){
+  // Use the best single working set in the session, not the top load's
+  // last set — a heavy triple can out-estimate a lighter set of ten.
+  var sets=workingSets(l.sets||normalizeSets(l));
+  var best=0;
+  sets.forEach(function(s){
+    var v=calcE1RM(s.l,s.r);
+    if(v>best) best=v;
+  });
+  return best;
+}
+
+function e1rmSeries(logs){
+  return (logs||[]).map(function(l){
+    return {date:l.date,value:bestE1RMForLog(l)};
+  }).filter(function(p){return p.value>0;});
+}
+
+function renderE1RMCard(logs,unit){
+  var series=e1rmSeries(logs);
+  if(series.length<1) return '';
+  var latest=series[series.length-1].value;
+  var best=0,bestDate=null;
+  series.forEach(function(p){ if(p.value>best){best=p.value;bestDate=p.date;} });
+  var deltaHtml='';
+  if(series.length>1){
+    var prev=series[series.length-2].value;
+    var d=Math.round((latest-prev)*10)/10;
+    if(d!==0){
+      var col=d>0?'var(--green)':'var(--red)';
+      deltaHtml='<span class="e1rm-delta" style="color:'+col+';">'+(d>0?'+':'')+d+unit+' vs last</span>';
+    } else {
+      deltaHtml='<span class="e1rm-delta" style="color:var(--muted);">no change</span>';
+    }
+  }
+  // Confidence: estimates from very high rep sets are unreliable
+  var lastLog=logs[logs.length-1];
+  var ws=workingSets(lastLog.sets||normalizeSets(lastLog));
+  var maxReps=0; ws.forEach(function(s){ var r=parseFloat(s.r)||0; if(r>maxReps) maxReps=r; });
+  var lowConf=maxReps>12;
+  var formulaName=(settings.e1rmFormula==='brzycki')?'Brzycki':'Epley';
+
+  return '<div class="e1rm-card">'+
+    '<div class="e1rm-top">'+
+      '<div><div class="e1rm-sub">Estimated 1RM</div>'+
+      '<div class="e1rm-val">'+latest+'<span style="font-size:14px;color:var(--dim);">'+unit+'</span></div></div>'+
+      '<div style="text-align:right;">'+deltaHtml+
+        '<div class="e1rm-sub" style="margin-top:3px;">best '+best+unit+'</div></div>'+
+    '</div>'+
+    '<div style="margin-top:9px;">'+e1rmSparkline(series)+'</div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">'+
+      '<span style="font-size:9px;color:var(--muted);">'+formulaName+' formula'+
+        (lowConf?' \u00b7 <span style="color:var(--gold);">low confidence above 12 reps</span>':'')+'</span>'+
+      '<button class="plate-btn" id="e1rm-formula-btn">Switch formula</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function e1rmSparkline(series){
+  if(series.length<2) return '<div style="font-size:10px;color:var(--muted);">Log another session to see the trend</div>';
+  var vals=series.map(function(p){return p.value;});
+  var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
+  if(min===max){min*=0.98;max*=1.02;}
+  var W=280,H=40,pad=3;
+  var pts=series.map(function(p,i){
+    var x=pad+(i*(W-pad*2)/(series.length-1));
+    var y=pad+(1-((p.value-min)/(max-min)))*(H-pad*2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  var lastX=W-pad, lastY=pad+(1-((vals[vals.length-1]-min)/(max-min)))*(H-pad*2);
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:40px;display:block;">'+
+    '<polyline points="'+pts+'" fill="none" stroke="#00B4D8" stroke-width="2" stroke-linejoin="round"/>'+
+    '<circle cx="'+lastX+'" cy="'+lastY.toFixed(1)+'" r="3" fill="#00B4D8"/>'+
+  '</svg>';
+}
+
+// ── ROUTINES ────────────────────────────────────────────────────
+// A routine stores the shape of a session (exercises, equipment, bilat
+// mode, set count and types) but never the loads. Loads always come from
+// the user's actual history, so a routine can't go stale or mislead.
+
+var routines=[];
+
+function loadRoutines(){ routines=lsGet('op-routines')||[]; }
+function saveRoutines(){ lsSet('op-routines',routines); }
+
+function captureRoutineFromSession(){
+  var cards=document.querySelectorAll('#ex-list .ex-card');
+  var out=[];
+  cards.forEach(function(card){
+    var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+    if(!name) return;
+    var sets=readSetsFromCard(card);
+    out.push({
+      name:name,
+      equipment:card.getAttribute('data-equipment')||'',
+      bilat:card.getAttribute('data-bilat')||'bilateral',
+      loadType:card.getAttribute('data-load-type')||'standard',
+      setTypes:sets.map(function(s){return s.t||'W';})
+    });
+  });
+  return out;
+}
+
+function saveCurrentAsRoutine(){
+  var exercises=captureRoutineFromSession();
+  if(!exercises.length){ showToast('Add exercises first'); return; }
+  var suggested=document.getElementById('sess-workout').value||'My Routine';
+  var name=prompt('Routine name:',suggested);
+  if(name===null) return;
+  name=(name||'').trim();
+  if(!name){ showToast('Name required'); return; }
+  var existing=routines.findIndex(function(r){return r.name.toLowerCase()===name.toLowerCase();});
+  var rec={id:Date.now(),name:name,workout:document.getElementById('sess-workout').value||'',
+    exercises:exercises,created:new Date().toISOString().split('T')[0]};
+  if(existing>-1){
+    if(!confirm('A routine called "'+name+'" already exists. Replace it?')) return;
+    rec.id=routines[existing].id; routines[existing]=rec;
+  } else {
+    routines.push(rec);
+  }
+  saveRoutines(); renderRoutines();
+  showToast('Routine saved \u2713');
+}
+
+function applyRoutine(id){
+  var r=routines.find(function(x){return x.id===id;});
+  if(!r) return;
+  var cards=document.querySelectorAll('#ex-list .ex-card');
+  var hasData=Array.from(cards).some(function(card){
+    return setsHaveData(readSetsFromCard(card));
+  });
+  if(hasData&&!confirm('This will replace the exercises in your current session. Continue?')) return;
+
+  if(r.workout){
+    var sel=document.getElementById('sess-workout');
+    var found=false;
+    for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===r.workout){sel.selectedIndex=i;found=true;break;} }
+    if(!found){ var o=document.createElement('option');o.value=r.workout;o.textContent=r.workout;sel.appendChild(o);sel.value=r.workout; }
+  }
+  document.getElementById('ex-list').innerHTML=''; exCount=0;
+  r.exercises.forEach(function(ex){
+    var sets=(ex.setTypes||['W','W']).map(function(t){return blankSet(t);});
+    addExRow({name:ex.name,equipment:ex.equipment,bilat:ex.bilat,loadType:ex.loadType,sets:sets});
+  });
+  saveCurrentSession();
+  closeRoutines();
+  showToast('Loaded: '+r.name);
+}
+
+function deleteRoutine(id){
+  var r=routines.find(function(x){return x.id===id;});
+  if(!r) return;
+  if(!confirm('Delete routine "'+r.name+'"?')) return;
+  routines=routines.filter(function(x){return x.id!==id;});
+  saveRoutines(); renderRoutines();
+  showToast('Routine deleted');
+}
+
+function renderRoutines(){
+  var wrap=document.getElementById('routine-list');
+  if(!wrap) return;
+  if(!routines.length){
+    wrap.innerHTML='<div style="text-align:center;color:var(--muted);font-size:11px;padding:22px 10px;line-height:1.6;">'+
+      'No routines yet.<br>Build a session, then save it here to reuse it.</div>';
+    return;
+  }
+  wrap.innerHTML=routines.map(function(r){
+    var names=r.exercises.map(function(e){return e.name;});
+    var preview=names.slice(0,5).join(' \u00b7 ')+(names.length>5?' \u00b7 +'+(names.length-5)+' more':'');
+    return '<div class="routine-card">'+
+      '<div class="routine-head">'+
+        '<div style="flex:1;">'+
+          '<div class="routine-name">'+r.name+'</div>'+
+          '<div class="routine-meta">'+names.length+' exercises'+(r.workout?' \u00b7 '+r.workout:'')+'</div>'+
+        '</div>'+
+        '<button class="btn btn-primary btn-sm" data-routine-load="'+r.id+'">Load</button>'+
+        '<button class="set-del" data-routine-del="'+r.id+'" title="Delete">&#215;</button>'+
+      '</div>'+
+      '<div class="routine-ex">'+preview+'</div>'+
+    '</div>';
+  }).join('');
+  wrap.querySelectorAll('[data-routine-load]').forEach(function(b){
+    b.addEventListener('click',function(){ applyRoutine(parseInt(b.getAttribute('data-routine-load'))); });
+  });
+  wrap.querySelectorAll('[data-routine-del]').forEach(function(b){
+    b.addEventListener('click',function(){ deleteRoutine(parseInt(b.getAttribute('data-routine-del'))); });
+  });
+}
+
+function openRoutines(){
+  loadRoutines(); renderRoutines();
+  document.getElementById('routine-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeRoutines(){
+  document.getElementById('routine-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// ── DELOAD PROTOCOL ─────────────────────────────────────────────
+// Encodes the OP rule: no progression across 5+ consecutive sessions at
+// RPE 9+ means the exercise is stalled and needs a deload week — 50% of
+// working sets at RPE 6-7, then return at full load. Deloaded sessions
+// are tagged so they never count as stalls themselves, which would
+// otherwise cascade into a permanent deload loop.
+//
+// Five sessions rather than three: three flat sessions is common noise
+// (a bad night's sleep, a hard week) and deloading on it wastes training
+// time. Five is a genuine plateau and is far easier to defend.
+
+var STALL_SESSIONS=5;
+
+function detectStall(exName,bilatMode,equipment){
+  var logs=getLogsForExercise(exName,bilatMode,equipment)
+    .filter(function(l){ return !l.deload; });
+  if(logs.length<STALL_SESSIONS) return null;
+  var recent=logs.slice(-STALL_SESSIONS);
+
+  // No load progression across the window
+  var loads=recent.map(function(l){return topWorkingLoad(l.sets);});
+  var loadStalled=loads.every(function(v){return v===loads[0];});
+  if(!loadStalled) return null;
+
+  // No rep progression either: best rep count at top load never improved
+  function bestReps(l){
+    var a=setsAtTopLoad(l.sets);
+    if(!a.length) return 0;
+    return Math.max.apply(null,a.map(function(s){return parseFloat(s.r)||0;}));
+  }
+  var reps=recent.map(bestReps);
+  var repStalled=reps[reps.length-1]<=reps[0];
+  if(!repStalled) return null;
+
+  // Effort is high — a stall at low RPE just means the user is holding back
+  function maxRpe(l){
+    var a=workingSets(l.sets);
+    var m=0; a.forEach(function(s){var v=parseFloat(s.rpe)||0;if(v>m)m=v;});
+    return m;
+  }
+  var rpes=recent.map(maxRpe);
+  var anyRpeLogged=rpes.some(function(v){return v>0;});
+  var highEffort=anyRpeLogged?rpes.filter(function(v){return v>=9;}).length>=3:true;
+  if(!highEffort) return null;
+
+  return {sessions:STALL_SESSIONS,load:loads[0],reps:reps[reps.length-1],
+    rpeLogged:anyRpeLogged,avgRpe:Math.round(rpes.reduce(function(a,b){return a+b;},0)/rpes.length*10)/10};
+}
+
+function deloadKey(exName,bilatMode,equipment){
+  return exName+'|'+(bilatMode||'bilateral')+'|'+(equipment||'');
+}
+function getActiveDeloads(){ return lsGet('op-deloads')||{}; }
+function setDeload(key,val){
+  var all=getActiveDeloads();
+  if(val) all[key]=val; else delete all[key];
+  lsSet('op-deloads',all);
+}
+function isDeloadActive(exName,bilatMode,equipment){
+  var d=getActiveDeloads()[deloadKey(exName,bilatMode,equipment)];
+  return d&&d.active?d:null;
+}
+
+function startDeload(card,exName,bilatMode,equipment){
+  var logs=getLogsForExercise(exName,bilatMode,equipment);
+  if(!logs.length) return;
+  var last=logs[logs.length-1];
+  var load=topWorkingLoad(last.sets);
+  var fullSets=workingSets(last.sets).length;
+  var deloadSets=Math.max(1,Math.round(fullSets/2));
+  setDeload(deloadKey(exName,bilatMode,equipment),
+    {active:true,load:load,fullSets:fullSets,deloadSets:deloadSets,started:Date.now()});
+
+  // Rebuild this card's sets at the reduced volume
+  var rows=card.querySelector('.set-rows');
+  if(rows){
+    var sets=[];
+    for(var i=0;i<deloadSets;i++) sets.push({t:'W',l:String(load),r:'',rpe:''});
+    rows.innerHTML=sets.map(function(s,i){return setRowHtml(i,s);}).join('');
+    reindexSetRows(card);
+  }
+  saveCurrentSession();
+  showExerciseStatusBar(card,exName);
+  showToast('Deload set: '+deloadSets+' sets at '+load+(settings.unit||'kg')+' \u00b7 RPE 6-7');
+}
+
+function completeDeload(exName,bilatMode,equipment){
+  setDeload(deloadKey(exName,bilatMode,equipment),null);
+}
+
+function renderStallBanner(card,exName,bilatMode,equipment){
+  var old=card.querySelector('.stall-banner');
+  if(old) old.remove();
+
+  var active=isDeloadActive(exName,bilatMode,equipment);
+  if(active){
+    var b=document.createElement('div');
+    b.className='stall-banner deload';
+    b.style.cssText='background:rgba(199,125,255,0.09);border:1px solid rgba(199,125,255,0.3);border-radius:8px;margin:0 14px 8px;padding:9px 11px;';
+    b.innerHTML='<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:#c77dff;margin-bottom:3px;">DELOAD WEEK</div>'+
+      '<div style="font-size:11px;color:var(--dim);line-height:1.5;">'+active.deloadSets+' sets at '+active.load+(settings.unit||'kg')+' \u00b7 target RPE 6&ndash;7. Return to '+active.fullSets+' sets at full effort next session.</div>'+
+      '<button class="plate-btn" style="margin-top:7px;" data-deload-cancel>Cancel deload</button>';
+    var hdr=card.querySelector('.ex-card-header');
+    if(hdr) hdr.after(b);
+    b.querySelector('[data-deload-cancel]').addEventListener('click',function(){
+      completeDeload(exName,bilatMode,equipment);
+      showExerciseStatusBar(card,exName);
+      showToast('Deload cancelled');
+    });
+    return;
+  }
+
+  var stall=detectStall(exName,bilatMode,equipment);
+  if(!stall) return;
+  var b2=document.createElement('div');
+  b2.className='stall-banner';
+  b2.style.cssText='background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.3);border-radius:8px;margin:0 14px 8px;padding:9px 11px;';
+  b2.innerHTML='<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--gold);margin-bottom:3px;">STALLED \u2014 '+stall.sessions+' SESSIONS</div>'+
+    '<div style="font-size:11px;color:var(--dim);line-height:1.5;">No progress at '+stall.load+(settings.unit||'kg')+
+      (stall.rpeLogged?' with RPE averaging '+stall.avgRpe:'')+
+      '. A deload week usually breaks this.</div>'+
+    '<button class="plate-btn" style="margin-top:7px;border-color:rgba(255,184,0,0.4);color:var(--gold);" data-deload-start>Start deload week</button>';
+  var hdr2=card.querySelector('.ex-card-header');
+  if(hdr2) hdr2.after(b2);
+  b2.querySelector('[data-deload-start]').addEventListener('click',function(){
+    startDeload(card,exName,bilatMode,equipment);
+  });
+}
+
+// ── SESSION SUMMARY ─────────────────────────────────────────────
+function buildSessionSummary(sess){
+  var unit=settings.unit||'kg';
+  var working=0,drop=0,warm=0,volume=0;
+  var prs=[],progressed=[],stalls=[];
+  var muscles={};
+
+  (sess.exercises||[]).forEach(function(ex){
+    if(!ex.name) return;
+    var sets=normalizeSets(ex);
+    var ws=workingSets(sets),ds=dropSets(sets);
+    working+=ws.length; drop+=ds.length;
+    warm+=sets.filter(function(s){return s.t==='U';}).length;
+    countedSets(sets).forEach(function(s){
+      volume+=(parseFloat(s.l)||0)*(parseFloat(s.r)||0);
+    });
+    var lib=allExercises().find(function(e){return e.name===ex.name;});
+    var grp=lib?lib.group:'Other';
+    muscles[grp]=(muscles[grp]||0)+ws.length;
+
+    // Was this a PR? Compare against history excluding this session.
+    var logs=getLogsForExercise(ex.name,ex.bilat||'bilateral',ex.equipment||'')
+      .filter(function(l){return l.sessId!==sess.id;});
+    var thisLoad=topWorkingLoad(sets);
+    var prevBest=0,prevRepsAtBest=0;
+    logs.forEach(function(l){
+      var v=topWorkingLoad(l.sets);
+      if(v>prevBest) prevBest=v;
+    });
+    logs.forEach(function(l){
+      if(topWorkingLoad(l.sets)===thisLoad){
+        setsAtTopLoad(l.sets).forEach(function(s){
+          var r=parseFloat(s.r)||0; if(r>prevRepsAtBest) prevRepsAtBest=r;
+        });
+      }
+    });
+    var thisReps=0;
+    setsAtTopLoad(sets).forEach(function(s){var r=parseFloat(s.r)||0;if(r>thisReps)thisReps=r;});
+    if(logs.length&&thisLoad>prevBest) prs.push({name:ex.name,type:'load',value:thisLoad+unit});
+    else if(logs.length&&thisLoad===prevBest&&thisReps>prevRepsAtBest&&prevRepsAtBest>0)
+      prs.push({name:ex.name,type:'reps',value:thisReps+' reps @ '+thisLoad+unit});
+
+    if(ex.deload) stalls.push({name:ex.name,note:'deload'});
+  });
+
+  return {date:sess.date,workout:sess.workout,working:working,drop:drop,warm:warm,
+    volume:Math.round(volume),prs:prs,muscles:muscles,
+    exercises:(sess.exercises||[]).filter(function(e){return e.name;}).length,
+    duration:sess.duration||null,stalls:stalls};
+}
+
+function renderSessionSummary(sess){
+  var s=buildSessionSummary(sess);
+  var unit=settings.unit||'kg';
+  var muscleList=Object.keys(s.muscles).sort(function(a,b){return s.muscles[b]-s.muscles[a];});
+
+  var html='<div style="text-align:center;padding:4px 0 14px;">'+
+    '<div style="font-size:10px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;">'+
+      (s.workout||'Session')+' \u00b7 '+formatDate(s.date)+'</div>'+
+    '</div>';
+
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    statTile(s.working,'work sets')+
+    statTile(s.volume>=1000?(Math.round(s.volume/100)/10)+'k':s.volume,'volume '+unit)+
+    statTile(s.exercises,'exercises')+
+  '</div>';
+
+  if(s.prs.length){
+    html+='<div style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.28);border-radius:10px;padding:11px 13px;margin-bottom:12px;">'+
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--green);margin-bottom:6px;">'+
+        s.prs.length+' PERSONAL RECORD'+(s.prs.length>1?'S':'')+'</div>'+
+      s.prs.map(function(p){
+        return '<div style="font-size:12px;color:var(--text);line-height:1.6;">'+
+          '<b>'+p.name+'</b> <span style="color:var(--green);">'+p.value+'</span></div>';
+      }).join('')+'</div>';
+  }
+
+  if(muscleList.length){
+    html+='<div style="background:var(--surface2);border-radius:10px;padding:11px 13px;margin-bottom:12px;">'+
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--muted);margin-bottom:7px;">WORKING SETS BY MUSCLE</div>'+
+      muscleList.map(function(m){
+        return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;">'+
+          '<span style="color:var(--dim);">'+m+'</span>'+
+          '<span style="font-family:JetBrains Mono,monospace;color:var(--text);font-weight:700;">'+s.muscles[m]+'</span></div>';
+      }).join('')+'</div>';
+  }
+
+  if(s.drop||s.warm){
+    html+='<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:10px;">'+
+      (s.warm?s.warm+' warm-up set'+(s.warm>1?'s':''):'')+
+      (s.warm&&s.drop?' \u00b7 ':'')+
+      (s.drop?s.drop+' drop set'+(s.drop>1?'s':''):'')+'</div>';
+  }
+  return html;
+}
+
+function statTile(v,label){
+  return '<div style="background:var(--surface2);border-radius:10px;padding:11px 6px;text-align:center;">'+
+    '<div style="font-family:JetBrains Mono,monospace;font-size:19px;font-weight:700;color:var(--cyan);line-height:1.1;">'+v+'</div>'+
+    '<div style="font-size:9px;color:var(--muted);letter-spacing:0.05em;margin-top:3px;">'+label+'</div></div>';
+}
+
+function shareSessionSummary(sess){
+  var s=buildSessionSummary(sess);
+  var unit=settings.unit||'kg';
+  var lines=['OPTIMAL PROTOCOL \u2014 '+(s.workout||'Session'),formatDate(s.date),'',
+    s.working+' working sets across '+s.exercises+' exercises',
+    'Total volume: '+s.volume+unit];
+  if(s.prs.length){
+    lines.push('','PRs:');
+    s.prs.forEach(function(p){ lines.push('  '+p.name+' \u2014 '+p.value); });
+  }
+  var text=lines.join('\n');
+  if(navigator.share){
+    navigator.share({title:'Training session',text:text}).catch(function(){});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){showToast('Summary copied');});
+  } else {
+    showToast('Sharing not supported');
+  }
+}
+
+// ── VOLUME LANDMARKS ────────────────────────────────────────────
+// MEV / MAV / MRV per muscle group, measured in DIRECT working sets per
+// week. Indirect volume is shown for context but never used to judge a
+// zone, because crediting it toward a landmark would overstate real
+// stimulus. Defaults follow commonly cited hypertrophy guidance and are
+// fully editable per muscle.
+
+var DEFAULT_LANDMARKS={
+  'Quads':{mev:8,mav:16,mrv:22},'Hamstrings':{mev:6,mav:14,mrv:20},
+  'Glutes':{mev:6,mav:14,mrv:20},'Calves':{mev:8,mav:16,mrv:22},
+  'Back \u2013 Lats':{mev:10,mav:18,mrv:25},'Back \u2013 Mid':{mev:8,mav:16,mrv:22},
+  'Shoulders':{mev:8,mav:18,mrv:26},'Chest':{mev:8,mav:16,mrv:22},
+  'Biceps':{mev:6,mav:14,mrv:20},'Triceps':{mev:6,mav:14,mrv:20},
+  'Abs & Core':{mev:6,mav:16,mrv:25}
+};
+
+function getLandmarks(group){
+  var custom=lsGet('op-landmarks')||{};
+  if(custom[group]) return custom[group];
+  return DEFAULT_LANDMARKS[group]||{mev:10,mav:18,mrv:24};
+}
+function setLandmarks(group,vals){
+  var custom=lsGet('op-landmarks')||{};
+  custom[group]=vals;
+  lsSet('op-landmarks',custom);
+}
+function resetLandmarks(){ lsSet('op-landmarks',{}); }
+
+function volumeZone(group,directSets){
+  var L=getLandmarks(group);
+  if(directSets<=0) return {zone:'none',label:'No volume',color:'var(--muted)'};
+  if(directSets<L.mev) return {zone:'below',label:'Below MEV',color:'var(--red)',
+    hint:(Math.round((L.mev-directSets)*10)/10)+' sets to MEV'};
+  if(directSets<L.mav) return {zone:'mev',label:'MEV\u2013MAV',color:'var(--cyan)',
+    hint:'maintenance to growth'};
+  if(directSets<=L.mrv) return {zone:'mav',label:'MAV\u2013MRV',color:'var(--green)',
+    hint:'optimal growth range'};
+  return {zone:'over',label:'Above MRV',color:'var(--gold)',
+    hint:(Math.round((directSets-L.mrv)*10)/10)+' sets over recoverable'};
+}
+
+function landmarkBarHtml(group,directSets){
+  var L=getLandmarks(group);
+  var z=volumeZone(group,directSets);
+  var scaleMax=Math.max(L.mrv*1.25,directSets*1.1,1);
+  function pct(v){ return Math.min(100,(v/scaleMax)*100); }
+  return '<div style="position:relative;background:var(--surface2);border-radius:4px;height:7px;overflow:hidden;">'+
+    '<div style="position:absolute;left:0;top:0;bottom:0;width:'+pct(directSets)+'%;background:'+z.color+';border-radius:4px;"></div>'+
+    '<div style="position:absolute;left:'+pct(L.mev)+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.45);"></div>'+
+    '<div style="position:absolute;left:'+pct(L.mav)+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.45);"></div>'+
+    '<div style="position:absolute;left:'+pct(L.mrv)+'%;top:0;bottom:0;width:1px;background:rgba(255,120,120,0.7);"></div>'+
+  '</div>';
+}
+
+function renderLandmarkSettings(){
+  var wrap=document.getElementById('landmark-list');
+  if(!wrap) return;
+  wrap.innerHTML=MUSCLE_GROUPS.map(function(g){
+    var L=getLandmarks(g);
+    return '<div style="border-bottom:1px solid var(--border);padding:9px 2px;">'+
+      '<div style="font-size:11px;color:var(--text);font-weight:600;margin-bottom:6px;">'+g+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'+
+        ['mev','mav','mrv'].map(function(k){
+          return '<div>'+
+            '<div style="font-size:8px;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">'+k.toUpperCase()+'</div>'+
+            '<input type="number" class="set-in" data-lm-group="'+g.replace(/"/g,'&quot;')+'" data-lm-key="'+k+'" value="'+L[k]+'" min="0" max="60" inputmode="numeric">'+
+          '</div>';
+        }).join('')+
+      '</div></div>';
+  }).join('');
+  wrap.querySelectorAll('[data-lm-group]').forEach(function(inp){
+    inp.addEventListener('change',function(){
+      var g=inp.getAttribute('data-lm-group');
+      var cur=getLandmarks(g);
+      var vals={mev:cur.mev,mav:cur.mav,mrv:cur.mrv};
+      vals[inp.getAttribute('data-lm-key')]=parseInt(inp.value)||0;
+      if(vals.mev>vals.mav||vals.mav>vals.mrv){
+        showToast('MEV must be \u2264 MAV \u2264 MRV');
+        renderLandmarkSettings(); return;
+      }
+      setLandmarks(g,vals);
+      showToast('Landmarks updated');
+    });
+  });
+}
+
 // ── SET MODEL ───────────────────────────────────────────────────
 // Each exercise stores an array of sets:
 //   {t:'W'|'U'|'D', l:load, r:reps, rpe:rpe}
@@ -2314,7 +3239,7 @@ function initLoadTypeToggle(card){
 // Only working sets drive the progression algorithm and PR detection.
 // Volume counts working and drop sets separately; warm-ups never count.
 
-var SET_TYPES=[{v:'W',label:'Work'},{v:'U',label:'Warm'},{v:'D',label:'Drop'}];
+var SET_TYPES=[{v:'W',label:'Working'},{v:'U',label:'Warm-up'},{v:'D',label:'Drop'}];
 var MAX_SETS=8;
 
 function blankSet(t){return {t:t||'W',l:'',r:'',rpe:''};}
@@ -2390,9 +3315,9 @@ function setRowHtml(idx,s){
   return '<div class="set-row" data-set-idx="'+idx+'">'+
     '<span class="set-idx">'+(idx+1)+'</span>'+
     '<select class="set-type" data-f="t" data-t="'+t+'">'+opts+'</select>'+
-    '<input type="number" class="set-in" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'">'+
+    '<input type="number" class="set-in" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'" data-plate-src>'+
     '<input type="number" class="set-in" data-f="r" inputmode="numeric" placeholder="\u2014" value="'+(s.r||'')+'">'+
-    '<input type="number" class="set-in rpe" data-f="rpe" inputmode="decimal" min="1" max="10" step="0.5" placeholder="\u2014" value="'+(s.rpe||'')+'">'+
+    '<input type="number" class="set-in rpe'+(t==='U'?' disabled-rpe':'')+'" data-f="rpe" inputmode="decimal" min="1" max="10" step="0.5" placeholder="'+(t==='U'?'\u2013':'\u2014')+'" value="'+(t==='U'?'':(s.rpe||''))+'"'+(t==='U'?' disabled':'')+'>'+
     '<button class="set-del" data-del-set="'+idx+'" title="Remove set">&#215;</button>'+
   '</div>';
 }
@@ -2439,9 +3364,32 @@ function wireSetsBlock(card,onChange){
   wrap.addEventListener('input',function(e){
     if(e.target.classList.contains('set-in')) onChange&&onChange();
   });
+  // Double-tap a load field to open the plate calculator prefilled
+  wrap.addEventListener('dblclick',function(e){
+    if(e.target.hasAttribute&&e.target.hasAttribute('data-plate-src')){
+      openPlateCalc(e.target.value||'');
+    }
+  });
   wrap.addEventListener('change',function(e){
     if(e.target.classList.contains('set-type')){
-      e.target.setAttribute('data-t',e.target.value);
+      var v=e.target.value;
+      e.target.setAttribute('data-t',v);
+      // RPE is meaningless on a warm-up, so lock the field rather than
+      // inviting a number that would then have to be ignored.
+      var row=e.target.closest('.set-row');
+      var rpe=row&&row.querySelector('[data-f="rpe"]');
+      if(rpe){
+        if(v==='U'){
+          rpe.value='';
+          rpe.disabled=true;
+          rpe.classList.add('disabled-rpe');
+          rpe.placeholder='\u2013';
+        } else {
+          rpe.disabled=false;
+          rpe.classList.remove('disabled-rpe');
+          rpe.placeholder='\u2014';
+        }
+      }
       onChange&&onChange();
     }
   });
@@ -2702,7 +3650,7 @@ function createSearchableDropdown(card,selectedName){
               setCardEquipment(card, eq);
               card.setAttribute('data-equipment', eq||'');
               populateLastRow(card,e.name);
-              showStallBanner(card,e.name);
+              renderStallBanner(card,e.name,(card.getAttribute('data-bilat')||'bilateral'),(card.getAttribute('data-equipment')||''));
               showRecoveryBanner(card,e.name);
               showExerciseStatusBar(card,e.name);
               saveCurrentSession();
@@ -2711,7 +3659,7 @@ function createSearchableDropdown(card,selectedName){
           } else {
             setTimeout(function(){
               populateLastRow(card,e.name);
-              showStallBanner(card,e.name);
+              renderStallBanner(card,e.name,(card.getAttribute('data-bilat')||'bilateral'),(card.getAttribute('data-equipment')||''));
               showRecoveryBanner(card,e.name);
               showExerciseStatusBar(card,e.name);
               saveCurrentSession();
@@ -2827,7 +3775,7 @@ function addExRow(data){
     // Always show status bar after DOM settles
     setTimeout(function(){
       populateLastRow(div,data.name);
-      showStallBanner(div,data.name);
+      renderStallBanner(div,data.name,(div.getAttribute('data-bilat')||'bilateral'),(div.getAttribute('data-equipment')||''));
       showRecoveryBanner(div,data.name);
       showExerciseStatusBar(div,data.name);
       // Show equipment picker if no equipment set and exercise has variants
@@ -3014,6 +3962,13 @@ document.getElementById('save-btn').addEventListener('click',function(){
   if(!hasData){showToast('Log at least one exercise');return;}
   if(draftSessionId){sessionHistory=sessionHistory.filter(function(s){return s.id!==draftSessionId;});draftSessionId=null;}
   sess.id=Date.now();sess.status='complete';
+  // Tag exercises performed under an active deload, then clear the flag so
+  // the next session automatically returns to full load and volume.
+  (sess.exercises||[]).forEach(function(e){
+    if(!e.name) return;
+    var act=isDeloadActive(e.name,e.bilat||'bilateral',e.equipment||'');
+    if(act){ e.deload=true; completeDeload(e.name,e.bilat||'bilateral',e.equipment||''); }
+  });
   var duration=sessionStartTime?Math.round((Date.now()-sessionStartTime)/60000):null;
   sess.duration=duration;
   sessionHistory.push(sess);lsSet('op-history',sessionHistory);
@@ -3082,9 +4037,10 @@ function showPostSessionModal(sess){
   },0);
   document.getElementById('ps-subtitle').textContent=sess.workout+' &bull; '+formatDate(sess.date);
   document.getElementById('ps-stats').innerHTML=
-    '<div class="ps-stat"><div class="ps-stat-val">'+exCount+'</div><div class="ps-stat-label">Exercises</div></div>'+
-    '<div class="ps-stat"><div class="ps-stat-val">'+totalSets+'</div><div class="ps-stat-label">Sets</div></div>'+
-    '<div class="ps-stat"><div class="ps-stat-val">'+(sess.duration?sess.duration+'m':'--')+'</div><div class="ps-stat-label">Duration</div></div>';
+    renderSessionSummary(sess)+
+    '<button class="btn btn-secondary btn-full" id="ps-share-btn" style="margin-top:2px;">\u21ea Share this session</button>';
+  var shareBtn=document.getElementById('ps-share-btn');
+  if(shareBtn) shareBtn.addEventListener('click',function(){ shareSessionSummary(sess); });
   document.getElementById('ps-feel').value=7;document.getElementById('ps-feel-val').textContent=7;
   document.querySelectorAll('#ps-targets-opts .ps-opt, #ps-energy-opts .ps-opt').forEach(function(b){b.classList.remove('selected');});
   document.getElementById('ps-notes-input').value='';
@@ -3114,7 +4070,7 @@ document.getElementById('ps-done-btn').addEventListener('click',function(){
   lsSet('op-current',currentSession);
   lsSet('op-draft-id',null);
   draftSessionId=null;
-  initSession();showToast('Session saved ✓');haptic('save');
+  initSession();checkBackupNag();showToast('Session saved ✓');haptic('save');
 });
 
 // ── PROGRESS TAB ──
@@ -3203,7 +4159,7 @@ function renderVolumeTab(){
   // ── MEV consistency (item 6) ──
   var mevConsistency={};
   MUSCLE_GROUPS.forEach(function(g){
-    var hitsArr=weeks.map(function(wk){return (weekMap[wk].groups[g]||{directSets:0}).directSets>=MEV;});
+    var hitsArr=weeks.map(function(wk){return (weekMap[wk].groups[g]||{directSets:0}).directSets>=getLandmarks(g).mev;});
     var hits=hitsArr.filter(Boolean).length;
     mevConsistency[g]={hits:hits,total:weeks.length,pct:weeks.length?Math.round(hits/weeks.length*100):0};
   });
@@ -3391,13 +4347,14 @@ function renderVolumeTab(){
         else if(sets<prevSets) trend='<span style="color:var(--red);font-size:11px;margin-left:3px;">&#9660;</span>';
         else trend='<span style="color:var(--muted);font-size:10px;margin-left:3px;">&mdash;</span>';
       }
-      var mevColor=directS>=MEV?'var(--cyan)':'var(--muted)';
-      var mevTip=directS<MEV?'<span style="font-size:9px;color:var(--muted);margin-left:4px;">'+(Math.round((MEV-directS)*10)/10)+' to MEV</span>':'';
+      var zone=volumeZone(grp,directS);
+      var mevColor=zone.color;
+      var mevTip=zone.hint?'<span style="font-size:9px;color:'+zone.color+';margin-left:4px;">'+zone.hint+'</span>':'';
       var exDrillId='exdrill-'+wk.replace('-','_')+'-'+grp.replace(/[^a-z0-9]/gi,'_');
       html+='<div style="border-bottom:1px solid var(--border);">';
       html+='<div data-drill="'+exDrillId+'" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;">'+
         '<div style="min-width:100px;font-size:12px;font-weight:500;display:flex;align-items:center;">'+grp+trend+'</div>'+
-        '<div style="flex:1;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+mevColor+';border-radius:4px;"></div></div>'+
+        '<div style="flex:1;">'+landmarkBarHtml(grp,directS)+'</div>'+
         '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+Math.round(directS*10)/10+' work'+(dropS?' · '+Math.round(dropS*10)/10+' drop':'')+' · '+Math.round(indirectS*10)/10+' indirect</div>'+
         mevTip+
         '<span style="color:var(--muted);font-size:10px;">&#9660;</span>'+
@@ -3647,7 +4604,7 @@ function getLogsForExercise(name,bilatFilter,equipment){
         load:topWorkingLoad(_sets),
         reps:setsAtTopLoad(_sets).map(function(s){return s.r;}),
         rpe:(function(){var a=setsAtTopLoad(_sets);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})(),
-        bilat:mode,equipment:ex.equipment||''});
+        bilat:mode,equipment:ex.equipment||'',deload:!!ex.deload});
     });
   });
   return logs;
@@ -3770,6 +4727,7 @@ function renderProgModal(name,logs,allLogs){
   var sinceLabel=sincePR===0?'PR ✓':sincePR+' sess';
   var bestAvgReps=Math.round(maxAvg*10)/10;
   document.getElementById('modal-summary').innerHTML=
+    renderE1RMCard(logs,unit)+
     '<div class="summary-cell"><div class="summary-cell-label">Best Load</div><div class="summary-cell-value cyan">'+(bestLoad||'&mdash;')+(bestLoad?unit:'')+'</div></div>'+
     '<div class="summary-cell"><div class="summary-cell-label">PR Date</div><div class="summary-cell-value">'+(prDate?prDate.slice(5):'&mdash;')+'</div></div>'+
     '<div class="summary-cell"><div class="summary-cell-label">Sessions</div><div class="summary-cell-value">'+totalSess+'</div></div>'+
@@ -4935,6 +5893,67 @@ document.getElementById('save-rep-ranges-btn').addEventListener('click',function
   showToast('Rep ranges saved ✓');
 });
 
+
+
+
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('#e1rm-formula-btn');
+  if(!b) return;
+  settings.e1rmFormula=(settings.e1rmFormula==='brzycki')?'epley':'brzycki';
+  lsSet('op-settings',settings);
+  showToast('Using '+(settings.e1rmFormula==='brzycki'?'Brzycki':'Epley')+' formula');
+  refreshProgModal();
+});
+
+
+document.getElementById('routine-close').addEventListener('click',closeRoutines);
+document.getElementById('routine-overlay').addEventListener('click',function(e){
+  if(e.target===this) closeRoutines();
+});
+document.getElementById('routine-save-current').addEventListener('click',saveCurrentAsRoutine);
+
+document.getElementById('landmark-reset').addEventListener('click',function(){
+  if(!confirm('Reset all volume landmarks to defaults?')) return;
+  resetLandmarks(); renderLandmarkSettings();
+  showToast('Landmarks reset');
+});
+
+document.getElementById('plate-close').addEventListener('click',closePlateCalc);
+document.getElementById('plate-overlay').addEventListener('click',function(e){
+  if(e.target===this) closePlateCalc();
+});
+['plate-target','plate-bar','plate-collar'].forEach(function(id){
+  document.getElementById(id).addEventListener('input',function(){
+    if(id==='plate-bar') lsSet('op-bar-'+(settings.unit||'kg'),parseFloat(this.value)||0);
+    if(id==='plate-collar') lsSet('op-collar-'+(settings.unit||'kg'),parseFloat(this.value)||0);
+    renderPlateResult();
+  });
+});
+document.getElementById('plate-reset-avail').addEventListener('click',function(){
+  savePlates(plateSet().slice()); renderPlateAvail(); renderPlateResult();
+});
+
+document.getElementById('install-skip-btn').addEventListener('click',function(){
+  lsSet('op-install-dismissed',true);
+  hideInstallGate();
+  if(!lsGet('op-launched')) document.getElementById('onboard-overlay').style.display='flex';
+});
+document.getElementById('install-prompt-btn').addEventListener('click',function(){
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(function(res){
+    if(res&&res.outcome==='accepted'){ lsSet('op-install-dismissed',true); hideInstallGate(); }
+    deferredInstallPrompt=null;
+  });
+});
+document.getElementById('backup-nag-export').addEventListener('click',function(){
+  document.getElementById('export-btn').click();
+});
+document.getElementById('backup-nag-dismiss').addEventListener('click',function(){
+  lsSet('op-backup-nag-snoozed',Date.now());
+  hideBackupNag();
+});
 
 // ── INIT ──
 loadAll();

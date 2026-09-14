@@ -636,7 +636,7 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
         <button class="btn btn-secondary" style="flex:1" id="export-btn">Export Data</button>
         <button class="btn btn-secondary" style="flex:1" id="import-btn">Import Data</button>
       </div>
-      <input type="file" id="import-file" accept=".json" style="display:none">
+      <input type="file" id="import-file" accept="application/json,text/plain,.json,.txt" style="display:none">
     </div></div>
   </div>
 </div>
@@ -1777,46 +1777,149 @@ function renderTargets(){
 // ══════════════════════════════════════════════════════════════
 // EXPORT / IMPORT
 // ══════════════════════════════════════════════════════════════
+// schema 3 adds phases (the permanent diet-phase archive) and settings.weeklySchedule.
+// Anything omitted here is permanently lost the moment someone restores onto a new device,
+// so every persisted key must appear in this object.
+function buildBackupPayload(){
+  return {settings:settings,dailyLog:dailyLog,recal:recal,phases:phases,exportedAt:new Date().toISOString(),schema:3};
+}
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent||'') ||
+    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+}
+
+// Last resort. Never leave someone with no way at all to get their data off the device —
+// on screen and copyable beats a silent failure, for an app whose whole promise is permanence.
+function showBackupAsText(json){
+  showModal({
+    title:'Your backup',
+    body:'Your device blocked the automatic save. Copy everything below and paste it into a note, an email to yourself, or a text file — that text <em>is</em> your backup, and Import Data will read it straight back.'+
+      '<textarea id="backup-text" readonly style="width:100%;height:150px;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;font-size:11px;padding:8px;-webkit-user-select:text;user-select:text;"></textarea>',
+    confirmText:'Copy',cancelText:'Close',
+    onConfirm:function(){
+      var ta=document.getElementById('backup-text');
+      if(!ta) return;
+      ta.select();ta.setSelectionRange(0,json.length);
+      var done=false;
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(json).then(function(){showToast('Backup copied ✓');}).catch(function(){});
+        done=true;
+      }
+      if(!done){try{document.execCommand('copy');showToast('Backup copied ✓');}catch(e){showToast('Select the text and copy it manually');}}
+    }
+  });
+  var ta=document.getElementById('backup-text');
+  if(ta) ta.value=json;
+}
+
+function downloadBackupFile(blob,filename,json){
+  try{
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download=filename;a.rel='noopener';a.style.display='none';
+    // The anchor has to be in the document for Safari to honour the click, and the object URL
+    // has to outlive the click — revoking it on the next line, as this used to, can abort the
+    // download before it has started.
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      if(a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    },5000);
+    showToast('Backup saved ✓');
+  }catch(e){
+    showBackupAsText(json);
+  }
+}
+
+function exportData(){
+  var json=JSON.stringify(buildBackupPayload(),null,2);
+  var filename='op-nutrition-backup-'+todayStr()+'.json';
+  var blob=new Blob([json],{type:'application/json'});
+
+  // On iOS — especially from the home screen, where there's no address bar to escape a blob
+  // preview with — a download attribute is not reliably honoured. The share sheet is the
+  // supported route to a real file there, via Save to Files.
+  if(navigator.share&&navigator.canShare&&typeof File==='function'){
+    try{
+      var file=new File([blob],filename,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:'OP Nutrition backup'})
+          .then(function(){showToast('Choose "Save to Files" to keep it');})
+          .catch(function(err){
+            if(err&&err.name==='AbortError') return;      // user cancelled — not a failure
+            if(isIOSDevice()) showBackupAsText(json); else downloadBackupFile(blob,filename,json);
+          });
+        return;
+      }
+    }catch(e){ /* fall through */ }
+  }
+  // No file sharing available. On iOS the download path can navigate away instead of saving,
+  // which strands a home-screen user, so go straight to the copyable text there.
+  if(isIOSDevice()) showBackupAsText(json);
+  else downloadBackupFile(blob,filename,json);
+}
+
 document.getElementById('export-btn').addEventListener('click',function(){
-  // schema 3 adds phases (the permanent diet-phase archive) and settings.weeklySchedule.
-  // Anything omitted here is permanently lost the moment someone restores onto a new device,
-  // so every persisted key must appear in this object.
-  var data={settings:settings,dailyLog:dailyLog,recal:recal,phases:phases,exportedAt:new Date().toISOString(),schema:3};
-  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');a.href=url;a.download='op-nutrition-backup.json';a.click();
-  URL.revokeObjectURL(url);
-  showToast('Data exported ✓');
+  exportData();
 });
-document.getElementById('import-btn').addEventListener('click',function(){document.getElementById('import-file').click();});
+// Import has to accept pasted text as well as a file — if a device pushed someone down the
+// copy-to-a-note route on the way out, a file picker is no way back in.
+document.getElementById('import-btn').addEventListener('click',function(){
+  showModal({
+    title:'Restore a backup',
+    body:'Pick the backup file, or paste backup text if you saved it into a note.<br><br><strong style="color:var(--gold);">This replaces everything currently in the app</strong> — entries, settings, phases and body fat readings.',
+    confirmText:'Paste text',cancelText:'Choose file',
+    onConfirm:function(){ promptPasteBackup(); },
+    onCancel:function(){ document.getElementById('import-file').click(); }
+  });
+});
+function promptPasteBackup(){
+  showModal({
+    title:'Paste your backup',
+    body:'Paste the backup text below, then tap Restore.'+
+      '<textarea id="restore-text" placeholder="Paste here" style="width:100%;height:140px;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;font-size:11px;padding:8px;"></textarea>',
+    confirmText:'Restore',cancelText:'Cancel',
+    onConfirm:function(){
+      var ta=document.getElementById('restore-text');
+      var txt=ta?ta.value:'';
+      if(!txt||!txt.trim()){showToast('Nothing pasted');return;}
+      applyBackupJson(txt);
+    }
+  });
+}
 document.getElementById('import-file').addEventListener('change',function(e){
   var file=e.target.files[0];if(!file) return;
   var reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      var data=JSON.parse(ev.target.result);
-      if(data.settings) settings=Object.assign(settings,data.settings);
-      if(data.dailyLog) dailyLog=data.dailyLog;
-      if(data.recal) recal=Object.assign(recal,data.recal);
-      if(data.phases) phases=data.phases;
-      lsSet('opn-settings',settings);lsSet('opn-daily',dailyLog);lsSet('opn-recal',recal);lsSet('opn-phases',phases);
-      // A schema-2 backup predates phases and the weekly schedule, so rebuild anything the
-      // restored file couldn't carry — otherwise a restore lands with an empty phase history
-      // and every day silently defaulting to Training.
-      ensureWeeklySchedule();
-      ensureInitialPhase();
-      applySettings();
-      checkRecalibration();
-      document.getElementById('log-type').value=getDayTypeForDate(todayStr());
-      renderDaily();
-      renderRecalBanner('recal-banner-daily');
-      renderBreakBanner('break-banner-daily');
-      renderTodayTarget();
-      showToast('Data restored ✓');
-    }catch(err){showToast('Import failed — invalid file');}
-  };
+  reader.onload=function(ev){ applyBackupJson(ev.target.result); };
   reader.readAsText(file);e.target.value='';
 });
+function applyBackupJson(raw){
+  try{
+    var data=JSON.parse(raw);
+    if(!data||typeof data!=='object'||(!data.dailyLog&&!data.settings)){
+      showToast('That doesn\'t look like an OP Nutrition backup');return;
+    }
+    if(data.settings) settings=Object.assign(settings,data.settings);
+    if(data.dailyLog) dailyLog=data.dailyLog;
+    if(data.recal) recal=Object.assign(recal,data.recal);
+    if(data.phases) phases=data.phases;
+    lsSet('opn-settings',settings);lsSet('opn-daily',dailyLog);lsSet('opn-recal',recal);lsSet('opn-phases',phases);
+    // A schema-2 backup predates phases and the weekly schedule, so rebuild anything the
+    // restored file couldn't carry — otherwise a restore lands with an empty phase history
+    // and every day silently defaulting to Training.
+    ensureWeeklySchedule();
+    ensureInitialPhase();
+    applySettings();
+    checkRecalibration();
+    document.getElementById('log-type').value=getDayTypeForDate(todayStr());
+    renderDaily();
+    renderRecalBanner('recal-banner-daily');
+    renderBreakBanner('break-banner-daily');
+    renderTodayTarget();
+    showToast('Data restored ✓');
+  }catch(err){showToast('Import failed — that text isn\'t valid backup data');}
+}
 
 // ══════════════════════════════════════════════════════════════
 // DAILY LOG

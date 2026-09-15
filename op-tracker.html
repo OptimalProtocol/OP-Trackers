@@ -243,8 +243,9 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .summary-cell-value.green{color:var(--green);}
 .summary-cell-value.gold{color:var(--gold);}
 .summary-cell-value.red{color:var(--red);}
-.modal-log-section{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.modal-log-thead{position:sticky;top:0;background:var(--surface);z-index:3;border-bottom:2px solid var(--cyan-border);}
+.modal-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.modal-log-section{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px;}
+.modal-log-thead{position:sticky;top:0;background:var(--bg);z-index:3;border-bottom:2px solid var(--cyan-border);}
 .modal-log-thead th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;white-space:nowrap;}
 .hist-table{width:100%;border-collapse:collapse;}
 .hist-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
@@ -381,7 +382,9 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .plate-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.04em;padding:5px 8px;}
 
 /* ── e1RM ── */
-.e1rm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:0 0 12px;padding:13px 15px;}
+.e1rm-card{grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:0 0 4px;padding:13px 15px;display:flex;align-items:center;gap:16px;}
+.e1rm-left{flex-shrink:0;min-width:104px;}
+.e1rm-right{flex:1;min-width:0;}
 .e1rm-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:3px;}
 .e1rm-val{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;line-height:1;}
 .e1rm-delta{font-size:11px;font-weight:700;}
@@ -769,6 +772,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
       <div style="flex:1;min-width:0;"><div class="modal-title" id="modal-ex-name">Exercise</div><div class="modal-subtitle" id="modal-ex-sub"></div></div>
       <button class="modal-close-btn" id="modal-close-btn">&#10005; Close</button>
     </div>
+    <div class="modal-scroll">
     <div class="share-btn-wrap"><button class="share-btn" id="share-ex-btn">&#8679; Share Progress</button></div>
     <div class="modal-bilat-toggle" id="modal-bilat-toggle" style="display:none;">
       <button class="modal-bilat-btn active" data-mmode="bilateral">Bilateral</button>
@@ -798,6 +802,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
         </tr></thead>
         <tbody id="hist-body"></tbody>
       </table>
+    </div>
     </div>
   </div>
 </div>
@@ -2717,19 +2722,18 @@ function renderE1RMCard(logs,unit){
   var series=e1rmSeries(logs);
   if(series.length<1) return '';
   var latest=series[series.length-1].value;
-  var best=0,bestDate=null;
-  series.forEach(function(p){ if(p.value>best){best=p.value;bestDate=p.date;} });
-  var deltaHtml='';
+  var best=0;
+  series.forEach(function(p){ if(p.value>best) best=p.value; });
+
+  var deltaHtml='<span class="e1rm-sub">first session</span>';
   if(series.length>1){
     var prev=series[series.length-2].value;
-    var d=Math.round((latest-prev)*10)/10;
-    if(d!==0){
-      var col=d>0?'var(--green)':'var(--red)';
-      deltaHtml='<span class="e1rm-delta" style="color:'+col+';">'+(d>0?'+':'')+d+unit+' vs last</span>';
-    } else {
-      deltaHtml='<span class="e1rm-delta" style="color:var(--muted);">no change</span>';
-    }
+    var dv=Math.round((latest-prev)*10)/10;
+    if(dv>0) deltaHtml='<span class="e1rm-delta" style="color:var(--green);">+'+dv+unit+' vs last</span>';
+    else if(dv<0) deltaHtml='<span class="e1rm-delta" style="color:var(--red);">'+dv+unit+' vs last</span>';
+    else deltaHtml='<span class="e1rm-delta" style="color:var(--muted);">no change</span>';
   }
+
   // Confidence: estimates from very high rep sets are unreliable
   var lastLog=logs[logs.length-1];
   var ws=workingSets(lastLog.sets||normalizeSets(lastLog));
@@ -2738,34 +2742,35 @@ function renderE1RMCard(logs,unit){
   var formulaName=(settings.e1rmFormula==='brzycki')?'Brzycki':'Epley';
 
   return '<div class="e1rm-card">'+
-    '<div class="e1rm-top">'+
-      '<div><div class="e1rm-sub">Estimated 1RM</div>'+
-      '<div class="e1rm-val">'+latest+'<span style="font-size:14px;color:var(--dim);">'+unit+'</span></div></div>'+
-      '<div style="text-align:right;">'+deltaHtml+
-        '<div class="e1rm-sub" style="margin-top:3px;">best '+best+unit+'</div></div>'+
+    '<div class="e1rm-left">'+
+      '<div class="e1rm-sub">Est. 1RM</div>'+
+      '<div class="e1rm-val">'+latest+'<span style="font-size:13px;color:var(--dim);">'+unit+'</span></div>'+
+      '<div style="margin-top:3px;">'+deltaHtml+'</div>'+
     '</div>'+
-    '<div style="margin-top:9px;">'+e1rmSparkline(series)+'</div>'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">'+
-      '<span style="font-size:9px;color:var(--muted);">'+formulaName+' formula'+
-        (lowConf?' \u00b7 <span style="color:var(--gold);">low confidence above 12 reps</span>':'')+'</span>'+
-      '<button class="plate-btn" id="e1rm-formula-btn">Switch formula</button>'+
+    '<div class="e1rm-right">'+
+      e1rmSparkline(series)+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px;">'+
+        '<span style="font-size:9px;color:var(--muted);white-space:nowrap;">best '+best+unit+' \u00b7 '+formulaName+
+          (lowConf?' <span style="color:var(--gold);">\u00b7 low confidence</span>':'')+'</span>'+
+        '<button class="plate-btn" id="e1rm-formula-btn" style="flex-shrink:0;">Switch</button>'+
+      '</div>'+
     '</div>'+
   '</div>';
 }
 
 function e1rmSparkline(series){
-  if(series.length<2) return '<div style="font-size:10px;color:var(--muted);">Log another session to see the trend</div>';
+  if(series.length<2) return '<div style="font-size:10px;color:var(--muted);padding:12px 0;">Log another session to see the trend</div>';
   var vals=series.map(function(p){return p.value;});
   var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
   if(min===max){min*=0.98;max*=1.02;}
-  var W=280,H=40,pad=3;
+  var W=300,H=46,pad=3;
   var pts=series.map(function(p,i){
     var x=pad+(i*(W-pad*2)/(series.length-1));
     var y=pad+(1-((p.value-min)/(max-min)))*(H-pad*2);
     return x.toFixed(1)+','+y.toFixed(1);
   }).join(' ');
   var lastX=W-pad, lastY=pad+(1-((vals[vals.length-1]-min)/(max-min)))*(H-pad*2);
-  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:40px;display:block;">'+
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:46px;display:block;">'+
     '<polyline points="'+pts+'" fill="none" stroke="#00B4D8" stroke-width="2" stroke-linejoin="round"/>'+
     '<circle cx="'+lastX+'" cy="'+lastY.toFixed(1)+'" r="3" fill="#00B4D8"/>'+
   '</svg>';

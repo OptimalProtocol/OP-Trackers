@@ -152,6 +152,23 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .rate-gap-bar{height:6px;border-radius:4px;background:var(--surface2);margin-top:9px;position:relative;overflow:hidden;}
 .rate-gap-bar-fill{position:absolute;top:0;bottom:0;border-radius:4px;}
 .rate-gap-bar-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--dim);}
+/* Adaptive engine status — makes the engine auditable instead of silent */
+.eng-state{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+.eng-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.eng-label{font-size:13px;font-weight:700;}
+.eng-req{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--border);}
+.eng-req-icon{width:17px;height:17px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.eng-req-met{background:rgba(0,200,150,0.16);color:var(--green);}
+.eng-req-unmet{background:rgba(255,184,0,0.16);color:var(--gold);}
+.eng-req-text{flex:1;font-size:12px;line-height:1.45;}
+.eng-req-count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.eng-explain{font-size:12px;color:var(--muted);line-height:1.55;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.eng-explain b{color:var(--text);}
+.eng-gauge{margin-top:11px;}
+.eng-gauge-track{height:7px;border-radius:5px;background:var(--surface2);position:relative;overflow:hidden;}
+.eng-gauge-fill{position:absolute;top:0;bottom:0;left:50%;border-radius:5px;}
+.eng-gauge-mid{position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:var(--dim);opacity:0.5;}
+.eng-gauge-legend{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:5px;font-family:'JetBrains Mono',monospace;}
 /* Chart range toggle + legends */
 .range-row{display:flex;gap:6px;margin-bottom:10px;}
 .range-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 11px;transition:all 0.15s;}
@@ -458,6 +475,8 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
         <div class="chart-legend" id="bf-chart-legend"></div>
       </div>
     </div>
+    <div class="section-title">Adaptive Engine</div>
+    <div class="card"><div class="card-body" id="engine-status"></div></div>
     <div class="section-title">Maintenance History</div>
     <div class="card"><div class="card-body" id="recal-history-list"></div></div>
     <div class="section-title">This Week vs Target</div>
@@ -673,7 +692,12 @@ var CONFIG={
   COMPLIANCE_CAL_BAND:0.10,        // calories must land within ±10% of that day's target
   COMPLIANCE_PROTEIN_FLOOR:0.90,   // protein must be at or above 90% of target
   RECAL_WINDOW_DAYS:14,            // how far back a recalibration check looks
-  RECAL_MIN_CONFIRMED_DAYS:10,     // need this many confirmed days with weight+cal in the window
+  RECAL_MIN_CONFIRMED_DAYS:10,     // legacy — superseded by the limits below
+  RECAL_MIN_CAL_DAYS:10,           // days with calories logged (any confidence) needed in the window
+  RECAL_MIN_WEIGH_PER_HALF:3,      // weigh-ins needed in each half of the window
+  RECAL_MIN_CONFIRMED_SHARE:0.35,  // below this share of weighed-food days the intake figure is too speculative to act on
+  RECAL_GOOD_CONFIRMED_SHARE:0.60, // at or above this, trust the intake figure at face value
+  RECAL_LOW_TRUST_MULT:1.5,        // otherwise demand this much more divergence before overriding the formula
   RECAL_TRIGGER_KCAL:220,          // minimum kcal/day divergence before we act (~0.2kg/week)
   KCAL_PER_KG:7700,
   DAILY_PAGE_SIZE:20,               // Daily tab shows this many most-recent entries before "Show all" — keeps re-render fast once history is long
@@ -1063,54 +1087,113 @@ function renderTodayTarget(){
 
 // ── Mechanism B: compare what the logged calorie balance predicted against what actually
 // happened to bodyweight, and when they disagree by enough, trust the outcome over the formula.
-function checkRecalibration(){
-  // Recalculates every time this runs (every save, and on load) rather than waiting a fixed
-  // number of days between checks — it compares the last 7 days' average weight against the
-  // 7 days before that, so it's always looking at a full week-vs-week trend, just re-evaluated
-  // continuously instead of on a rigid cycle.
+// Works out everything the adaptive engine knows right now, WITHOUT changing anything.
+// Split out from checkRecalibration so the status panel can show the user exactly where the
+// engine stands — eligible or not, how far off the trigger it is, and what is holding it up.
+// Silence from this engine used to be indistinguishable from it being broken.
+function getRecalStatus(){
   var today=todayStr();
   var windowStart=addDays(today,-CONFIG.RECAL_WINDOW_DAYS);
   var midpoint=addDays(windowStart,7);
-  var windowDays=dailyLog.filter(function(d){
-    return d.date>=windowStart&&d.date<today&&d.confidence==='confirmed'&&d.weight&&d.cal;
-  });
-  if(windowDays.length<CONFIG.RECAL_MIN_CONFIRMED_DAYS) return; // not enough confirmed data yet — try again next save
+  var inWindow=dailyLog.filter(function(d){return d.date>=windowStart&&d.date<today;});
 
-  var firstHalf=windowDays.filter(function(d){return d.date<midpoint;});
-  var secondHalf=windowDays.filter(function(d){return d.date>=midpoint;});
-  if(firstHalf.length<3||secondHalf.length<3) return; // too lopsided to trust a trend
+  // The calorie side and the weight side are judged separately and on their own merits.
+  // "Confirmed" describes how carefully the FOOD was measured — it says nothing about the
+  // scale. Throwing out a perfectly good weigh-in because dinner was estimated that night
+  // was a category error, and it was the single biggest reason this engine sat idle.
+  // Energy balance only works if both sides describe the SAME days. The intake average must
+  // therefore cover every day that fed into the weight change — including the ones logged as
+  // Estimated. Averaging only the carefully-weighed days while the big estimated days still
+  // push the scale up makes the app conclude maintenance is far lower than it is.
+  var calDays=inWindow.filter(function(d){return d.cal;});
+  var confirmedCalDays=calDays.filter(function(d){return d.confidence==='confirmed';});
+  var confirmedShare=calDays.length?confirmedCalDays.length/calDays.length:0;
+  var weighDays=inWindow.filter(function(d){return d.weight&&parseFloat(d.weight)>0;});
+  var weighFirst=weighDays.filter(function(d){return d.date<midpoint;});
+  var weighSecond=weighDays.filter(function(d){return d.date>=midpoint;});
 
-  var startKg=avg(firstHalf.map(function(d){return parseFloat(d.weight);}));
-  var endKg=avg(secondHalf.map(function(d){return parseFloat(d.weight);}));
-  var actualDeltaKg=endKg-startKg;
-  var avgLoggedCal=avg(windowDays.map(function(d){return d.cal;}));
+  // A low share of weighed days means the intake figure is largely self-estimated, so demand a
+  // bigger disagreement before overriding the formula on the strength of it.
+  var trigger=CONFIG.RECAL_TRIGGER_KCAL*(confirmedShare<CONFIG.RECAL_GOOD_CONFIRMED_SHARE?CONFIG.RECAL_LOW_TRUST_MULT:1);
 
+  var st={
+    windowDays:CONFIG.RECAL_WINDOW_DAYS,
+    calDays:calDays.length, calDaysNeeded:CONFIG.RECAL_MIN_CAL_DAYS,
+    confirmedCalDays:confirmedCalDays.length,
+    confirmedShare:Math.round(confirmedShare*100),
+    lowTrust:confirmedShare<CONFIG.RECAL_GOOD_CONFIRMED_SHARE,
+    weighFirst:weighFirst.length, weighSecond:weighSecond.length, weighNeeded:CONFIG.RECAL_MIN_WEIGH_PER_HALF,
+    weighIns:weighDays.length, totalLogged:inWindow.length,
+    eligible:false, blockedBy:null,
+    divergence:null, impliedMaintenance:null, baseline:null, triggerKcal:Math.round(trigger),
+    weeklyRateKg:null, predictedDeltaKg:null, plateau:false, weightNoiseKg:null,
+    workingMaintenance:recal.workingMaintenance, lastActed:recal.history.length?recal.history[0].date:null
+  };
+
+  if(calDays.length<CONFIG.RECAL_MIN_CAL_DAYS){st.blockedBy='calories';return st;}
+  if(weighFirst.length<CONFIG.RECAL_MIN_WEIGH_PER_HALF||weighSecond.length<CONFIG.RECAL_MIN_WEIGH_PER_HALF){
+    st.blockedBy='weigh-ins';return st;
+  }
+  if(confirmedShare<CONFIG.RECAL_MIN_CONFIRMED_SHARE){st.blockedBy='trust';return st;}
+
+  // Weight change comes from a least-squares fit across every weigh-in in the window, not from
+  // comparing two half-window averages. Splitting into halves lets one heavy morning land in one
+  // block and skew it; the fit spreads that across every point instead.
+  var pts=weighDays.map(function(d){return {x:dateOrdinal(d.date),y:parseFloat(d.weight)};})
+    .sort(function(a,b){return a.x-b.x;});
+  var slope=linearSlopePerDay(pts);
+  if(slope==null){st.blockedBy='weigh-ins';return st;}
+  var weeklyRateKg=slope*7;
+
+  // How far individual readings sit from that line — the app's own measure of how trustworthy
+  // this person's scale data is.
+  var x0=pts[0].x, resid=0;
+  var mean=avg(pts.map(function(p){return p.y;}));
+  var fitAt=function(x){return mean+slope*((x-x0)-avg(pts.map(function(q){return q.x-x0;})));};
+  pts.forEach(function(p){var e=p.y-fitAt(p.x);resid+=e*e;});
+  st.weightNoiseKg=Math.round(Math.sqrt(resid/pts.length)*100)/100;
+
+  var avgLoggedCal=avg(calDays.map(function(d){return d.cal;}));
   var f=formulaTDEE();
   var baseline=recal.workingMaintenance!=null?recal.workingMaintenance:(f?f.tdee:null);
-  if(baseline==null) return;
+  if(baseline==null){st.blockedBy='profile';return st;}
 
-  var newMaintenance=avgLoggedCal-(actualDeltaKg*CONFIG.KCAL_PER_KG/7);
-  var diff=newMaintenance-baseline;
+  var impliedMaintenance=avgLoggedCal-(weeklyRateKg*CONFIG.KCAL_PER_KG/7);
+  st.eligible=true;
+  st.baseline=Math.round(baseline);
+  st.impliedMaintenance=Math.round(impliedMaintenance);
+  st.divergence=Math.round(impliedMaintenance-baseline);
+  st.weeklyRateKg=Math.round(weeklyRateKg*100)/100;
+  st.actualDeltaKg=st.weeklyRateKg;
+  st.avgLoggedCal=Math.round(avgLoggedCal);
+  st.avgConfirmedCal=confirmedCalDays.length?Math.round(avg(confirmedCalDays.map(function(d){return d.cal;}))):null;
   // What the logged calorie balance predicted would happen to bodyweight over this window,
   // vs what actually happened — this is the evidence shown to the user for why the number moved.
-  var predictedDeltaKg=(avgLoggedCal-baseline)*CONFIG.RECAL_WINDOW_DAYS/CONFIG.KCAL_PER_KG;
-
+  st.predictedDeltaKg=Math.round(((avgLoggedCal-baseline)*7/CONFIG.KCAL_PER_KG)*100)/100;
   var gc=GOAL_CONFIG[settings.goal]||GOAL_CONFIG.maintain;
-  var goalWantsChange=gc.multiplier!==1.00;
-  var plateau=goalWantsChange&&Math.abs(actualDeltaKg)<0.15;
+  st.plateau=(gc.multiplier!==1.00)&&Math.abs(weeklyRateKg)<0.15;
+  if(Math.abs(st.divergence)<trigger) st.blockedBy='agreement';
+  return st;
+}
 
-  if(Math.abs(diff)>=CONFIG.RECAL_TRIGGER_KCAL){
-    recal.history.unshift({date:today,from:Math.round(baseline),to:Math.round(newMaintenance),windowStart:windowStart,windowEnd:today,
-      predictedDeltaKg:Math.round(predictedDeltaKg*100)/100,actualDeltaKg:Math.round(actualDeltaKg*100)/100});
+function checkRecalibration(){
+  // Re-evaluated on every save and on load — no waiting period. It compares the last 7 days'
+  // average weight against the 7 days before that, so it is always looking at a full
+  // week-vs-week trend rather than reacting to one morning's reading.
+  var st=getRecalStatus();
+  recal.lastCheckDate=todayStr();
+  if(!st.eligible){lsSet('opn-recal',recal);return;}
+
+  recal.plateauActive=st.plateau;
+  if(Math.abs(st.divergence)>=CONFIG.RECAL_TRIGGER_KCAL){
+    recal.history.unshift({date:todayStr(),from:st.baseline,to:st.impliedMaintenance,
+      windowStart:addDays(todayStr(),-CONFIG.RECAL_WINDOW_DAYS),windowEnd:todayStr(),
+      predictedDeltaKg:st.predictedDeltaKg,actualDeltaKg:st.actualDeltaKg});
     recal.history=recal.history.slice(0,12);
-    recal.workingMaintenance=Math.round(newMaintenance);
-    recal.plateauActive=plateau;
-    recal.lastCheckDate=today;
+    recal.workingMaintenance=st.impliedMaintenance;
     lsSet('opn-recal',recal);
-    showToast('Maintenance recalibrated: '+Math.round(baseline)+' → '+Math.round(newMaintenance)+' kcal');
+    showToast('Maintenance recalibrated: '+st.baseline+' → '+st.impliedMaintenance+' kcal');
   } else {
-    recal.plateauActive=plateau;
-    recal.lastCheckDate=today;
     lsSet('opn-recal',recal);
   }
 }
@@ -1188,6 +1271,22 @@ function calcComplianceStreak(){
 // we simply compared the first reading to the last. Deliberately independent of goal weight:
 // the rate is worth knowing whether or not a goal has been set.
 // ══════════════════════════════════════════════════════════════
+// Least-squares slope in kg per day across {x:dayOrdinal, y:kg} points. One estimator, shared by
+// the rate gap and the adaptive engine — they used to use different maths and could disagree by
+// enough to change whether the engine acted at all.
+function linearSlopePerDay(pts){
+  if(!pts||pts.length<2) return null;
+  var x0=pts[0].x, n=pts.length;
+  var xs=pts.map(function(p){return p.x-x0;});
+  var ys=pts.map(function(p){return p.y;});
+  var sumX=xs.reduce(function(a,b){return a+b;},0),sumY=ys.reduce(function(a,b){return a+b;},0);
+  var sumXY=0,sumXX=0;
+  for(var i=0;i<n;i++){sumXY+=xs[i]*ys[i];sumXX+=xs[i]*xs[i];}
+  var denom=(n*sumXX-sumX*sumX);
+  if(!denom) return null;
+  return (n*sumXY-sumX*sumY)/denom;
+}
+
 function computeTrendRate(windowDays){
   var days=windowDays||CONFIG.TREND_WINDOW_DAYS;
   var cutoff=addDays(todayStr(),-(days-1));
@@ -1200,10 +1299,8 @@ function computeTrendRate(windowDays){
   var ys=pts.map(function(p){return p.y;});
   var n=xs.length;
   var sumX=xs.reduce(function(a,b){return a+b;},0),sumY=ys.reduce(function(a,b){return a+b;},0);
-  var sumXY=0,sumXX=0;
-  for(var i=0;i<n;i++){sumXY+=xs[i]*ys[i];sumXX+=xs[i]*xs[i];}
-  var denom=(n*sumXX-sumX*sumX)||1;
-  var slope=(n*sumXY-sumX*sumY)/denom;          // kg per day
+  var slope=linearSlopePerDay(pts);
+  if(slope==null) return null;
   var intercept=(sumY-slope*sumX)/n;
   // The fitted value at the most recent weigh-in, NOT that morning's raw number — using the raw
   // reading here would put all the daily water noise straight back into every figure downstream.
@@ -2174,6 +2271,88 @@ function renderPlateauBanner(){
     '<div class="banner-body">Your weight hasn\'t moved over the last '+CONFIG.RECAL_WINDOW_DAYS+' days despite a logged intake that should be moving it. If a recalibration above didn\'t already correct for it, this can mean real maintenance is higher (or lower, if gaining) than currently estimated, water retention is masking real change, or it\'s worth double-checking portions and logging accuracy for a few days.</div></div>';
 }
 
+// The engine explaining itself. Whether it is acting, waiting, or deliberately holding still,
+// the user can see which — and what would have to change for it to act.
+function renderEngineStatus(){
+  var el=document.getElementById('engine-status');
+  if(!el) return;
+  var t=calcTargets();
+  if(!t){el.innerHTML='<p style="font-size:12px;color:var(--muted);">Complete your profile in Settings and the adaptive engine will start reporting here.</p>';return;}
+  var st=getRecalStatus();
+  var unit=settings.unit;
+
+  var calMet=st.calDays>=st.calDaysNeeded;
+  var weighMet=st.weighFirst>=st.weighNeeded&&st.weighSecond>=st.weighNeeded;
+
+  var dotColor,label,explain;
+  if(!st.eligible&&st.blockedBy==='profile'){
+    dotColor='var(--muted)';label='Waiting on your profile';
+    explain='Fill in age, height and current weight in Settings so there is a baseline to measure against.';
+  } else if(!st.eligible){
+    dotColor='var(--gold)';label='Collecting data';
+    explain='The engine needs enough of the last '+st.windowDays+' days covered before it will move your numbers. It will not guess from thin data — a maintenance figure built on three weigh-ins would move your target around for no good reason.';
+  } else if(st.blockedBy==='trust'){
+    dotColor='var(--gold)';label='Intake too speculative';
+    explain='Only '+st.confirmedShare+'% of your logged days were marked Confirmed. The engine works by treating your calorie figure as fact and solving for maintenance — if most of that figure is estimated, it would be overriding a formula with a guess. Weigh your food on more days and it will start.';
+  } else if(st.blockedBy==='agreement'){
+    dotColor='var(--green)';label='Measured and holding';
+    explain='This is the engine working, not the engine idle. Across the last '+st.windowDays+' days your intake averaged <b>'+st.avgLoggedCal+' kcal</b> and your weight trend moved <b>'+fmtRate(st.weeklyRateKg,unit)+'</b>. That implies real maintenance of <b>'+st.impliedMaintenance+' kcal</b>, against the <b>'+st.baseline+'</b> in use — a gap of '+Math.abs(st.divergence)+' kcal. It only moves your target once that gap passes '+st.triggerKcal+' kcal, because anything smaller is inside the noise of bathroom scales and food labels.';
+  } else {
+    dotColor='var(--cyan)';label='Actively adjusting';
+    explain='Your logged results and the formula disagree by <b>'+Math.abs(st.divergence)+' kcal</b>, past the '+st.triggerKcal+' kcal threshold — so your maintenance figure is being set from what your body actually did, not from the formula.';
+  }
+
+  var html='<div class="eng-state"><span class="eng-dot" style="background:'+dotColor+'"></span><span class="eng-label" style="color:'+dotColor+'">'+label+'</span></div>';
+
+  html+='<div class="eng-req"><span class="eng-req-icon '+(calMet?'eng-req-met':'eng-req-unmet')+'">'+(calMet?'✓':'!')+'</span>'+
+    '<span class="eng-req-text">Days with calories logged, last '+st.windowDays+' days</span>'+
+    '<span class="eng-req-count">'+st.calDays+'/'+st.calDaysNeeded+'</span></div>';
+  var trustMet=!st.lowTrust;
+  html+='<div class="eng-req"><span class="eng-req-icon '+(trustMet?'eng-req-met':'eng-req-unmet')+'">'+(trustMet?'✓':'!')+'</span>'+
+    '<span class="eng-req-text">...of those, days you weighed your food</span>'+
+    '<span class="eng-req-count">'+st.confirmedCalDays+' &nbsp;·&nbsp; '+st.confirmedShare+'%</span></div>';
+  html+='<div class="eng-req"><span class="eng-req-icon '+(weighMet?'eng-req-met':'eng-req-unmet')+'">'+(weighMet?'✓':'!')+'</span>'+
+    '<span class="eng-req-text">Weigh-ins in each half of that window</span>'+
+    '<span class="eng-req-count">'+st.weighFirst+'/'+st.weighNeeded+' &nbsp;·&nbsp; '+st.weighSecond+'/'+st.weighNeeded+'</span></div>';
+
+  if(st.eligible){
+    // Gauge showing how far the measured divergence sits from the trigger, either side of zero.
+    var span=Math.max(st.triggerKcal*1.5,Math.abs(st.divergence)*1.15);
+    var pct=Math.max(-50,Math.min(50,(st.divergence/span)*50));
+    var fill=st.blockedBy==='agreement'?'var(--green)':'var(--cyan)';
+    html+='<div class="eng-gauge"><div class="eng-gauge-track">'+
+      '<div class="eng-gauge-fill" style="background:'+fill+';'+(pct<0?('right:50%;left:auto;width:'+Math.abs(pct)+'%;'):('left:50%;width:'+pct+'%;'))+'"></div>'+
+      '<div class="eng-gauge-mid"></div></div>'+
+      '<div class="eng-gauge-legend"><span>−'+Math.round(span)+'</span><span>gap '+(st.divergence>0?'+':'')+st.divergence+' kcal · acts at ±'+st.triggerKcal+'</span><span>+'+Math.round(span)+'</span></div></div>';
+  }
+
+  html+='<div class="eng-explain">'+explain+'</div>';
+
+  if(st.eligible&&st.lowTrust){
+    html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--gold);">Only '+st.confirmedShare+
+      '% of these days were weighed'+(st.avgConfirmedCal!=null?' — those averaged '+st.avgConfirmedCal+' kcal against '+st.avgLoggedCal+' across all days':'')+
+      '. Both sets are counted, because the food on the estimated days moved the scale just the same. But while the split is this uneven the engine needs a '+
+      st.triggerKcal+' kcal gap rather than '+CONFIG.RECAL_TRIGGER_KCAL+' before it acts.</div>';
+  }
+  if(st.eligible&&st.weightNoiseKg!=null&&st.weightNoiseKg>0.7){
+    html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--gold);">Your weigh-ins scatter about '+
+      fmtMass(st.weightNoiseKg,unit,1)+' '+unit+' either side of the trend, which is high. Weighing at the same time each morning, before eating and after the toilet, would tighten this and let the engine read your trend sooner.</div>';
+  }
+
+  if(st.workingMaintenance!=null){
+    html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;">Currently using a measured maintenance of <b>'+st.workingMaintenance+' kcal</b>'+
+      (st.lastActed?', set on '+formatDate(st.lastActed):'')+'.</div>';
+  } else {
+    html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;">Still using the formula estimate of <b>'+t.formulaTDEE+' kcal</b>. It has never had cause to override it.</div>';
+  }
+
+  // The honest note about why the formula alone barely moves.
+  html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--muted);">Separately, the formula itself only shifts your target by roughly '+
+    (settings.bf?'20':'12')+' kcal per kg of bodyweight, because resting metabolism genuinely barely changes with a kilo either way. If you are watching for your target to track your weight day to day, it will not, and it should not — real adjustments come from the measurement above.</div>';
+
+  el.innerHTML=html;
+}
+
 function renderRecalHistory(){
   var el=document.getElementById('recal-history-list');
   if(!el) return;
@@ -2427,6 +2606,7 @@ function renderProgress(){
   drawCalChart(weeks,t);
   drawSmartWeightChart();
   renderComposition();
+  renderEngineStatus();
   renderRecalHistory();
 
   var macroEl=document.getElementById('macro-status');

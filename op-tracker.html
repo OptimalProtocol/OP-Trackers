@@ -409,6 +409,41 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .ex-card-since-pr.red{color:var(--red);}
 .ex-card-since-pr.muted{color:var(--muted);}
 
+
+/* ── COLLAPSIBLE EXERCISE CARDS ── */
+.ex-card-footer{display:flex;align-items:center;gap:8px;padding:8px 14px 11px;border-top:1px solid var(--border);}
+.ex-rest-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--dim);cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:8px 13px;flex-shrink:0;}
+.ex-rest-btn:active{background:var(--cyan-dim);color:var(--cyan);}
+.ex-done-btn{background:var(--cyan-dim);border:1px solid var(--cyan-border);border-radius:8px;color:var(--cyan);cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.04em;padding:8px 0;flex:1;}
+.ex-done-btn:disabled{opacity:0.35;cursor:default;}
+.ex-done-btn.reopen{background:transparent;color:var(--muted);border-color:var(--border);}
+
+/* Collapsed state — everything but the summary row is hidden */
+.ex-card.collapsed > *:not(.ex-collapsed-row){display:none !important;}
+.ex-card.collapsed{border-color:var(--border);box-shadow:none;}
+.ex-collapsed-row{display:none;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;}
+.ex-card.collapsed .ex-collapsed-row{display:flex;}
+.ex-collapsed-row .cr-tick{flex-shrink:0;width:18px;height:18px;border-radius:50%;background:rgba(0,200,150,0.15);
+  border:1px solid rgba(0,200,150,0.5);position:relative;}
+.ex-collapsed-row .cr-tick::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:8px;
+  border:solid var(--green);border-width:0 2px 2px 0;transform:rotate(45deg);}
+.ex-collapsed-row .cr-main{flex:1;min-width:0;}
+.ex-collapsed-row .cr-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ex-collapsed-row .cr-sum{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ex-collapsed-row .cr-pr{flex-shrink:0;width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px rgba(0,200,150,0.7);}
+.ex-collapsed-row .cr-chev{flex-shrink:0;color:var(--muted);font-size:11px;}
+.ex-card.collapsed.was-ready{border-color:rgba(0,200,150,0.3);}
+
+/* Session progress + collapse-all */
+.sess-progress{display:flex;align-items:center;gap:10px;margin:0 16px 10px;}
+.sess-progress .sp-text{font-size:10px;color:var(--muted);letter-spacing:0.05em;font-weight:600;flex:1;}
+.sess-progress .sp-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--dim);cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.05em;padding:5px 9px;}
+
 /* ── PROGRESSION PROMPT (tiered by stakes) ── */
 .ex-card-target{font-size:10px;color:var(--dim);font-weight:600;padding:2px 14px 6px;}
 
@@ -717,6 +752,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <button class="copy-last-btn" id="copy-last-btn">&#8635; Reload last session of this type</button>
   <button class="copy-last-btn" id="add-workout-type-btn" style="margin-top:8px;color:var(--dim);border-color:var(--border);">+ Add custom workout type</button>
   <div id="progress-alert-slot"></div>
+  <div id="sess-progress-slot"></div>
   <div class="ex-list" id="ex-list"></div>
   <button class="add-ex-btn" id="add-ex-btn">+ Add Exercise</button>
   <div class="autosave-indicator" id="autosave-indicator">&bull; Auto-saving</div>
@@ -1169,7 +1205,8 @@ var EQUIPMENT_MAP = {
   "Back Extension (Prone)": ["Bodyweight"],
   "Hip Extension (45-Degree Bench)": ["Bodyweight","Dumbbell","Plate-Loaded Machine"],
   "Hammer Preacher Curl": ["Dumbbell","EZ Bar","Cable","Pin-Select Machine"],
-  "Machine Chest Press": ["Pin-Select Machine","Plate-Loaded Machine","Cable"]
+  "Machine Chest Press": ["Pin-Select Machine","Plate-Loaded Machine","Cable"],
+  "Standing Leg Curl": ["Pin-Select Machine","Plate-Loaded Machine"]
 };
 
 var BILAT_MAP = {
@@ -1282,7 +1319,8 @@ var BILAT_MAP = {
   "Back Extension (Prone)": "both",
   "Hip Extension (45-Degree Bench)": "both",
   "Hammer Preacher Curl": "both",
-  "Machine Chest Press": "bilateral"
+  "Machine Chest Press": "bilateral",
+  "Standing Leg Curl": "unilateral"
 };
 
 var SECONDARY_MAP = {
@@ -1597,7 +1635,11 @@ var MIGRATION_MAP = {
   "Hip Extension (45-Degree Bench)": {canonical:"Hip Extension (45-Degree Bench)",equipment:"Bodyweight"},
   "Back Extension (Prone)": {canonical:"Back Extension (Prone)",equipment:"Bodyweight"},
   "Hammer Preacher Curl": {canonical:"Hammer Preacher Curl",equipment:"Dumbbell"},
-  "Machine Chest Press": {canonical:"Machine Chest Press",equipment:"Pin-Select Machine"}
+  "Machine Chest Press": {canonical:"Machine Chest Press",equipment:"Pin-Select Machine"},
+  "Standing Leg Curl": {canonical:"Standing Leg Curl",equipment:"Pin-Select Machine"},
+  "Standing Hamstring Curl": {canonical:"Standing Leg Curl",equipment:"Pin-Select Machine"},
+  "Single Leg Standing Curl": {canonical:"Standing Leg Curl",equipment:"Pin-Select Machine"},
+  "Standing Single Leg Curl": {canonical:"Standing Leg Curl",equipment:"Pin-Select Machine"}
 };
 
 // ── EXERCISE LIBRARY ──
@@ -1711,7 +1753,8 @@ var BUILT_IN = [
   {id:119,name:"Back Extension (Prone)",group:"Back – Mid",muscles:"Back – Mid",type:"Compound"},
   {id:120,name:"Pendlay Row",group:"Back – Mid",muscles:"Back – Mid",type:"Compound"},
   {id:121,name:"Shrug",group:"Back – Mid",muscles:"Back – Mid",type:"Isolation"},
-  {id:122,name:"Rack Pull",group:"Back – Mid",muscles:"Back – Mid",type:"Compound"}
+  {id:122,name:"Rack Pull",group:"Back – Mid",muscles:"Back – Mid",type:"Compound"},
+  {id:123,name:"Standing Leg Curl",group:"Hamstrings",muscles:"Hamstrings",type:"Isolation"}
 ];
 
 // ── STATE ──
@@ -1973,7 +2016,7 @@ function openCustomExEdit(cid){
   var btn=document.getElementById('add-custom-btn');
   if(btn) btn.textContent='Save Changes';
   var form=document.querySelector('.add-ex-form');
-  if(form) form.scrollIntoView({behavior:'smooth',block:'start'});
+  if(form) safeScrollIntoView(form,{behavior:'smooth',block:'start'});
   showToast('Editing: '+ex.name);
 }
 
@@ -2259,6 +2302,88 @@ function getProgressionTarget(exName,bilatMode,equipment){
   return {type:'build',text:'Target: '+lastLoad+unit+' \u00d7 '+nextTarget+' reps per set'};
 }
 
+// ── COLLAPSIBLE CARDS ───────────────────────────────────────────
+// Once an exercise is done its detail is just noise, so it folds down to a
+// one-line summary. The summary still carries the loads, so a user can
+// review the whole session by scrolling once rather than expanding cards.
+
+function safeScrollIntoView(el,opts){
+  // Not every engine implements this; a missing scroll must never abort
+  // the action that triggered it.
+  try{ if(el&&typeof el.scrollIntoView==='function') el.scrollIntoView(opts); }catch(e){}
+}
+
+function cardSummaryText(card){
+  var sets=readSetsFromCard(card);
+  var unit=settings.unit||'kg';
+  var ws=workingSets(sets), ds=dropSets(sets);
+  if(!ws.length&&!ds.length) return 'not logged';
+  var groups=[];
+  ws.forEach(function(s){
+    var l=s.l||'';
+    var g=groups[groups.length-1];
+    if(g&&g.l===l) g.reps.push(s.r||'0'); else groups.push({l:l,reps:[s.r||'0']});
+  });
+  var parts=groups.map(function(g){return (g.l||'\u2014')+unit+' \u00d7 '+g.reps.join(', ');});
+  if(ds.length) parts.push(ds.length+' drop');
+  return parts.join('  \u00b7  ');
+}
+
+function setCardCollapsed(card,collapsed,skipSave){
+  var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+  if(collapsed&&!name){ showToast('Select an exercise first'); return; }
+  card.classList.toggle('collapsed',!!collapsed);
+  card.setAttribute('data-collapsed',collapsed?'1':'0');
+  if(collapsed){
+    var nm=card.querySelector('[data-cr-name]');
+    var sm=card.querySelector('[data-cr-sum]');
+    var pr=card.querySelector('[data-cr-pr]');
+    var eq=card.getAttribute('data-equipment')||'';
+    if(nm) nm.textContent=name+(eq?'  \u00b7  '+eq:'');
+    if(sm) sm.textContent=cardSummaryText(card);
+    // Keep a marker if this lift was flagged ready to progress, so
+    // collapsing never fully hides the thing we made prominent.
+    var wasReady=card.classList.contains('ready-to-progress');
+    card.classList.toggle('was-ready',wasReady);
+    if(pr) pr.style.display=wasReady?'block':'none';
+  }
+  var btn=card.querySelector('[data-ex-done]');
+  if(btn){
+    btn.textContent=collapsed?'Reopen':'Done \u2713';
+    btn.classList.toggle('reopen',!!collapsed);
+  }
+  if(!skipSave) saveCurrentSession();
+  updateSessProgress();
+}
+
+function updateSessProgress(){
+  var slot=document.getElementById('sess-progress-slot');
+  if(!slot) return;
+  var cards=document.querySelectorAll('#ex-list .ex-card');
+  var named=0,done=0;
+  cards.forEach(function(c){
+    var nm=c.getExName?c.getExName():(c.getAttribute('data-ex-name')||'');
+    if(!nm) return;
+    named++;
+    if(c.classList.contains('collapsed')) done++;
+  });
+  if(named<2){ slot.innerHTML=''; return; }
+  var allDone=done===named;
+  slot.innerHTML='<div class="sess-progress">'+
+    '<span class="sp-text">'+done+' of '+named+' complete</span>'+
+    '<button class="sp-btn" data-collapse-all>'+(allDone?'EXPAND ALL':'COLLAPSE ALL')+'</button>'+
+  '</div>';
+  var btn=slot.querySelector('[data-collapse-all]');
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('#ex-list .ex-card').forEach(function(c){
+      var nm=c.getExName?c.getExName():(c.getAttribute('data-ex-name')||'');
+      if(nm) setCardCollapsed(c,!allDone,true);
+    });
+    saveCurrentSession();
+    updateSessProgress();
+  });
+}
+
 function updateProgressAlert(){
   // Counts exercises in today's session that have earned a load increase,
   // so the user knows before scrolling rather than after.
@@ -2278,6 +2403,17 @@ function updateProgressAlert(){
   '</div>';
 }
 
+function renderRepRangeChip(card,exName){
+  var hdr=card.querySelector('.ex-card-header');
+  if(!hdr||!exName) return;
+  var existing=hdr.querySelector('.rep-range-chip');
+  if(existing) existing.remove();
+  var chip=document.createElement('span');
+  chip.className='rep-range-chip'+(isCustomRepRange(exName)?' custom':'');
+  chip.textContent=getRepRangeLabel(exName);
+  hdr.appendChild(chip);
+}
+
 function showExerciseStatusBar(card,exName){
   // Remove existing status bar and note
   ['ex-status-bar','ex-last-note','ex-card-meta','ex-card-target'].forEach(function(cls){
@@ -2292,7 +2428,29 @@ function showExerciseStatusBar(card,exName){
   var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
   var bilatMode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
   var logs=getLogsForExercise(exName,bilatMode);
-  if(!logs.length) return;
+
+  // The rep range is exactly what a first-timer needs, so render the chip
+  // before bailing out on empty history. Without it a brand-new exercise
+  // gave the user no target at all.
+  renderRepRangeChip(card,exName);
+
+  if(!logs.length){
+    var firstMeta=document.createElement('div');
+    firstMeta.className='ex-card-meta';
+    var fLbl=document.createElement('span');
+    fLbl.className='ex-card-since-pr muted';
+    fLbl.textContent='First time logging this';
+    firstMeta.appendChild(fLbl);
+    var hdrF=card.querySelector('.ex-card-header');
+    if(hdrF) hdrF.after(firstMeta);
+
+    var rrF=getRepRange(exName);
+    var tgtF=document.createElement('div');
+    tgtF.className='ex-card-target';
+    tgtF.textContent='Pick a weight you can hold for '+rrF.min+'\u2013'+rrF.max+' reps \u2014 this becomes your base load';
+    firstMeta.after(tgtF);
+    return;
+  }
 
   // ── Since PR ──
   var sincePR=0;
@@ -2350,19 +2508,8 @@ function showExerciseStatusBar(card,exName){
     if(lastNote) break;
   }
 
-  // ── Rep range chip (add to card header) ──
-  var rrLabel=getRepRangeLabel(exName);
-  var isCustomRR=isCustomRepRange(exName);
+  // ── Rep range chip (already rendered above) ──
   var hdr=card.querySelector('.ex-card-header');
-  // Remove existing rep range chip
-  var existingChip=hdr?hdr.querySelector('.rep-range-chip'):null;
-  if(existingChip) existingChip.remove();
-  if(hdr){
-    var rrChip=document.createElement('span');
-    rrChip.className='rep-range-chip'+(isCustomRR?' custom':'');
-    rrChip.textContent=rrLabel;
-    hdr.appendChild(rrChip);
-  }
 
   // ── Since-PR line ──
   var meta=document.createElement('div');
@@ -2410,6 +2557,7 @@ function showExerciseStatusBar(card,exName){
     }
   }
   updateProgressAlert();
+  updateSessProgress();
 
   // ── Last note ──
   if(lastNote){
@@ -3807,6 +3955,18 @@ function addExRow(data){
   if(!initSets.length) initSets=[blankSet('W'),blankSet('W')];
   html+=setsBlockHtml(initSets,unit);
   html+='<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes: cues, technique, pain…" value="'+(data.notes||'')+'"></div>';
+  html+='<div class="ex-card-footer">'+
+    '<button class="ex-rest-btn" data-ex-rest>\u23f1 Rest</button>'+
+    '<button class="ex-done-btn" data-ex-done>Done \u2713</button>'+
+  '</div>';
+  // Collapsed summary row — the only thing visible once the card is closed
+  html='<div class="ex-collapsed-row" data-collapsed-row>'+
+    '<span class="cr-tick"></span>'+
+    '<span class="cr-main"><span class="cr-name" data-cr-name></span>'+
+    '<span class="cr-sum" data-cr-sum></span></span>'+
+    '<span class="cr-pr" data-cr-pr style="display:none;"></span>'+
+    '<span class="cr-chev">\u25bc</span>'+
+  '</div>'+html;
   div.innerHTML=html;
   div.querySelector('.del-btn').addEventListener('click',function(){div.remove();saveCurrentSession();});
   div.querySelectorAll('input').forEach(function(el){el.addEventListener('change',saveCurrentSession);el.addEventListener('input',saveCurrentSession);});
@@ -3815,7 +3975,31 @@ function addExRow(data){
     saveCurrentSession();
     var nm=div.getExName?div.getExName():(div.getAttribute('data-ex-name')||'');
     if(nm) showExerciseStatusBar(div,nm);
+    var db=div.querySelector('[data-ex-done]');
+    if(db) db.disabled=!setsHaveData(readSetsFromCard(div));
   });
+
+  // Rest and Done live in every card so neither needs a scroll to reach
+  var restB=div.querySelector('[data-ex-rest]');
+  if(restB) restB.addEventListener('click',function(e){
+    e.stopPropagation();
+    openRestTimer();
+  });
+  var doneB=div.querySelector('[data-ex-done]');
+  if(doneB){
+    doneB.disabled=!setsHaveData(readSetsFromCard(div));
+    doneB.addEventListener('click',function(e){
+      e.stopPropagation();
+      var nowCollapsed=!div.classList.contains('collapsed');
+      setCardCollapsed(div,nowCollapsed);
+      if(nowCollapsed){
+        haptic('save');
+        safeScrollIntoView(div,{behavior:'smooth',block:'nearest'});
+      }
+    });
+  }
+  var crow=div.querySelector('[data-collapsed-row]');
+  if(crow) crow.addEventListener('click',function(){ setCardCollapsed(div,false); });
   initLoadTypeToggle(div);
   initBilatToggle(div);
   initDragHandle(div);
@@ -3856,6 +4040,7 @@ function addExRow(data){
         updateLoadTypeLabel(div,ltl);
       }
     }
+    if(data.collapsed) setTimeout(function(){ setCardCollapsed(div,true,true); },80);
     // Always show status bar after DOM settles
     setTimeout(function(){
       populateLastRow(div,data.name);
@@ -3952,6 +4137,7 @@ function initSession(){
   document.getElementById('sess-notes').value=currentSession.notes||'';
   document.getElementById('ex-list').innerHTML='';exCount=0;
   var _pa=document.getElementById('progress-alert-slot');if(_pa)_pa.innerHTML='';
+  var _sp=document.getElementById('sess-progress-slot');if(_sp)_sp.innerHTML='';
   if(currentSession.exercises&&currentSession.exercises.length){
     currentSession.exercises.forEach(function(ex){addExRow(ex);});
   } else {addExRow();addExRow();addExRow();}
@@ -3983,6 +4169,7 @@ function saveCurrentSession(){
     for(var q=atTop.length-1;q>=0;q--){if(atTop[q].rpe){mirrorRpe=atTop[q].rpe;break;}}
     currentSession.exercises.push({
       name:name,notes:notes,loadType:loadType,bilat:bilatMode,equipment:equipment,
+      collapsed:card.classList.contains('collapsed'),
       sets:sets,
       curr:{load:topL?String(topL):'',reps:mirrorReps,rpe:mirrorRpe}
     });
@@ -4020,6 +4207,7 @@ document.getElementById('sess-workout').addEventListener('change',function(){
   for(var i=sessionHistory.length-1;i>=0;i--){if(sessionHistory[i].workout===raw&&sessionHistory[i].status!=='draft'){prev=sessionHistory[i];break;}}
   document.getElementById('ex-list').innerHTML='';exCount=0;
   var _pa=document.getElementById('progress-alert-slot');if(_pa)_pa.innerHTML='';
+  var _sp=document.getElementById('sess-progress-slot');if(_sp)_sp.innerHTML='';
   if(prev){
     prev.exercises.forEach(function(ex){addExRow({name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}});});
     showToast('Last '+raw+' session loaded ✓');
@@ -4035,6 +4223,7 @@ document.getElementById('copy-last-btn').addEventListener('click',function(){
   if(!prev){showToast('No previous '+workout+' session found');return;}
   document.getElementById('ex-list').innerHTML='';exCount=0;
   var _pa=document.getElementById('progress-alert-slot');if(_pa)_pa.innerHTML='';
+  var _sp=document.getElementById('sess-progress-slot');if(_sp)_sp.innerHTML='';
   prev.exercises.forEach(function(ex){addExRow({name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}});});
   showToast('Last '+workout+' session loaded ✓');saveCurrentSession();
 });
@@ -5444,7 +5633,7 @@ function openPriorEdit(sessId){
             var blankEx={name:exName,bilat:getLastBilatForExercise(exName),equipment:getLastEquipmentForExercise(exName)||'',loadType:'standard',notes:'',curr:{load:'',reps:['','','','',''],rpe:''}};
             var card=buildPriorExCard(blankEx,newIdx,sessId);
             container.appendChild(card);
-            card.scrollIntoView({behavior:'smooth',block:'center'});
+            safeScrollIntoView(card,{behavior:'smooth',block:'center'});
             if(EQUIPMENT_MAP[exName]&&EQUIPMENT_MAP[exName].length&&!blankEx.equipment){
               openEquipPicker(card,exName,null,function(eq){card.setAttribute('data-equipment',eq||'');});
             }
@@ -5464,7 +5653,7 @@ function closePriorEdit(){
   document.getElementById('prior-sess-list-wrap').style.display='block';
   document.getElementById('prior-sess-edit-wrap').style.display='none';
   // Scroll filter chips back into view
-  document.getElementById('prior-muscle-chips').scrollIntoView({behavior:'smooth',block:'nearest'});
+  safeScrollIntoView(document.getElementById('prior-muscle-chips'),{behavior:'smooth',block:'nearest'});
 }
 
 document.getElementById('prior-save-btn').addEventListener('click',function(){
@@ -5586,7 +5775,42 @@ var restElapsedAtPause=0; // seconds elapsed before last pause
 var REST_CIRCUMFERENCE=722.6;
 var BUBBLE_CIRCUMFERENCE=144.5;
 
+
+// ── REST TIMER: reconcile on return from background ──────────────
+// JS is suspended while the app is hidden, so the countdown can be stale
+// when the user comes back. The audio track is the real timer; this just
+// re-syncs the display and catches an expiry that happened while away.
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden) return;
+  if(restExpired||!restEndTimestamp) return;
+
+  if(Date.now()>=restEndTimestamp){
+    restRunning=false;restExpired=true;restRemaining=0;
+    clearInterval(restInterval);
+    clearTimeout(restNotifTimeout);restNotifTimeout=null;
+    onRestExpired();
+    return;
+  }
+
+  if(restRunning&&restStartTime){
+    var elapsed=restElapsedAtPause+Math.floor((Date.now()-restStartTime)/1000);
+    restRemaining=Math.max(0,restSecs-elapsed);
+    updateRestDisplay();
+    updateBubble();
+    if(restAudioLost){
+      var lbl=document.getElementById('rest-audio-note');
+      if(lbl){
+        lbl.textContent='Alarm muted by other audio \u2014 restart the timer to re-arm it';
+        lbl.style.color='var(--gold)';
+        lbl.style.display='block';
+      }
+    }
+  }
+});
+
 function openRestTimer(){
+  // Never restart the track here — a running timer is already sounding
+  // its own countdown and touching the element would reset it.
   requestNotifPermission();
   document.getElementById('rest-overlay').classList.add('open');
   document.body.style.overflow='hidden';
@@ -5600,8 +5824,11 @@ function handleRestOverlayClick(e){
 }
 
 function closeRestTimer(){
-  // Silence the alarm if it is still sounding
-  stopRestTrack();
+  // Only silence the track if the timer is finished or idle. A running
+  // timer's track IS the timer — killing it here would stop the alarm
+  // ever sounding, which is exactly what happens when the user closes
+  // the sheet to carry on logging.
+  if(!restRunning) stopRestTrack();
   document.getElementById('rest-overlay').classList.remove('open');
   document.getElementById('rest-overlay').classList.remove('expired');
   document.body.style.overflow='';
@@ -5858,6 +6085,7 @@ function startRestTrack(secondsRemaining){
     var el=document.getElementById('rest-track');
     if(!el) return;
     restAudioLost=false;
+    try{ el.pause(); }catch(e){}
     el.loop=false;
     el.volume=1.0;
     el.src=buildRestTrack(secondsRemaining);
@@ -5870,6 +6098,11 @@ function startRestTrack(secondsRemaining){
       // alarm will never sound — record it so we can be honest with
       // the user rather than silently failing.
       el.addEventListener('pause',function(){
+        // Only a pause while the page is VISIBLE means another app seized
+        // the audio session. Backgrounding can also fire pause on some
+        // engines, and flagging that would wrongly warn the user their
+        // alarm was muted when it is working fine.
+        if(document.hidden) return;
         if(restTrackPlaying&&restRunning&&!restExpired) restAudioLost=true;
       });
       el.addEventListener('ended',function(){

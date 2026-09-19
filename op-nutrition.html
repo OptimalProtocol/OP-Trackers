@@ -691,13 +691,26 @@ document.getElementById('op-logo').src = 'data:image/png;base64,' + LOGO_B64;
 var CONFIG={
   COMPLIANCE_CAL_BAND:0.10,        // calories must land within ±10% of that day's target
   COMPLIANCE_PROTEIN_FLOOR:0.90,   // protein must be at or above 90% of target
-  RECAL_WINDOW_DAYS:14,            // how far back a recalibration check looks
+  RECAL_WINDOW_DAYS:21,            // how far back a recalibration check looks. 14 was too few
+                                   // weigh-ins to pin a slope through noisy scale data — going
+                                   // to 21 roughly halves the error in the estimated trend.
   RECAL_MIN_CONFIRMED_DAYS:10,     // legacy — superseded by the limits below
-  RECAL_MIN_CAL_DAYS:10,           // days with calories logged (any confidence) needed in the window
-  RECAL_MIN_WEIGH_PER_HALF:3,      // weigh-ins needed in each half of the window
+  RECAL_MIN_CAL_DAYS:14,           // days with calories logged (any confidence) needed in the window
+  RECAL_MIN_WEIGH_PER_HALF:4,      // weigh-ins needed in each half of the window
+  RECAL_MIN_WEIGH_TOTAL:10,        // and this many across it — thin data produced confident nonsense
   RECAL_MIN_CONFIRMED_SHARE:0.35,  // below this share of weighed-food days the intake figure is too speculative to act on
-  RECAL_GOOD_CONFIRMED_SHARE:0.60, // at or above this, trust the intake figure at face value
-  RECAL_LOW_TRUST_MULT:1.5,        // otherwise demand this much more divergence before overriding the formula
+  RECAL_GOOD_CONFIRMED_SHARE:0.60, // at or above this, treat the intake figure as solid
+  RECAL_ESTIMATED_DAY_SD:400,      // how far out a guessed (rather than weighed) day plausibly is
+  RECAL_TRIGGER_SE_MULT:1.5,       // act only when the gap clears this many standard errors
+  RECAL_TRIGGER_MIN:150,           // never act on less than this, however tidy the data looks
+  RECAL_TRIGGER_MAX:600,           // and never demand more than this, however messy it is
+  RECAL_MIN_DAYS_BETWEEN_ACTIONS:7,// consecutive windows share 20 of 21 days, so their errors are
+                                   // highly correlated — acting on each one compounds the same
+                                   // noise repeatedly. Re-measure daily, but only move weekly.
+  RECAL_DAMPING:0.5,               // move this fraction of the way to the new measurement, never all of it
+  RECAL_MAX_STEP_KCAL:250,         // and never move further than this in one adjustment
+  RECAL_MOMENTUM_DAMPING:0.8,      // ...unless the last correction pointed the same way, which means
+  RECAL_MOMENTUM_STEP_KCAL:400,    // a real drift rather than noise, so follow it faster
   RECAL_TRIGGER_KCAL:220,          // minimum kcal/day divergence before we act (~0.2kg/week)
   KCAL_PER_KG:7700,
   DAILY_PAGE_SIZE:20,               // Daily tab shows this many most-recent entries before "Show all" — keeps re-render fast once history is long
@@ -1094,7 +1107,7 @@ function renderTodayTarget(){
 function getRecalStatus(){
   var today=todayStr();
   var windowStart=addDays(today,-CONFIG.RECAL_WINDOW_DAYS);
-  var midpoint=addDays(windowStart,7);
+  var midpoint=addDays(windowStart,Math.floor(CONFIG.RECAL_WINDOW_DAYS/2));
   var inWindow=dailyLog.filter(function(d){return d.date>=windowStart&&d.date<today;});
 
   // The calorie side and the weight side are judged separately and on their own merits.
@@ -1112,9 +1125,11 @@ function getRecalStatus(){
   var weighFirst=weighDays.filter(function(d){return d.date<midpoint;});
   var weighSecond=weighDays.filter(function(d){return d.date>=midpoint;});
 
-  // A low share of weighed days means the intake figure is largely self-estimated, so demand a
-  // bigger disagreement before overriding the formula on the strength of it.
-  var trigger=CONFIG.RECAL_TRIGGER_KCAL*(confirmedShare<CONFIG.RECAL_GOOD_CONFIRMED_SHARE?CONFIG.RECAL_LOW_TRUST_MULT:1);
+  // The trigger is derived from how precise THIS person's data actually is, rather than being a
+  // fixed number for everybody. Someone weighing daily on a steady scale can be believed at a
+  // smaller divergence than someone whose readings scatter two kilos — and the maths says by
+  // exactly how much. Computed further down, once the residual scatter is known.
+  var trigger=CONFIG.RECAL_TRIGGER_KCAL;
 
   var st={
     windowDays:CONFIG.RECAL_WINDOW_DAYS,
@@ -1131,7 +1146,8 @@ function getRecalStatus(){
   };
 
   if(calDays.length<CONFIG.RECAL_MIN_CAL_DAYS){st.blockedBy='calories';return st;}
-  if(weighFirst.length<CONFIG.RECAL_MIN_WEIGH_PER_HALF||weighSecond.length<CONFIG.RECAL_MIN_WEIGH_PER_HALF){
+  if(weighDays.length<CONFIG.RECAL_MIN_WEIGH_TOTAL||
+     weighFirst.length<CONFIG.RECAL_MIN_WEIGH_PER_HALF||weighSecond.length<CONFIG.RECAL_MIN_WEIGH_PER_HALF){
     st.blockedBy='weigh-ins';return st;
   }
   if(confirmedShare<CONFIG.RECAL_MIN_CONFIRMED_SHARE){st.blockedBy='trust';return st;}
@@ -1152,6 +1168,19 @@ function getRecalStatus(){
   var fitAt=function(x){return mean+slope*((x-x0)-avg(pts.map(function(q){return q.x-x0;})));};
   pts.forEach(function(p){var e=p.y-fitAt(p.x);resid+=e*e;});
   st.weightNoiseKg=Math.round(Math.sqrt(resid/pts.length)*100)/100;
+
+  // Standard error of the fitted slope, converted into kcal/day — this is the genuine precision
+  // of the weight half of the measurement. Combined in quadrature with the uncertainty the
+  // estimated food days introduce, it gives one honest error bar on the implied maintenance.
+  var meanX=avg(pts.map(function(q){return q.x;}));
+  var sxx=0; pts.forEach(function(q){sxx+=(q.x-meanX)*(q.x-meanX);});
+  var seFromWeight=sxx>0?(st.weightNoiseKg/Math.sqrt(sxx))*CONFIG.KCAL_PER_KG:CONFIG.RECAL_TRIGGER_KCAL;
+  var seFromIntake=(1-confirmedShare)*CONFIG.RECAL_ESTIMATED_DAY_SD;
+  var se=Math.sqrt(seFromWeight*seFromWeight+seFromIntake*seFromIntake);
+  trigger=Math.max(CONFIG.RECAL_TRIGGER_MIN,Math.min(CONFIG.RECAL_TRIGGER_MAX,Math.round(se*CONFIG.RECAL_TRIGGER_SE_MULT)));
+  st.triggerKcal=trigger;
+  st.measurementSE=Math.round(se);
+  st.lowTrust=trigger>CONFIG.RECAL_TRIGGER_KCAL;
 
   var avgLoggedCal=avg(calDays.map(function(d){return d.cal;}));
   var f=formulaTDEE();
@@ -1185,14 +1214,39 @@ function checkRecalibration(){
   if(!st.eligible){lsSet('opn-recal',recal);return;}
 
   recal.plateauActive=st.plateau;
-  if(Math.abs(st.divergence)>=CONFIG.RECAL_TRIGGER_KCAL){
-    recal.history.unshift({date:todayStr(),from:st.baseline,to:st.impliedMaintenance,
+  // Measured every day so the status panel is always current; allowed to MOVE the number only
+  // once a week, because a fresh reading only contains one genuinely new day of evidence.
+  var lastAction=recal.history.length?recal.history[0].date:null;
+  var tooSoon=lastAction&&dateDiffDays(lastAction,todayStr())<CONFIG.RECAL_MIN_DAYS_BETWEEN_ACTIONS;
+  if(!tooSoon&&Math.abs(st.divergence)>=st.triggerKcal){
+    // Move PART of the way to the new measurement, not all of it, and never further than one
+    // capped step. Every window is a noisy estimate of the same underlying number; adopting each
+    // one wholesale made the target lurch by 300-500 kcal on consecutive weeks and never settle.
+    // Damped steps converge on the truth just as surely and far more calmly.
+    var raw=st.impliedMaintenance-st.baseline;
+    var dir=raw>0?1:-1;
+    // If the previous correction pointed the same way, this is a body genuinely drifting —
+    // metabolic adaptation through a long cut, say — not noise. Follow a real trend faster than
+    // a one-off reading, otherwise the engine lags a changing metabolism by weeks.
+    // Two prior corrections the same way, not one — in noisy data a single repeat happens by
+    // chance often enough to send the engine chasing its own scatter.
+    var prev=recal.history.length?recal.history[0]:null;
+    var prev2=recal.history.length>1?recal.history[1]:null;
+    var sameDirection=prev&&prev2&&
+      ((prev.to-prev.from)>0?1:-1)===dir&&((prev2.to-prev2.from)>0?1:-1)===dir;
+    var damping=sameDirection?CONFIG.RECAL_MOMENTUM_DAMPING:CONFIG.RECAL_DAMPING;
+    var cap=sameDirection?CONFIG.RECAL_MOMENTUM_STEP_KCAL:CONFIG.RECAL_MAX_STEP_KCAL;
+    var step=raw*damping;
+    if(Math.abs(step)>cap) step=dir*cap;
+    var updated=Math.round(st.baseline+step);
+    recal.history.unshift({date:todayStr(),from:st.baseline,to:updated,
       windowStart:addDays(todayStr(),-CONFIG.RECAL_WINDOW_DAYS),windowEnd:todayStr(),
+      measured:st.impliedMaintenance,
       predictedDeltaKg:st.predictedDeltaKg,actualDeltaKg:st.actualDeltaKg});
     recal.history=recal.history.slice(0,12);
-    recal.workingMaintenance=st.impliedMaintenance;
+    recal.workingMaintenance=updated;
     lsSet('opn-recal',recal);
-    showToast('Maintenance recalibrated: '+st.baseline+' → '+st.impliedMaintenance+' kcal');
+    showToast('Maintenance recalibrated: '+st.baseline+' → '+updated+' kcal');
   } else {
     lsSet('opn-recal',recal);
   }
@@ -2260,7 +2314,7 @@ function renderRecalBanner(targetId){
   el.innerHTML='<div class="banner banner-adaptive"><div class="banner-title">Target recalibrated <span class="tag">ADAPTIVE</span></div>'+
     '<div class="banner-body">Your maintenance calories moved '+dir+' from '+last.from+' to '+last.to+' kcal based on what your logged intake and actual weight change showed over '+formatDate(last.windowStart)+' – '+formatDate(last.windowEnd)+'. This replaces the formula estimate with what your body is actually showing us.</div>'+
     evidence+
-    '<div class="banner-meta">Continuously recalibrated — comparing this week\'s average weight to last week\'s every time you log</div></div>';
+    '<div class="banner-meta">Re-measured every time you log, across your last '+CONFIG.RECAL_WINDOW_DAYS+' days · adjusts at most once a week, and only part-way each time</div></div>';
 }
 
 function renderPlateauBanner(){
@@ -2296,7 +2350,7 @@ function renderEngineStatus(){
     explain='Only '+st.confirmedShare+'% of your logged days were marked Confirmed. The engine works by treating your calorie figure as fact and solving for maintenance — if most of that figure is estimated, it would be overriding a formula with a guess. Weigh your food on more days and it will start.';
   } else if(st.blockedBy==='agreement'){
     dotColor='var(--green)';label='Measured and holding';
-    explain='This is the engine working, not the engine idle. Across the last '+st.windowDays+' days your intake averaged <b>'+st.avgLoggedCal+' kcal</b> and your weight trend moved <b>'+fmtRate(st.weeklyRateKg,unit)+'</b>. That implies real maintenance of <b>'+st.impliedMaintenance+' kcal</b>, against the <b>'+st.baseline+'</b> in use — a gap of '+Math.abs(st.divergence)+' kcal. It only moves your target once that gap passes '+st.triggerKcal+' kcal, because anything smaller is inside the noise of bathroom scales and food labels.';
+    explain='This is the engine working, not the engine idle. Across the last '+st.windowDays+' days your intake averaged <b>'+st.avgLoggedCal+' kcal</b> and your weight trend moved <b>'+fmtRate(st.weeklyRateKg,unit)+'</b>. That implies real maintenance of <b>'+st.impliedMaintenance+' kcal</b>, against the <b>'+st.baseline+'</b> in use — a gap of '+Math.abs(st.divergence)+' kcal. Your data supports measuring that to about ±'+st.measurementSE+' kcal, so it waits for a gap of '+st.triggerKcal+' before moving anything. Below that it would be reacting to scatter, not to you.';
   } else {
     dotColor='var(--cyan)';label='Actively adjusting';
     explain='Your logged results and the formula disagree by <b>'+Math.abs(st.divergence)+' kcal</b>, past the '+st.triggerKcal+' kcal threshold — so your maintenance figure is being set from what your body actually did, not from the formula.';
@@ -2331,8 +2385,8 @@ function renderEngineStatus(){
   if(st.eligible&&st.lowTrust){
     html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--gold);">Only '+st.confirmedShare+
       '% of these days were weighed'+(st.avgConfirmedCal!=null?' — those averaged '+st.avgConfirmedCal+' kcal against '+st.avgLoggedCal+' across all days':'')+
-      '. Both sets are counted, because the food on the estimated days moved the scale just the same. But while the split is this uneven the engine needs a '+
-      st.triggerKcal+' kcal gap rather than '+CONFIG.RECAL_TRIGGER_KCAL+' before it acts.</div>';
+      '. Both sets are counted, because the food on the estimated days moved the scale just the same. But guessed days widen the error bar, which is why the engine is waiting for a '+
+      st.triggerKcal+' kcal gap here rather than the '+CONFIG.RECAL_TRIGGER_MIN+' it would need from clean data.</div>';
   }
   if(st.eligible&&st.weightNoiseKg!=null&&st.weightNoiseKg>0.7){
     html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--gold);">Your weigh-ins scatter about '+

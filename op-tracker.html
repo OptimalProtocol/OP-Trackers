@@ -357,6 +357,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .set-in{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;padding:7px 2px;text-align:center;width:100%;box-sizing:border-box;}
 .set-in:focus{border-color:var(--cyan);outline:none;}
 .set-in.rpe{font-size:11px;}
+.set-in.ghost-load{color:var(--muted);font-style:italic;opacity:0.62;border-style:dashed;}
+.set-in.ghost-load:focus{color:var(--text);font-style:normal;opacity:1;border-style:solid;}
 .set-in.disabled-rpe{background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.05);color:var(--muted);opacity:0.45;cursor:not-allowed;}
 .set-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px;}
 .set-del:hover{color:var(--red);}
@@ -583,6 +585,17 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     </div></div>
   </div>
     <div class="section">
+    <div class="section-title">Training Phase</div>
+    <div class="card"><div class="card-body">
+      <div class="toggle-group" id="phase-toggle">
+        <button class="toggle-opt active" data-phase="gaining">Gaining</button>
+        <button class="toggle-opt" data-phase="maintenance">Maintenance</button>
+        <button class="toggle-opt" data-phase="fatloss">Fat Loss</button>
+      </div>
+      <p id="phase-note" style="font-size:10px;color:var(--muted);line-height:1.55;margin:10px 0 0;"></p>
+    </div></div>
+  </div>
+  <div class="section">
     <div class="section-title">Rep Range Defaults</div>
     <div class="card"><div class="card-body">
       <div class="field-row">
@@ -616,6 +629,18 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
         </div>
       </div>
       <button class="btn btn-primary btn-full" id="save-rep-ranges-btn" style="margin-top:10px;">Save Rep Ranges</button>
+      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-size:12px;color:var(--text);font-weight:600;">Carry loads forward</div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:3px;">Pre-fills each exercise with last session&#39;s sets and weights. Reps and RPE always start blank.</div>
+          </div>
+          <div class="toggle-group" style="flex-shrink:0;">
+            <button class="toggle-opt active" id="prefill-on">On</button>
+            <button class="toggle-opt" id="prefill-off">Off</button>
+          </div>
+        </div>
+      </div>
       <p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;">Per-exercise overrides can be set in the Library tab.</p>
     </div></div>
   </div>
@@ -1758,7 +1783,7 @@ var BUILT_IN = [
 ];
 
 // ── STATE ──
-var settings={name:'',block:'',start:'',weeks:'10',unit:'kg',compoundMin:6,compoundMax:12,isolationMin:10,isolationMax:15,stabilityMin:20,stabilityMax:30};
+var settings={name:'',block:'',start:'',weeks:'10',unit:'kg',prefillLoads:true,phase:'gaining',compoundMin:6,compoundMax:12,isolationMin:10,isolationMax:15,stabilityMin:20,stabilityMax:30};
 var customRepRanges={};
 var customExercises=[];
 var sessionHistory=[];
@@ -1933,8 +1958,43 @@ document.querySelectorAll('.nav-btn').forEach(function(btn){
 });
 
 // ── SETTINGS ──
+var PHASE_NOTES={
+  gaining:'Progress is judged on getting stronger. Five sessions without improvement at high effort offers a deload.',
+  maintenance:'Same rules as gaining \u2014 progress is judged on getting stronger.',
+  fatloss:'In a calorie deficit, holding your strength is the win. Flat performance is marked as strength held, and a deload is offered only if performance drops across three sessions in a row.'
+};
+
+function applyPhaseToggle(){
+  var p=settings.phase||'gaining';
+  document.querySelectorAll('#phase-toggle [data-phase]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-phase')===p);
+  });
+  var n=document.getElementById('phase-note');
+  if(n) n.textContent=PHASE_NOTES[p]||'';
+}
+
+function refreshAllCardBanners(){
+  // Changing phase changes which banner applies, so re-render the banner
+  // itself — showExerciseStatusBar alone does not draw it.
+  document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
+    var nm=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+    if(!nm) return;
+    renderStallBanner(card,nm,(card.getAttribute('data-bilat')||'bilateral'),(card.getAttribute('data-equipment')||''));
+    showExerciseStatusBar(card,nm);
+  });
+}
+
+function applyPrefillToggle(){
+  var on=settings.prefillLoads!==false;
+  var a=document.getElementById('prefill-on'),b=document.getElementById('prefill-off');
+  if(a) a.classList.toggle('active',on);
+  if(b) b.classList.toggle('active',!on);
+}
+
 function applySettings(){
   setUnit(settings.unit||'kg',false);
+  applyPrefillToggle();
+  applyPhaseToggle();
   // Rep ranges
   ['compound','isolation','stability'].forEach(function(type){
     ['min','max'].forEach(function(mm){
@@ -2302,6 +2362,59 @@ function getProgressionTarget(exName,bilatMode,equipment){
   return {type:'build',text:'Target: '+lastLoad+unit+' \u00d7 '+nextTarget+' reps per set'};
 }
 
+// ── LOAD PREFILL ────────────────────────────────────────────────
+// Carries the set structure and the LOADS from the last matching session
+// into today's card. Reps and RPE are deliberately left blank: copying
+// those would let a user rubber-stamp "same as last time" without having
+// done the work, which defeats the point of the tracker.
+// A prefilled load is provisional until the user touches it — it renders
+// as a ghost value and does not count as logged data.
+
+function buildPrefillSets(exName,bilatMode,equipment){
+  if(settings.prefillLoads===false) return null;
+  if(!exName) return null;
+
+  // An active deload overrides history: half the sets at the deload load
+  var dl=isDeloadActive(exName,bilatMode,equipment);
+  if(dl){
+    var out=[];
+    for(var i=0;i<dl.deloadSets;i++) out.push({t:'W',l:String(dl.load),r:'',rpe:'',ghost:true});
+    return out;
+  }
+
+  var last=getLastEntryForExercise(exName,bilatMode,equipment);
+  if(!last||!last.sets||!last.sets.length) return null;
+
+  var sets=countedSets(last.sets).concat(
+    last.sets.filter(function(s){return s.t==='U'&&(s.l!==''||s.r!=='');}));
+  // Preserve the original order rather than the filtered grouping
+  sets=last.sets.filter(function(s){return s&&(s.l!==''||s.r!=='');});
+  if(!sets.length) return null;
+
+  return sets.map(function(s){
+    return {t:s.t||'W',l:s.l||'',r:'',rpe:'',ghost:(s.l||'')!==''};
+  });
+}
+
+function clearGhost(input){
+  // Only drops the provisional styling. The row keeps its data-ghost
+  // marker so the load can revert to a suggestion if the reps are cleared.
+  if(!input||!input.classList.contains('ghost-load')) return;
+  input.classList.remove('ghost-load');
+}
+
+function cardHasRealData(card){
+  // A ghost load alone is not data — the user hasn't logged anything yet
+  var rows=card.querySelectorAll('.set-row');
+  for(var i=0;i<rows.length;i++){
+    var l=rows[i].querySelector('[data-f="l"]');
+    var r=rows[i].querySelector('[data-f="r"]');
+    if(r&&r.value!=='') return true;
+    if(l&&l.value!==''&&!l.classList.contains('ghost-load')) return true;
+  }
+  return false;
+}
+
 // ── COLLAPSIBLE CARDS ───────────────────────────────────────────
 // Once an exercise is done its detail is just noise, so it folds down to a
 // one-line summary. The summary still carries the loads, so a user can
@@ -2542,7 +2655,9 @@ function showExerciseStatusBar(card,exName){
       var icon=type==='increase'?'\u2191':'\u2192';
       var head=type==='increase'?'Ready to increase load':'One more to confirm';
       var sub=type==='increase'
-        ? 'You hit the top of your rep range twice at this weight. Move up to the next increment your gym has.'
+        ? (isFatLossPhase()
+            ? 'You hit the top of your rep range twice at this weight \u2014 in a deficit. Move up when you feel ready; holding here is also fine.'
+            : 'You hit the top of your rep range twice at this weight. Move up to the next increment your gym has.')
         : targetText.replace(/^Target:\s*/,'Repeat ').replace(/\s*\u2014 do it again to confirm$/,' to unlock a load increase.');
       p.innerHTML='<span class="pp-icon">'+icon+'</span>'+
         '<div class="pp-body"><div class="pp-head">'+head+'</div>'+
@@ -3217,6 +3332,122 @@ function completeDeload(exName,bilatMode,equipment){
   setDeload(deloadKey(exName,bilatMode,equipment),null);
 }
 
+// ── TRAINING PHASE: FAT LOSS ────────────────────────────────────
+// In a calorie deficit the goal shifts from building strength to holding
+// it. Roughly half of people lose relative strength while dieting, so a
+// flat line is a genuine win and must not be treated as a stall.
+// The warning therefore fires on DECLINE, not stagnation — and it fires
+// early, because recovery is impaired in a deficit rather than improved.
+// Gaining and maintenance never reach this code.
+
+var DECLINE_SESSIONS=3;
+
+function isFatLossPhase(){ return settings.phase==='fatloss'; }
+
+function sessionScore(l){
+  // Performance for one session: heaviest working load first, then the
+  // best reps achieved at that load. Compared lexicographically so a
+  // heavier load always counts as better, matching the progression rules.
+  var sets=l.sets||normalizeSets(l);
+  var load=topWorkingLoad(sets);
+  var at=setsAtTopLoad(sets);
+  var reps=0;
+  at.forEach(function(s){ var r=parseFloat(s.r)||0; if(r>reps) reps=r; });
+  var rpe=0;
+  workingSets(sets).forEach(function(s){ var v=parseFloat(s.rpe)||0; if(v>rpe) rpe=v; });
+  return {load:load,reps:reps,rpe:rpe};
+}
+function scoreCmp(a,b){
+  if(a.load!==b.load) return a.load<b.load?-1:1;
+  if(a.reps!==b.reps) return a.reps<b.reps?-1:1;
+  return 0;
+}
+
+function recentFatLossWindow(exName,bilatMode,equipment){
+  var logs=getLogsForExercise(exName,bilatMode,equipment)
+    .filter(function(l){ return !l.deload; });
+  if(logs.length<DECLINE_SESSIONS) return null;
+  return logs.slice(-DECLINE_SESSIONS).map(sessionScore);
+}
+
+function detectDecline(exName,bilatMode,equipment){
+  // Each session must be worse than the one before it. A single bad
+  // session is noise — sleep, stress, a missed meal. A run of them is
+  // a trend worth acting on.
+  var w=recentFatLossWindow(exName,bilatMode,equipment);
+  if(!w) return null;
+  for(var i=1;i<w.length;i++){ if(scoreCmp(w[i],w[i-1])>=0) return null; }
+  return {sessions:w.length,from:w[0],to:w[w.length-1]};
+}
+
+function detectStrengthHeld(exName,bilatMode,equipment){
+  var w=recentFatLossWindow(exName,bilatMode,equipment);
+  if(!w) return null;
+  if(scoreCmp(w[w.length-1],w[0])<0) return null;   // net loss — not held
+  return {sessions:w.length,now:w[w.length-1],improved:scoreCmp(w[w.length-1],w[0])>0};
+}
+
+function detectRpeDrift(exName,bilatMode,equipment){
+  // Same output, rising effort. An early sign fatigue is building before
+  // performance actually drops. Deliberately gentle: RPE is a noisy
+  // measure, especially on high-rep sets.
+  var w=recentFatLossWindow(exName,bilatMode,equipment);
+  if(!w) return null;
+  var first=w[0],last=w[w.length-1];
+  if(!first.rpe||!last.rpe) return null;
+  if(scoreCmp(last,first)!==0) return null;          // output changed
+  if(last.rpe-first.rpe<1) return null;
+  return {from:first.rpe,to:last.rpe};
+}
+
+function renderFatLossBanner(card,exName,bilatMode,equipment){
+  var unit=settings.unit||'kg';
+  var hdr=card.querySelector('.ex-card-header');
+  if(!hdr) return;
+
+  var decline=detectDecline(exName,bilatMode,equipment);
+  if(decline){
+    var b=document.createElement('div');
+    b.className='stall-banner';
+    b.style.cssText='background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.3);border-radius:8px;margin:0 14px 8px;padding:9px 11px;';
+    b.innerHTML='<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--gold);margin-bottom:3px;">STRENGTH DROPPING \u2014 '+decline.sessions+' SESSIONS</div>'+
+      '<div style="font-size:11px;color:var(--dim);line-height:1.5;">Down from '+decline.from.load+unit+' \u00d7 '+decline.from.reps+
+        ' to '+decline.to.load+unit+' \u00d7 '+decline.to.reps+'. Recovery is harder in a deficit \u2014 a deload week usually helps you hold on to what you have.</div>'+
+      '<button class="plate-btn" style="margin-top:7px;border-color:rgba(255,184,0,0.4);color:var(--gold);" data-deload-start>Start deload week</button>';
+    hdr.after(b);
+    b.querySelector('[data-deload-start]').addEventListener('click',function(){
+      startDeload(card,exName,bilatMode,equipment);
+    });
+    return;
+  }
+
+  var drift=detectRpeDrift(exName,bilatMode,equipment);
+  if(drift){
+    var d=document.createElement('div');
+    d.className='stall-banner';
+    d.style.cssText='background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;margin:0 14px 8px;padding:8px 11px;';
+    d.innerHTML='<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--dim);margin-bottom:2px;">EFFORT CREEPING UP</div>'+
+      '<div style="font-size:11px;color:var(--muted);line-height:1.5;">Same weight and reps, but RPE up from '+drift.from+' to '+drift.to+'. Worth keeping an eye on sleep and recovery.</div>';
+    hdr.after(d);
+    return;
+  }
+
+  var held=detectStrengthHeld(exName,bilatMode,equipment);
+  if(held){
+    var h=document.createElement('div');
+    h.className='stall-banner';
+    h.style.cssText='background:rgba(0,200,150,0.07);border:1px solid rgba(0,200,150,0.28);border-radius:8px;margin:0 14px 8px;padding:8px 11px;';
+    h.innerHTML='<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--green);margin-bottom:2px;">'+
+        (held.improved?'STRENGTH UP IN A DEFICIT':'STRENGTH HELD')+'</div>'+
+      '<div style="font-size:11px;color:var(--dim);line-height:1.5;">'+
+        (held.improved
+          ?'Still getting stronger while dieting \u2014 a strong sign you\u2019re keeping muscle.'
+          :'Holding '+held.now.load+unit+' \u00d7 '+held.now.reps+' across '+held.sessions+' sessions in a deficit \u2014 a strong sign you\u2019re keeping muscle.')+
+      '</div>';
+    hdr.after(h);
+  }
+}
+
 function renderStallBanner(card,exName,bilatMode,equipment){
   var old=card.querySelector('.stall-banner');
   if(old) old.remove();
@@ -3238,6 +3469,10 @@ function renderStallBanner(card,exName,bilatMode,equipment){
     });
     return;
   }
+
+  // Fat loss uses its own rules; gaining and maintenance continue below
+  // exactly as before.
+  if(isFatLossPhase()){ renderFatLossBanner(card,exName,bilatMode,equipment); return; }
 
   var stall=detectStall(exName,bilatMode,equipment);
   if(!stall) return;
@@ -3544,10 +3779,10 @@ function setRowHtml(idx,s){
   var opts=SET_TYPES.map(function(o){
     return '<option value="'+o.v+'"'+(o.v===t?' selected':'')+'>'+o.label+'</option>';
   }).join('');
-  return '<div class="set-row" data-set-idx="'+idx+'">'+
+  return '<div class="set-row" data-set-idx="'+idx+'"'+(s.ghost?' data-ghost="1"':'')+'>'+
     '<span class="set-idx">'+(idx+1)+'</span>'+
     '<select class="set-type" data-f="t" data-t="'+t+'">'+opts+'</select>'+
-    '<input type="number" class="set-in" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'" data-plate-src>'+
+    '<input type="number" class="set-in'+(s.ghost?' ghost-load':'')+'" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'" data-plate-src>'+
     '<input type="number" class="set-in" data-f="r" inputmode="numeric" placeholder="\u2014" value="'+(s.r||'')+'">'+
     '<input type="number" class="set-in rpe'+(t==='U'?' disabled-rpe':'')+'" data-f="rpe" inputmode="decimal" min="1" max="10" step="0.5" placeholder="'+(t==='U'?'\u2013':'\u2014')+'" value="'+(t==='U'?'':(s.rpe||''))+'"'+(t==='U'?' disabled':'')+'>'+
     '<button class="set-del" data-del-set="'+idx+'" title="Remove set">&#215;</button>'+
@@ -3594,7 +3829,30 @@ function wireSetsBlock(card,onChange){
   wrap._wired=true;
 
   wrap.addEventListener('input',function(e){
-    if(e.target.classList.contains('set-in')) onChange&&onChange();
+    if(!e.target.classList.contains('set-in')) return;
+    var row=e.target.closest('.set-row');
+    var field=e.target.getAttribute('data-f');
+
+    // Entering reps is what confirms a row. The prefilled load then
+    // becomes real without the user having to touch it — needing a tap
+    // to confirm would cancel out the time the prefill saves.
+    if(field==='r'&&row){
+      var loadIn=row.querySelector('[data-f="l"]');
+      if(e.target.value!==''){
+        clearGhost(loadIn);
+      } else if(row.getAttribute('data-ghost')==='1'&&loadIn){
+        // Reps cleared again — the load reverts to a suggestion
+        loadIn.classList.add('ghost-load');
+      }
+    }
+
+    // Editing the load directly also confirms it
+    if(field==='l') clearGhost(e.target);
+
+    onChange&&onChange();
+  });
+  wrap.addEventListener('focusin',function(e){
+    if(e.target.classList.contains('ghost-load')) e.target.select&&e.target.select();
   });
   // Double-tap a load field to open the plate calculator prefilled
   wrap.addEventListener('dblclick',function(e){
@@ -3952,6 +4210,9 @@ function addExRow(data){
   html+='<div class="bilat-label" id="bl-'+id+'">Load = per limb when Unilateral</div>';
   html+='<div class="card-status-line" id="csl-'+id+'"></div>';
   var initSets=(data.sets&&data.sets.length)?data.sets:normalizeSets(data);
+  if(!initSets.length&&data.name){
+    initSets=buildPrefillSets(data.name,data.bilat||'bilateral',data.equipment||'')||[];
+  }
   if(!initSets.length) initSets=[blankSet('W'),blankSet('W')];
   html+=setsBlockHtml(initSets,unit);
   html+='<div class="notes-row"><input type="text" class="notes-in" placeholder="Notes: cues, technique, pain…" value="'+(data.notes||'')+'"></div>';
@@ -3976,7 +4237,7 @@ function addExRow(data){
     var nm=div.getExName?div.getExName():(div.getAttribute('data-ex-name')||'');
     if(nm) showExerciseStatusBar(div,nm);
     var db=div.querySelector('[data-ex-done]');
-    if(db) db.disabled=!setsHaveData(readSetsFromCard(div));
+    if(db) db.disabled=!cardHasRealData(div);
   });
 
   // Rest and Done live in every card so neither needs a scroll to reach
@@ -3987,7 +4248,7 @@ function addExRow(data){
   });
   var doneB=div.querySelector('[data-ex-done]');
   if(doneB){
-    doneB.disabled=!setsHaveData(readSetsFromCard(div));
+    doneB.disabled=!cardHasRealData(div);
     doneB.addEventListener('click',function(e){
       e.stopPropagation();
       var nowCollapsed=!div.classList.contains('collapsed');
@@ -4154,6 +4415,16 @@ function saveCurrentSession(){
   document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
     var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
     var sets=readSetsFromCard(card);
+    // A load the user never confirmed is a suggestion, not a logged value
+    var ghosts=card.querySelectorAll('.set-row [data-f="l"].ghost-load');
+    if(ghosts.length){
+      var ghostIdx={};
+      card.querySelectorAll('.set-row').forEach(function(row,i){
+        var li=row.querySelector('[data-f="l"]');
+        if(li&&li.classList.contains('ghost-load')&&row.querySelector('[data-f="r"]').value==='') ghostIdx[i]=true;
+      });
+      sets=sets.map(function(s,i){ return ghostIdx[i]?Object.assign({},s,{l:''}):s; });
+    }
     var notes=card.querySelector('.notes-in').value;
     var loadType=card.getAttribute('data-load-type')||'standard';
     var bilatMode=card.getAttribute('data-bilat')||'bilateral';
@@ -6186,6 +6457,25 @@ function haptic(type){
 }
 
 // ── REP RANGE SAVE
+
+document.querySelectorAll('#phase-toggle [data-phase]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    settings.phase=btn.getAttribute('data-phase');
+    lsSet('op-settings',settings);
+    applyPhaseToggle();
+    refreshAllCardBanners();
+    showToast({gaining:'Gaining phase',maintenance:'Maintenance phase',fatloss:'Fat loss phase'}[settings.phase]);
+  });
+});
+
+document.getElementById('prefill-on').addEventListener('click',function(){
+  settings.prefillLoads=true;lsSet('op-settings',settings);applyPrefillToggle();
+  showToast('Loads will carry forward');
+});
+document.getElementById('prefill-off').addEventListener('click',function(){
+  settings.prefillLoads=false;lsSet('op-settings',settings);applyPrefillToggle();
+  showToast('Exercises will start blank');
+});
 
 document.getElementById('save-rep-ranges-btn').addEventListener('click',function(){
   ['compound','isolation','stability'].forEach(function(type){

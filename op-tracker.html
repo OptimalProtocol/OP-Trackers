@@ -1846,6 +1846,21 @@ function migrateSessionHistory(){
     if(ch2) lsSet('op-history',sessionHistory);
     lsSet('op-migrated-v2',true);
   }
+  // v5: repair entries saved with bilat 'both'. 'both' is a library
+  // capability that leaked in as a stored mode, and such entries match
+  // neither bilateral nor unilateral — so their history was invisible.
+  if(!lsGet('op-migrated-v5')){
+    var ch5=false;
+    sessionHistory.forEach(function(sess){
+      (sess.exercises||[]).forEach(function(ex){
+        if(ex.bilat&&ex.bilat!=='unilateral'&&ex.bilat!=='bilateral'){
+          ex.bilat=resolveBilatMode(ex.bilat); ch5=true;
+        }
+      });
+    });
+    if(ch5) lsSet('op-history',sessionHistory);
+    lsSet('op-migrated-v5',true);
+  }
   // v4: expand legacy {load, reps[], rpe} into a per-set array
   if(!lsGet('op-migrated-v4')){
     var ch4=false;
@@ -2385,10 +2400,12 @@ function buildPrefillSets(exName,bilatMode,equipment){
   var last=getLastEntryForExercise(exName,bilatMode,equipment);
   if(!last||!last.sets||!last.sets.length) return null;
 
-  var sets=countedSets(last.sets).concat(
-    last.sets.filter(function(s){return s.t==='U'&&(s.l!==''||s.r!=='');}));
-  // Preserve the original order rather than the filtered grouping
-  sets=last.sets.filter(function(s){return s&&(s.l!==''||s.r!=='');});
+  // Carry the full structure in its original order — warm-ups, working and
+  // drop sets, including rows that were prefilled but never confirmed.
+  // Empty warm-up rows are kept too: sessions saved before this fix stored
+  // skipped warm-ups as blank rows, and keeping them restores the structure
+  // for those exercises. They carry no load, so no number is invented.
+  var sets=last.sets.filter(function(s){return s&&(s.l!==''||s.r!==''||s.t==='U');});
   if(!sets.length) return null;
 
   return sets.map(function(s){
@@ -2401,6 +2418,29 @@ function clearGhost(input){
   // marker so the load can revert to a suggestion if the reps are cleared.
   if(!input||!input.classList.contains('ghost-load')) return;
   input.classList.remove('ghost-load');
+}
+
+function applyPrefillToCard(card){
+  // Re-seeds a card's sets from history for its CURRENT exercise, equipment
+  // and bilat mode. Runs when the user picks an exercise, changes equipment,
+  // or switches bilateral/unilateral — the moments the right history changes.
+  // It never touches a card the user has already logged anything on.
+  var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
+  if(!name) return;
+  if(cardHasRealData(card)) return;
+  var rows=card.querySelector('.set-rows');
+  if(!rows) return;
+  var bilat=card.getAttribute('data-bilat')||'bilateral';
+  var equip=card.getAttribute('data-equipment')||'';
+  var sets=buildPrefillSets(name,bilat,equip);
+  // No history for this variant: clear any suggestion left over from the
+  // previous selection, so stale weights from another exercise or piece of
+  // equipment can never be shown as if they belonged here.
+  if(!sets||!sets.length) sets=[blankSet('W'),blankSet('W')];
+  rows.innerHTML=sets.map(function(s,i){return setRowHtml(i,s);}).join('');
+  reindexSetRows(card);
+  var db=card.querySelector('[data-ex-done]');
+  if(db) db.disabled=!cardHasRealData(card);
 }
 
 function cardHasRealData(card){
@@ -2609,8 +2649,9 @@ function showExerciseStatusBar(card,exName){
 
   // ── Last session note ──
   var lastNote='';
-  for(var i=sessionHistory.length-1;i>=0;i--){
-    var sess=sessionHistory[i];
+  var _nb=sessionsByDateDesc();
+  for(var i=0;i<_nb.length;i++){
+    var sess=_nb[i];
     if(sess.status==='draft') continue;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
@@ -2795,6 +2836,7 @@ function setCardEquipment(card, equipment){
         setCardEquipment(card, eq);
         card.setAttribute('data-equipment', eq||'');
         // Re-populate last row and status bar for new equipment
+        applyPrefillToCard(card);
         populateLastRow(card, exName);
         showExerciseStatusBar(card, exName);
         saveCurrentSession();
@@ -2816,7 +2858,7 @@ function initBilatToggle(card){
       if(bl) bl.textContent=btn.getAttribute('data-mode')==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
       // Re-populate Last row and status bar for the new bilat mode
       var exName=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
-      if(exName){populateLastRow(card,exName);showExerciseStatusBar(card,exName);}
+      if(exName){applyPrefillToCard(card);populateLastRow(card,exName);showExerciseStatusBar(card,exName);}
       saveCurrentSession();
     });
   });
@@ -3503,7 +3545,7 @@ function buildSessionSummary(sess){
     var sets=normalizeSets(ex);
     var ws=workingSets(sets),ds=dropSets(sets);
     working+=ws.length; drop+=ds.length;
-    warm+=sets.filter(function(s){return s.t==='U';}).length;
+    warm+=sets.filter(function(s){return s.t==='U'&&!s.g&&(s.l!==''||s.r!=='');}).length;
     countedSets(sets).forEach(function(s){
       volume+=(parseFloat(s.l)||0)*(parseFloat(s.r)||0);
     });
@@ -3512,7 +3554,7 @@ function buildSessionSummary(sess){
     muscles[grp]=(muscles[grp]||0)+ws.length;
 
     // Was this a PR? Compare against history excluding this session.
-    var logs=getLogsForExercise(ex.name,ex.bilat||'bilateral',ex.equipment||'')
+    var logs=getLogsForExercise(ex.name,resolveBilatMode(ex.bilat),ex.equipment||'')
       .filter(function(l){return l.sessId!==sess.id;});
     var thisLoad=topWorkingLoad(sets);
     var prevBest=0,prevRepsAtBest=0;
@@ -3730,18 +3772,18 @@ function normalizeSets(ex){
 
 function workingSets(sets){
   return (sets||[]).filter(function(s){
-    return s&&s.t==='W'&&(s.l!==''||s.r!=='');
+    return s&&!s.g&&s.t==='W'&&(s.l!==''||s.r!=='');
   });
 }
 function dropSets(sets){
   return (sets||[]).filter(function(s){
-    return s&&s.t==='D'&&(s.l!==''||s.r!=='');
+    return s&&!s.g&&s.t==='D'&&(s.l!==''||s.r!=='');
   });
 }
 function countedSets(sets){
   // Sets that contribute volume: working + drop, never warm-up
   return (sets||[]).filter(function(s){
-    return s&&(s.t==='W'||s.t==='D')&&(s.l!==''||s.r!=='');
+    return s&&!s.g&&(s.t==='W'||s.t==='D')&&(s.l!==''||s.r!=='');
   });
 }
 
@@ -3761,7 +3803,7 @@ function setsAtTopLoad(sets){
 }
 
 function setsHaveData(sets){
-  return (sets||[]).some(function(s){return s&&(s.l!==''||s.r!=='');});
+  return (sets||[]).some(function(s){return s&&!s.g&&(s.l!==''||s.r!=='');});
 }
 
 function setsSummary(sets,unit){
@@ -3779,10 +3821,11 @@ function setRowHtml(idx,s){
   var opts=SET_TYPES.map(function(o){
     return '<option value="'+o.v+'"'+(o.v===t?' selected':'')+'>'+o.label+'</option>';
   }).join('');
-  return '<div class="set-row" data-set-idx="'+idx+'"'+(s.ghost?' data-ghost="1"':'')+'>'+
+  var gh=!!(s.ghost||s.g);
+  return '<div class="set-row" data-set-idx="'+idx+'"'+(gh?' data-ghost="1"':'')+'>'+
     '<span class="set-idx">'+(idx+1)+'</span>'+
     '<select class="set-type" data-f="t" data-t="'+t+'">'+opts+'</select>'+
-    '<input type="number" class="set-in'+(s.ghost?' ghost-load':'')+'" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'" data-plate-src>'+
+    '<input type="number" class="set-in'+(gh?' ghost-load':'')+'" data-f="l" inputmode="decimal" placeholder="\u2014" value="'+(s.l||'')+'" data-plate-src>'+
     '<input type="number" class="set-in" data-f="r" inputmode="numeric" placeholder="\u2014" value="'+(s.r||'')+'">'+
     '<input type="number" class="set-in rpe'+(t==='U'?' disabled-rpe':'')+'" data-f="rpe" inputmode="decimal" min="1" max="10" step="0.5" placeholder="'+(t==='U'?'\u2013':'\u2014')+'" value="'+(t==='U'?'':(s.rpe||''))+'"'+(t==='U'?' disabled':'')+'>'+
     '<button class="set-del" data-del-set="'+idx+'" title="Remove set">&#215;</button>'+
@@ -3805,12 +3848,16 @@ function setsBlockHtml(sets,unit){
 function readSetsFromCard(card){
   var out=[];
   card.querySelectorAll('.set-row').forEach(function(row){
-    out.push({
+    var li=row.querySelector('[data-f="l"]');
+    var rec={
       t:row.querySelector('[data-f="t"]').value||'W',
-      l:row.querySelector('[data-f="l"]').value,
+      l:li.value,
       r:row.querySelector('[data-f="r"]').value,
       rpe:row.querySelector('[data-f="rpe"]').value
-    });
+    };
+    // A prefilled load the user hasn't confirmed by logging reps
+    if(li.classList.contains('ghost-load')&&rec.r==='') rec.g=1;
+    out.push(rec);
   });
   return out;
 }
@@ -3956,72 +4003,109 @@ function renderLastSetsLine(card,sets,unit){
 }
 
 function getLastBilatForExercise(name){
-  for(var i=sessionHistory.length-1;i>=0;i--){
-    var sess=sessionHistory[i];
+  // Newest by date, and only sessions where the exercise was actually
+  // performed — an exercise opened and abandoned must not set the default.
+  var ordered=sessionsByDateDesc();
+  for(var i=0;i<ordered.length;i++){
+    var sess=ordered[i];
     if(sess.status==='draft') continue;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
-      if(matchName&&ex.bilat) return ex.bilat;
+      if(matchName&&ex.bilat&&setsHaveData(normalizeSets(ex))) return ex.bilat;
     }
   }
-  return BILAT_MAP[name]||'bilateral';
+  return resolveBilatMode(BILAT_MAP[name]);
 }
 
 function getLastEquipmentForExercise(name){
-  for(var i=sessionHistory.length-1;i>=0;i--){
-    var sess=sessionHistory[i];
+  // Newest by date, and only sessions where the exercise was actually
+  // performed — an exercise opened and abandoned must not set the default.
+  var ordered=sessionsByDateDesc();
+  for(var i=0;i<ordered.length;i++){
+    var sess=ordered[i];
     if(sess.status==='draft') continue;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
-      if(matchName&&ex.equipment) return ex.equipment;
+      if(matchName&&ex.equipment&&setsHaveData(normalizeSets(ex))) return ex.equipment;
     }
   }
   return null;
 }
 
 function getLastLoadTypeForExercise(name){
-  for(var i=sessionHistory.length-1;i>=0;i--){
-    var sess=sessionHistory[i];
+  var ordered=sessionsByDateDesc();
+  for(var i=0;i<ordered.length;i++){
+    var sess=ordered[i];
     if(sess.status==='draft') continue;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
-      if(matchName&&ex.loadType&&ex.loadType!=='standard') return ex.loadType;
+      if(matchName&&ex.loadType&&ex.loadType!=='standard'&&setsHaveData(normalizeSets(ex))) return ex.loadType;
     }
   }
   return null;
 }
 
+function resolveBilatMode(v){
+  // BILAT_MAP uses 'both' to mean "can be trained either way". It is a
+  // capability, not a mode. A logged set is always one or the other, so
+  // anything that isn't explicitly unilateral resolves to bilateral.
+  // (The string 'both' is still valid as a FILTER meaning "all modes".)
+  return v==='unilateral'?'unilateral':'bilateral';
+}
+
+function sessionsByDateDesc(){
+  // Newest first by DATE, not by the order sessions happened to be saved.
+  // Backdated or edited sessions would otherwise be read as the latest.
+  // Stable: sessions on the same date keep their original order.
+  return sessionHistory.map(function(s,i){return {s:s,i:i};})
+    .sort(function(a,b){
+      var da=a.s.date||'',db=b.s.date||'';
+      if(da!==db) return da<db?1:-1;
+      return b.i-a.i;
+    })
+    .map(function(x){return x.s;});
+}
+
 function getLastEntryForExercise(name,bilatMode,equipment){
-  // Most recent entry matching name + bilat mode (+ equipment when given).
-  // Returns the full sets array so callers can show per-set detail.
+  // Most recent entry for this exact exercise variant. Never borrows a
+  // different piece of equipment's history — prefilling dumbbell weights
+  // from a barbell session would be actively wrong.
   if(!name) return null;
   var mode=bilatMode||'bilateral';
-  var modeMatch=null;
-  for(var i=sessionHistory.length-1;i>=0;i--){
-    var sess=sessionHistory[i];
+  var ordered=sessionsByDateDesc();
+
+  function build(sess,ex,sets){
+    return {sets:sets,date:sess.date,workout:sess.workout,equipment:ex.equipment||'',
+      load:topWorkingLoad(sets),
+      reps:setsAtTopLoad(sets).map(function(s){return s.r;}),
+      rpe:(function(){var a=setsAtTopLoad(sets);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})()};
+  }
+
+  // Legacy entries logged before equipment existed carry no tag. They are
+  // only used when this exercise has no tagged history at all, so they
+  // can't masquerade as a specific piece of equipment once tagging starts.
+  var hasTagged=false, untagged=null;
+  for(var i=0;i<ordered.length;i++){
+    var sess=ordered[i];
     if(sess.status==='draft') continue;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
       if(!matchName) continue;
+      if(resolveBilatMode(ex.bilat)!==mode) continue;
       var sets=normalizeSets(ex);
       if(!setsHaveData(sets)) continue;
-      var exMode=ex.bilat||'bilateral';
       var exEquip=ex.equipment||'';
-      if(exMode!==mode) continue;
-      var equipOk=!equipment||!exEquip||exEquip===equipment;
-      var entry={sets:sets,date:sess.date,workout:sess.workout,equipment:exEquip,
-        load:topWorkingLoad(sets),
-        reps:setsAtTopLoad(sets).map(function(s){return s.r;}),
-        rpe:(function(){var a=setsAtTopLoad(sets);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})()};
-      if(equipOk) return entry;
-      if(!modeMatch) modeMatch=entry;
+      if(exEquip) hasTagged=true;
+      if(!equipment) return build(sess,ex,sets);
+      if(exEquip===equipment) return build(sess,ex,sets);
+      if(!exEquip&&!untagged) untagged=build(sess,ex,sets);
     }
   }
-  return modeMatch||null;
+  return (!hasTagged&&untagged)?untagged:null;
 }
 
 function getSincePR(exName, bilatMode){
@@ -4030,7 +4114,7 @@ function getSincePR(exName, bilatMode){
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft') return;
     sess.exercises.forEach(function(ex){
-      if(ex.name===exName && (ex.bilat||'bilateral')===bilatMode && normalizeSets(ex).length){
+      if(ex.name===exName && (resolveBilatMode(ex.bilat))===bilatMode && normalizeSets(ex).length){
         var load=topWorkingLoad(normalizeSets(ex));
         var reps=setsAtTopLoad(normalizeSets(ex)).map(function(s){return s.r;}).reduce(function(a,r){return a+(parseFloat(r)||0);},0);
         if(load||reps) logs.push({load:load,reps:reps});
@@ -4059,13 +4143,14 @@ function populateLastRow(card,exName){
 
   // Last session notes
   var lastNote=null;
-  for(var i=sessionHistory.length-1;i>=0;i--){
-    var sess=sessionHistory[i];
+  var _pb=sessionsByDateDesc();
+  for(var i=0;i<_pb.length;i++){
+    var sess=_pb[i];
     if(sess.status==='draft') continue;
     var hit=null;
     for(var j=0;j<sess.exercises.length;j++){
       var ex=sess.exercises[j];
-      if((ex.name===exName||ex.canonicalName===exName)&&(ex.bilat||'bilateral')===bilatMode){hit=ex;break;}
+      if((ex.name===exName||ex.canonicalName===exName)&&(resolveBilatMode(ex.bilat))===bilatMode){hit=ex;break;}
     }
     if(hit){ if(hit.notes) lastNote=hit.notes; break; }
   }
@@ -4114,7 +4199,7 @@ function createSearchableDropdown(card,selectedName){
               bt2.querySelectorAll('.bilat-btn').forEach(function(b){
                 b.classList.toggle('active',b.getAttribute('data-mode')===lastBilat);
               });
-              card.setAttribute('data-bilat',lastBilat);
+              card.setAttribute('data-bilat',resolveBilatMode(lastBilat));
               var bl2=document.getElementById('bl-'+card.id);
               if(bl2) bl2.textContent=lastBilat==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
             }
@@ -4139,6 +4224,7 @@ function createSearchableDropdown(card,selectedName){
             openEquipPicker(card, e.name, lastEquip, function(eq){
               setCardEquipment(card, eq);
               card.setAttribute('data-equipment', eq||'');
+              applyPrefillToCard(card);
               populateLastRow(card,e.name);
               renderStallBanner(card,e.name,(card.getAttribute('data-bilat')||'bilateral'),(card.getAttribute('data-equipment')||''));
               showRecoveryBanner(card,e.name);
@@ -4148,6 +4234,7 @@ function createSearchableDropdown(card,selectedName){
             },50);
           } else {
             setTimeout(function(){
+              applyPrefillToCard(card);
               populateLastRow(card,e.name);
               renderStallBanner(card,e.name,(card.getAttribute('data-bilat')||'bilateral'),(card.getAttribute('data-equipment')||''));
               showRecoveryBanner(card,e.name);
@@ -4275,7 +4362,7 @@ function addExRow(data){
         preBt.querySelectorAll('.bilat-btn').forEach(function(b){
           b.classList.toggle('active',b.getAttribute('data-mode')===preLastBilat);
         });
-        div.setAttribute('data-bilat',preLastBilat);
+        div.setAttribute('data-bilat',resolveBilatMode(preLastBilat));
         var preBl=document.getElementById('bl-'+id);
         if(preBl) preBl.textContent=preLastBilat==='unilateral'?'Load = per limb (unilateral)':'Both limbs together (bilateral)';
       }
@@ -4415,19 +4502,12 @@ function saveCurrentSession(){
   document.querySelectorAll('#ex-list .ex-card').forEach(function(card){
     var name=card.getExName?card.getExName():(card.getAttribute('data-ex-name')||'');
     var sets=readSetsFromCard(card);
-    // A load the user never confirmed is a suggestion, not a logged value
-    var ghosts=card.querySelectorAll('.set-row [data-f="l"].ghost-load');
-    if(ghosts.length){
-      var ghostIdx={};
-      card.querySelectorAll('.set-row').forEach(function(row,i){
-        var li=row.querySelector('[data-f="l"]');
-        if(li&&li.classList.contains('ghost-load')&&row.querySelector('[data-f="r"]').value==='') ghostIdx[i]=true;
-      });
-      sets=sets.map(function(s,i){ return ghostIdx[i]?Object.assign({},s,{l:''}):s; });
-    }
+    // Unconfirmed loads are kept but flagged (g:1) by readSetsFromCard.
+    // Every calculation ignores flagged sets, so they never count as
+    // performed — but the structure and weights survive a reload.
     var notes=card.querySelector('.notes-in').value;
     var loadType=card.getAttribute('data-load-type')||'standard';
-    var bilatMode=card.getAttribute('data-bilat')||'bilateral';
+    var bilatMode=resolveBilatMode(card.getAttribute('data-bilat'));
     var equipment=card.getAttribute('data-equipment')||'';
     // curr is kept as a derived mirror of the top working sets so that any
     // remaining legacy reader keeps working; sets[] is the source of truth.
@@ -4475,12 +4555,20 @@ document.getElementById('sess-workout').addEventListener('change',function(){
   document.getElementById('custom-workout-wrap').style.display='none';
   saveCurrentSession();
   var prev=null;
-  for(var i=sessionHistory.length-1;i>=0;i--){if(sessionHistory[i].workout===raw&&sessionHistory[i].status!=='draft'){prev=sessionHistory[i];break;}}
+  var _byDate=sessionsByDateDesc();
+  for(var i=0;i<_byDate.length;i++){if(_byDate[i].workout===raw&&_byDate[i].status!=='draft'){prev=_byDate[i];break;}}
   document.getElementById('ex-list').innerHTML='';exCount=0;
   var _pa=document.getElementById('progress-alert-slot');if(_pa)_pa.innerHTML='';
   var _sp=document.getElementById('sess-progress-slot');if(_sp)_sp.innerHTML='';
   if(prev){
-    prev.exercises.forEach(function(ex){addExRow({name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}});});
+    prev.exercises.forEach(function(ex){
+    if(!ex.name) return;
+    // Carry the variant across so the card prefills from the right history
+    addExRow({name:ex.name,notes:'',
+      equipment:ex.equipment||'',
+      bilat:resolveBilatMode(ex.bilat),
+      loadType:ex.loadType||'standard'});
+  });
     showToast('Last '+raw+' session loaded ✓');
   } else {addExRow();addExRow();addExRow();}
   saveCurrentSession();
@@ -4490,12 +4578,20 @@ document.getElementById('copy-last-btn').addEventListener('click',function(){
   var workout=document.getElementById('sess-workout').value;
   if(!workout){showToast('Select workout type first');return;}
   var prev=null;
-  for(var i=sessionHistory.length-1;i>=0;i--){if(sessionHistory[i].workout===workout&&sessionHistory[i].status!=='draft'){prev=sessionHistory[i];break;}}
+  var _byDate=sessionsByDateDesc();
+  for(var i=0;i<_byDate.length;i++){if(_byDate[i].workout===workout&&_byDate[i].status!=='draft'){prev=_byDate[i];break;}}
   if(!prev){showToast('No previous '+workout+' session found');return;}
   document.getElementById('ex-list').innerHTML='';exCount=0;
   var _pa=document.getElementById('progress-alert-slot');if(_pa)_pa.innerHTML='';
   var _sp=document.getElementById('sess-progress-slot');if(_sp)_sp.innerHTML='';
-  prev.exercises.forEach(function(ex){addExRow({name:ex.name,notes:'',last:ex.curr,curr:{load:'',reps:['','','','',''],rpe:''}});});
+  prev.exercises.forEach(function(ex){
+    if(!ex.name) return;
+    // Carry the variant across so the card prefills from the right history
+    addExRow({name:ex.name,notes:'',
+      equipment:ex.equipment||'',
+      bilat:resolveBilatMode(ex.bilat),
+      loadType:ex.loadType||'standard'});
+  });
   showToast('Last '+workout+' session loaded ✓');saveCurrentSession();
 });
 
@@ -4513,8 +4609,8 @@ document.getElementById('save-btn').addEventListener('click',function(){
   // the next session automatically returns to full load and volume.
   (sess.exercises||[]).forEach(function(e){
     if(!e.name) return;
-    var act=isDeloadActive(e.name,e.bilat||'bilateral',e.equipment||'');
-    if(act){ e.deload=true; completeDeload(e.name,e.bilat||'bilateral',e.equipment||''); }
+    var act=isDeloadActive(e.name,resolveBilatMode(e.bilat),e.equipment||'');
+    if(act){ e.deload=true; completeDeload(e.name,resolveBilatMode(e.bilat),e.equipment||''); }
   });
   var duration=sessionStartTime?Math.round((Date.now()-sessionStartTime)/60000):null;
   sess.duration=duration;
@@ -5008,7 +5104,7 @@ function computeExStats(name,logs){
   // other. Same for bilateral vs unilateral.
   var tracks={};
   logs.forEach(function(l){
-    var key=(l.bilat||'bilateral')+'|'+(l.equipment||'');
+    var key=resolveBilatMode(l.bilat)+'|'+(l.equipment||'');
     if(!tracks[key]) tracks[key]=[];
     tracks[key].push(l);
   });
@@ -5057,7 +5153,7 @@ function renderProgression(){
         reps:setsAtTopLoad(_xs).map(function(s){return s.r;}),
         rpe:(function(){var a=setsAtTopLoad(_xs);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})(),
         sessId:sess.id,isDraft:sess.status==='draft',
-        bilat:ex.bilat||'bilateral',equipment:ex.equipment||'',sets:normalizeSets(ex)});
+        bilat:resolveBilatMode(ex.bilat),equipment:ex.equipment||'',sets:normalizeSets(ex)});
       if(ex.equipment) exMap[ex.name].equipment[ex.equipment]=true;
       if(sess.workout) exMap[ex.name].workouts[sess.workout]=true;
     });
@@ -5140,7 +5236,7 @@ function getLogsForExercise(name,bilatFilter,equipment){
       var matchName=(ex.name===name)||(ex.canonicalName&&ex.canonicalName===name);
       if(!matchName) return;
       if(!setsHaveData(normalizeSets(ex))) return;
-      var mode=ex.bilat||'bilateral';
+      var mode=resolveBilatMode(ex.bilat);
       if(bilatFilter&&bilatFilter!=='both'&&mode!==bilatFilter) return;
       if(equipment&&ex.equipment&&ex.equipment!==equipment) return;
       // If equipment specified but entry has none (old/untagged), skip to avoid bleed-through
@@ -5151,9 +5247,19 @@ function getLogsForExercise(name,bilatFilter,equipment){
         load:topWorkingLoad(_sets),
         reps:setsAtTopLoad(_sets).map(function(s){return s.r;}),
         rpe:(function(){var a=setsAtTopLoad(_sets);for(var k=a.length-1;k>=0;k--){if(a[k].rpe)return a[k].rpe;}return '';})(),
-        bilat:mode,equipment:ex.equipment||'',deload:!!ex.deload});
+        bilat:mode,equipment:ex.equipment||'',deload:!!ex.deload,_order:logs.length});
     });
   });
+  // Oldest first by DATE. Progression compares the last two sessions, so
+  // a backdated or edited session must land in its true position rather
+  // than wherever it was saved. Stable: same-date sessions keep save order,
+  // so history that was already in order produces identical results.
+  logs.sort(function(a,b){
+    var da=a.date||'',db=b.date||'';
+    if(da!==db) return da<db?-1:1;
+    return a._order-b._order;
+  });
+  logs.forEach(function(l){ delete l._order; });
   return logs;
 }
 
@@ -5201,7 +5307,7 @@ function openProgDetail(name){
 
   // Detect if this exercise has both bilateral and unilateral entries
   var allLogs=getLogsForExercise(name,'both');
-  var hasBilat=allLogs.some(function(l){return (l.bilat||'bilateral')==='bilateral';});
+  var hasBilat=allLogs.some(function(l){return (resolveBilatMode(l.bilat))==='bilateral';});
   var hasUni=allLogs.some(function(l){return l.bilat==='unilateral';});
   var bilatToggle=document.getElementById('modal-bilat-toggle');
   if(hasBilat&&hasUni){
@@ -5257,7 +5363,7 @@ function renderProgModal(name,logs,allLogs){
   var chartH=Math.round(window.innerHeight*0.32);chartEl.style.height=chartH+'px';
   if(modalBilatMode==='both'&&allLogs){
     // Split allLogs into bilateral and unilateral for overlaid chart
-    var bilatLogs=allLogs.filter(function(l){return (l.bilat||'bilateral')==='bilateral';});
+    var bilatLogs=allLogs.filter(function(l){return (resolveBilatMode(l.bilat))==='bilateral';});
     var uniLogs=allLogs.filter(function(l){return l.bilat==='unilateral';});
     drawChartBoth(bilatLogs,uniLogs);
   } else {
@@ -5683,7 +5789,7 @@ function buildPriorFilterChips(){
 function buildPriorExCard(ex, exIdx, sessId){
   // Build a fully interactive exercise card for prior session editing
   var sess=sessionHistory.find(function(s){return s.id===sessId;});
-  var bilatMode=ex.bilat||'bilateral';
+  var bilatMode=resolveBilatMode(ex.bilat);
   var equipment=ex.equipment||'';
   var loadType=ex.loadType||'standard';
   var curr=ex.curr||{load:'',reps:['','','','',''],rpe:''};

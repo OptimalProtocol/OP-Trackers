@@ -253,11 +253,15 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .hist-table td:first-child{font-family:'Inter',sans-serif;color:var(--dim);}
 .hist-table tr:last-child td{border-bottom:none;}
 .pr-load-cell{color:var(--cyan);font-weight:700;}
-.pr-rep-cell{color:var(--gold);font-weight:700;}
+.pr-load-current-cell{color:var(--cyan);font-weight:700;text-decoration:underline;text-decoration-color:var(--orange);text-underline-offset:3px;}
+.pr-rep-cell{color:var(--orange);font-weight:700;}
+.pr-rep-current-cell{color:var(--orange);font-weight:700;text-decoration:underline;text-decoration-color:var(--cyan);text-underline-offset:3px;}
 .pr-both-cell{color:var(--green);font-weight:700;}
 .pr-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;display:inline-block;}
 .pr-badge-load{background:rgba(0,180,216,0.15);color:var(--cyan);}
-.pr-badge-rep{background:rgba(255,184,0,0.15);color:var(--gold);}
+.pr-badge-rep{background:rgba(255,140,0,0.15);color:var(--orange);}
+.pr-badge-rep-current{background:rgba(255,140,0,0.18);color:var(--orange);box-shadow:inset 0 0 0 1px var(--cyan);}
+.pr-badge-load-current{background:rgba(0,180,216,0.18);color:var(--cyan);box-shadow:inset 0 0 0 1px var(--orange);}
 .edit-entry-btn{background:none;border:1px solid var(--cyan-border);border-radius:5px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;margin-right:4px;}
 .del-entry-btn{background:none;border:1px solid rgba(255,77,77,0.3);border-radius:5px;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;}
 .edit-form-row{background:var(--surface2);padding:10px 14px;display:grid;grid-template-columns:56px repeat(5,1fr) 44px;gap:4px;border-bottom:1px solid var(--border);}
@@ -889,11 +893,11 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     </div>
     <div class="modal-chart-section"><svg class="chart-svg" id="prog-chart"></svg>
       <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:3px;vertical-align:middle;"></span>Normal</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);border:1px solid var(--gold);margin-right:3px;vertical-align:middle;"></span>Load PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:3px;vertical-align:middle;"></span>Rep PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:3px;vertical-align:middle;"></span>Both</span>
-      </div>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#DCE6F0;margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>No PR</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Load PR</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);border:2px solid var(--orange);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Current load PR</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--orange);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Rep PR</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--orange);border:2px solid var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Current rep PR</span></div>
     </div>
     <div class="modal-summary-strip" id="modal-summary"></div>
     <div class="modal-log-section">
@@ -5339,9 +5343,15 @@ function renderProgModal(name,logs,allLogs){
 
   // Second pass: detect PRs correctly
   // Load PR = new highest load ever
-  // Rep PR = more reps than any previous session AT the current best load only
+  // Rep PR = more reps than ever before AT THE SAME LOAD
   var runMaxLoad=0;
   var maxRepsAtBestLoad=0; // tracks best reps seen so far at the overall best load
+  // Rep PRs are judged AT THE LOAD THEY WERE PERFORMED: more reps than you
+  // had ever managed at that same weight before. Judging them only at the
+  // all-time best load meant every session at a lighter weight showed
+  // nothing at all, so a session's outcome was invisible without reading
+  // the reps. Load PR detection is unchanged.
+  var bestRepsAtLoad={};
   var enriched=logs.map(function(l,idx){
     var repsArr=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
     var avg=repsArr.length?repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length:0;
@@ -5350,15 +5360,27 @@ function renderProgModal(name,logs,allLogs){
     // Load PR: new highest load
     if(!isBase&&load>runMaxLoad){runMaxLoad=load;prLoad=true;}
     else if(load>runMaxLoad){runMaxLoad=load;}
-    // Rep PR: more reps than any prior session — but ONLY at the current best load
-    // This means rep PRs only fire when the user is lifting at their top weight
-    if(!isBase&&load===overallBestLoad&&avg>maxRepsAtBestLoad){maxRepsAtBestLoad=avg;prRep=true;}
-    else if(load===overallBestLoad&&avg>maxRepsAtBestLoad){maxRepsAtBestLoad=avg;}
-    // Keep maxLoad updated for return value
+    // Rep PR: more reps than ever before at this same load
+    var key=String(load);
+    var prevBest=bestRepsAtLoad.hasOwnProperty(key)?bestRepsAtLoad[key]:null;
+    if(avg>0){
+      if(prevBest===null) bestRepsAtLoad[key]=avg;
+      else if(avg>prevBest){ bestRepsAtLoad[key]=avg; if(!isBase) prRep=true; }
+    }
     if(load>maxLoad) maxLoad=load;
     if(avg>maxAvg) maxAvg=avg;
-    return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,isBase:isBase,sessId:l.sessId,exIdx:l.exIdx};
+    if(load===overallBestLoad&&avg>maxRepsAtBestLoad) maxRepsAtBestLoad=avg;
+    return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,prRepCurrent:false,prLoadCurrent:false,isBase:isBase,sessId:l.sessId,exIdx:l.exIdx};
   });
+  // Colour says WHAT KIND of PR; a ring says THIS ONE STILL STANDS.
+  // The most recent PR of each kind is the one that holds; every earlier
+  // one was a record at the time but has since been beaten.
+  for(var ri=enriched.length-1;ri>=0;ri--){
+    if(enriched[ri].prRep){ enriched[ri].prRepCurrent=true; break; }
+  }
+  for(var li=enriched.length-1;li>=0;li--){
+    if(enriched[li].prLoad){ enriched[li].prLoadCurrent=true; break; }
+  }
   var chartEl=document.getElementById('prog-chart');
   var chartH=Math.round(window.innerHeight*0.32);chartEl.style.height=chartH+'px';
   if(modalBilatMode==='both'&&allLogs){
@@ -5390,8 +5412,15 @@ function renderProgModal(name,logs,allLogs){
   enriched.slice().reverse().forEach(function(l,rowIdx){
     var origIdx=enriched.length-1-rowIdx;
     var pr=l.isBase?'base':(l.prLoad&&l.prRep?'both':l.prLoad?'load':l.prRep?'rep':'');
-    var cls=pr==='both'?'pr-both-cell':pr==='load'?'pr-load-cell':pr==='rep'?'pr-rep-cell':'';
-    var badge=pr==='base'?'<span class="pr-badge" style="background:rgba(255,255,255,0.08);color:var(--dim);">Base Load</span>':pr==='both'?'<span class="pr-badge pr-badge-load">L</span><span class="pr-badge pr-badge-rep">R</span>':pr==='load'?'<span class="pr-badge pr-badge-load">Load PR</span>':pr==='rep'?'<span class="pr-badge pr-badge-rep">Rep PR</span>':'&mdash;';
+    var repCur=l.prRepCurrent;
+    var loadCur=l.prLoadCurrent;
+    var cls=pr==='load'||pr==='both'?(loadCur?'pr-load-current-cell':'pr-load-cell')
+           :pr==='rep'?(repCur?'pr-rep-current-cell':'pr-rep-cell'):'';
+    var repBadge='<span class="pr-badge '+(repCur?'pr-badge-rep-current':'pr-badge-rep')+'">'+(repCur?'Rep PR \u2605':'Rep PR')+'</span>';
+    var badge=pr==='base'?'<span class="pr-badge" style="background:rgba(255,255,255,0.08);color:var(--dim);">Base Load</span>'
+      :pr==='both'?'<span class="pr-badge pr-badge-load">L</span>'+'<span class="pr-badge '+(repCur?'pr-badge-rep-current':'pr-badge-rep')+'">R'+(repCur?' \u2605':'')+'</span>'
+      :pr==='load'?'<span class="pr-badge '+(loadCur?'pr-badge-load-current':'pr-badge-load')+'">Load PR'+(loadCur?' ★':'')+'</span>'
+      :pr==='rep'?repBadge:'&mdash;';
     var tr=document.createElement('tr');tr.setAttribute('data-row',origIdx);
     tr.innerHTML='<td style="font-size:11px;color:var(--dim);white-space:nowrap;">'+(l.date||'&mdash;')+'</td>'+
       '<td style="font-size:10px;color:var(--muted);white-space:nowrap;">'+(l.workout||'&mdash;')+'</td>'+
@@ -5622,10 +5651,15 @@ function drawChart(logs){
   var maxAvg=Math.max.apply(null,logs.map(function(l){return l.avgReps;}));if(!maxAvg) maxAvg=1;
   logs.forEach(function(l,i){
     var r=4+(l.avgReps/maxAvg)*8;
-    var color=(l.prLoad&&l.prRep)?'#00C896':l.prRep?'#FFB800':'#00B4D8';
-    var stroke=l.prLoad&&!l.prRep?'#FFB800':'none';
+    // Same meaning as the session table: orange = the rep PR that still
+    // stands, green = a rep PR since beaten, cyan ring = a load PR.
+    // Fill = kind of PR (cyan load, orange rep, soft white nothing).
+    // Ring = this PR still stands, in the opposite PR colour so it reads
+    // clearly against the fill.
+    var color=l.prLoad?'#00B4D8':l.prRep?'#FF8C00':'#DCE6F0';
+    var stroke=l.prLoadCurrent?'#FF8C00':l.prRepCurrent?'#00B4D8':'none';
     var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(i));c.setAttribute('cy',yp(l.load));c.setAttribute('r',r);c.setAttribute('fill',color);c.setAttribute('opacity','0.9');
-    if(stroke!=='none'){c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','2');}svg.appendChild(c);
+    if(stroke!=='none'){c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','3');}svg.appendChild(c);
     (function(dot,log){
       dot.style.cursor='pointer';
       dot.addEventListener('click',function(evt){

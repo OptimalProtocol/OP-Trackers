@@ -416,6 +416,42 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .ex-card-since-pr.muted{color:var(--muted);}
 
 
+
+/* ── SESSION SUMMARY ── */
+.ps-summary{display:block;margin-bottom:22px;}
+.ps-pr-hero{background:linear-gradient(135deg,rgba(0,200,150,0.20),rgba(0,200,150,0.06));
+  border:1px solid rgba(0,200,150,0.45);border-radius:14px;padding:15px 16px;margin-bottom:12px;
+  box-shadow:0 4px 20px rgba(0,200,150,0.12);}
+.ps-pr-count{font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--green);margin-bottom:9px;}
+.ps-pr-item{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-top:1px solid rgba(0,200,150,0.15);}
+.ps-pr-item:first-of-type{border-top:none;}
+.ps-pr-name{font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;}
+.ps-pr-val{font-size:12px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.ps-pr-kind{font-size:8px;font-weight:700;letter-spacing:0.08em;color:var(--green);opacity:0.7;}
+
+.ps-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.ps-tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 6px;text-align:center;}
+.ps-tile-val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--cyan);line-height:1.05;}
+.ps-tile-unit{font-size:11px;color:var(--dim);font-weight:600;}
+.ps-tile-label{font-size:8.5px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+
+.ps-muscle-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:10px;}
+.ps-block-head{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.ps-muscle-row{margin-bottom:9px;}
+.ps-muscle-row:last-child{margin-bottom:0;}
+.ps-muscle-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.ps-muscle-name{font-size:11.5px;color:var(--dim);}
+.ps-muscle-sets{font-size:11px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;}
+.ps-muscle-bar{background:var(--surface2);border-radius:3px;height:5px;overflow:hidden;}
+.ps-muscle-fill{background:var(--cyan);border-radius:3px;height:100%;}
+
+.ps-footnote{font-size:10px;color:var(--muted);text-align:center;margin-bottom:12px;}
+.ps-share{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--dim);
+  cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:11px;width:100%;}
+.ps-share:active{background:var(--cyan-dim);color:var(--cyan);}
+.ps-feedback-head{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);
+  border-top:1px solid var(--border);padding-top:16px;margin-bottom:4px;}
+
 /* ── COLLAPSIBLE EXERCISE CARDS ── */
 .ex-card-footer{display:flex;align-items:center;gap:8px;padding:8px 14px 11px;border-top:1px solid var(--border);}
 .ex-rest-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--dim);cursor:pointer;
@@ -917,7 +953,8 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
   <div class="post-session-inner">
     <div class="ps-title">Session Complete</div>
     <div class="ps-subtitle" id="ps-subtitle"></div>
-    <div class="ps-stat-grid" id="ps-stats"></div>
+    <div class="ps-summary" id="ps-stats"></div>
+    <div class="ps-feedback-head">How did it go?</div>
     <div class="ps-question">
       <div class="ps-q-label">How did you feel overall?</div>
       <div class="ps-slider-wrap"><input type="range" class="ps-slider" id="ps-feel" min="1" max="10" value="7"><span class="ps-slider-val" id="ps-feel-val">7</span></div>
@@ -3589,49 +3626,68 @@ function buildSessionSummary(sess){
 }
 
 function renderSessionSummary(sess){
+  // Celebration first: PRs are the payoff, so they lead. Then the headline
+  // numbers, then the muscle breakdown. Each section is a full-width block
+  // — the old version injected these into a 3-column grid, which stretched
+  // every block into a column.
   var s=buildSessionSummary(sess);
   var unit=settings.unit||'kg';
-  var muscleList=Object.keys(s.muscles).sort(function(a,b){return s.muscles[b]-s.muscles[a];});
-
-  var html='<div style="text-align:center;padding:4px 0 14px;">'+
-    '<div style="font-size:10px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;">'+
-      (s.workout||'Session')+' \u00b7 '+formatDate(s.date)+'</div>'+
-    '</div>';
-
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
-    statTile(s.working,'work sets')+
-    statTile(s.volume>=1000?(Math.round(s.volume/100)/10)+'k':s.volume,'volume '+unit)+
-    statTile(s.exercises,'exercises')+
-  '</div>';
+  var html='';
 
   if(s.prs.length){
-    html+='<div style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.28);border-radius:10px;padding:11px 13px;margin-bottom:12px;">'+
-      '<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--green);margin-bottom:6px;">'+
-        s.prs.length+' PERSONAL RECORD'+(s.prs.length>1?'S':'')+'</div>'+
+    html+='<div class="ps-pr-hero">'+
+      '<div class="ps-pr-count">'+s.prs.length+' PERSONAL RECORD'+(s.prs.length>1?'S':'')+'</div>'+
       s.prs.map(function(p){
-        return '<div style="font-size:12px;color:var(--text);line-height:1.6;">'+
-          '<b>'+p.name+'</b> <span style="color:var(--green);">'+p.value+'</span></div>';
-      }).join('')+'</div>';
+        return '<div class="ps-pr-item">'+
+          '<span class="ps-pr-name">'+p.name+'</span>'+
+          '<span class="ps-pr-val">'+p.value+'</span>'+
+          '<span class="ps-pr-kind">'+(p.type==='load'?'LOAD':'REPS')+'</span>'+
+        '</div>';
+      }).join('')+
+    '</div>';
   }
 
-  if(muscleList.length){
-    html+='<div style="background:var(--surface2);border-radius:10px;padding:11px 13px;margin-bottom:12px;">'+
-      '<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--muted);margin-bottom:7px;">WORKING SETS BY MUSCLE</div>'+
-      muscleList.map(function(m){
-        return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;">'+
-          '<span style="color:var(--dim);">'+m+'</span>'+
-          '<span style="font-family:JetBrains Mono,monospace;color:var(--text);font-weight:700;">'+s.muscles[m]+'</span></div>';
-      }).join('')+'</div>';
+  var vol=s.volume>=1000?(Math.round(s.volume/100)/10)+'k':String(s.volume);
+  html+='<div class="ps-tiles">'+
+    tile(s.working,'','work sets')+
+    tile(vol,unit,'volume')+
+    tile(s.exercises,'','exercises')+
+  '</div>';
+
+  var muscles=Object.keys(s.muscles).sort(function(a,b){return s.muscles[b]-s.muscles[a];});
+  if(muscles.length){
+    var top=Math.max.apply(null,muscles.map(function(m){return s.muscles[m];}));
+    html+='<div class="ps-muscle-block">'+
+      '<div class="ps-block-head">Working sets by muscle</div>'+
+      muscles.map(function(m){
+        var pct=Math.round((s.muscles[m]/top)*100);
+        return '<div class="ps-muscle-row">'+
+          '<div class="ps-muscle-top"><span class="ps-muscle-name">'+m+'</span>'+
+          '<span class="ps-muscle-sets">'+s.muscles[m]+'</span></div>'+
+          '<div class="ps-muscle-bar"><div class="ps-muscle-fill" style="width:'+pct+'%;"></div></div>'+
+        '</div>';
+      }).join('')+
+    '</div>';
   }
 
   if(s.drop||s.warm){
-    html+='<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:10px;">'+
+    html+='<div class="ps-footnote">'+
       (s.warm?s.warm+' warm-up set'+(s.warm>1?'s':''):'')+
       (s.warm&&s.drop?' \u00b7 ':'')+
       (s.drop?s.drop+' drop set'+(s.drop>1?'s':''):'')+'</div>';
   }
+
+  html+='<button class="ps-share" id="ps-share-btn">\u21ea Share this session</button>';
   return html;
 }
+
+function tile(val,unit,label){
+  return '<div class="ps-tile">'+
+    '<div class="ps-tile-val">'+val+(unit?'<span class="ps-tile-unit">'+unit+'</span>':'')+'</div>'+
+    '<div class="ps-tile-label">'+label+'</div>'+
+  '</div>';
+}
+
 
 function statTile(v,label){
   return '<div style="background:var(--surface2);border-radius:10px;padding:11px 6px;text-align:center;">'+
@@ -4682,10 +4738,8 @@ function showPostSessionModal(sess){
   var totalSets=sess.exercises.reduce(function(a,e){
     return a+countedSets(normalizeSets(e)).filter(function(r){return r;}).length;
   },0);
-  document.getElementById('ps-subtitle').textContent=sess.workout+' &bull; '+formatDate(sess.date);
-  document.getElementById('ps-stats').innerHTML=
-    renderSessionSummary(sess)+
-    '<button class="btn btn-secondary btn-full" id="ps-share-btn" style="margin-top:2px;">\u21ea Share this session</button>';
+  document.getElementById('ps-subtitle').textContent=(sess.workout||'Session')+' \u00b7 '+formatDate(sess.date);
+  document.getElementById('ps-stats').innerHTML=renderSessionSummary(sess);
   var shareBtn=document.getElementById('ps-share-btn');
   if(shareBtn) shareBtn.addEventListener('click',function(){ shareSessionSummary(sess); });
   document.getElementById('ps-feel').value=7;document.getElementById('ps-feel-val').textContent=7;

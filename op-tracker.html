@@ -2647,16 +2647,15 @@ function showExerciseStatusBar(card,exName){
   }
 
   // ── Since PR ──
+  // Since-PR from the shared engine, so the session card agrees with
+  // Insights and the summary.
   var sincePR=0;
-  var runL=0,runA=0,lastPRIdx=-1;
+  var lastPRIdx=-1;
   var allLogs=logs;
+  var cardPrMap=prFlagsByLog(exName);
   allLogs.forEach(function(l,i){
-    var load=parseFloat(l.load)||0;
-    var reps=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
-    var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
-    if(i===0){runL=load;runA=avg;return;} // base load
-    if(load>runL){lastPRIdx=i;runL=load;runA=0;}
-    else if(load===runL&&avg>runA){lastPRIdx=i;runA=avg;}
+    var f=cardPrMap[l.sessId+':'+l.exIdx];
+    if(f&&(f.prLoad||f.prRep)) lastPRIdx=i;
   });
   var isBase=allLogs.length===1;
   sincePR=lastPRIdx===-1?allLogs.length-1:(allLogs.length-1-lastPRIdx);
@@ -3594,27 +3593,18 @@ function buildSessionSummary(sess){
     var grp=lib?lib.group:'Other';
     muscles[grp]=(muscles[grp]||0)+ws.length;
 
-    // Was this a PR? Compare against history excluding this session.
-    var logs=getLogsForExercise(ex.name,resolveBilatMode(ex.bilat),ex.equipment||'')
-      .filter(function(l){return l.sessId!==sess.id;});
+    // PRs come from the shared engine, so the summary always agrees with
+    // the Insights list and the exercise detail view.
+    var prMap=prFlagsByLog(ex.name);
     var thisLoad=topWorkingLoad(sets);
-    var prevBest=0,prevRepsAtBest=0;
-    logs.forEach(function(l){
-      var v=topWorkingLoad(l.sets);
-      if(v>prevBest) prevBest=v;
-    });
-    logs.forEach(function(l){
-      if(topWorkingLoad(l.sets)===thisLoad){
-        setsAtTopLoad(l.sets).forEach(function(s){
-          var r=parseFloat(s.r)||0; if(r>prevRepsAtBest) prevRepsAtBest=r;
-        });
-      }
-    });
-    var thisReps=0;
-    setsAtTopLoad(sets).forEach(function(s){var r=parseFloat(s.r)||0;if(r>thisReps)thisReps=r;});
-    if(logs.length&&thisLoad>prevBest) prs.push({name:ex.name,type:'load',value:thisLoad+unit});
-    else if(logs.length&&thisLoad===prevBest&&thisReps>prevRepsAtBest&&prevRepsAtBest>0)
-      prs.push({name:ex.name,type:'reps',value:thisReps+' reps @ '+thisLoad+unit});
+    var myIdx=(sess.exercises||[]).indexOf(ex);
+    var f=prMap[sess.id+':'+myIdx];
+    if(f&&f.prLoad) prs.push({name:ex.name,type:'load',value:thisLoad+unit});
+    else if(f&&f.prRep){
+      var bestRep=0;
+      setsAtTopLoad(sets).forEach(function(s){var r=parseFloat(s.r)||0;if(r>bestRep)bestRep=r;});
+      prs.push({name:ex.name,type:'reps',value:bestRep+' reps @ '+thisLoad+unit});
+    }
 
     if(ex.deload) stalls.push({name:ex.name,note:'deload'});
   });
@@ -5128,26 +5118,94 @@ function buildProgFilterChips(){
   if(clearBtn) clearBtn.style.display=hasFilter?'block':'none';
 }
 
+// ── PR ENGINE ───────────────────────────────────────────────────
+// ONE definition of a personal record, used by the Insights list, the
+// exercise detail view and the session summary. These previously each had
+// their own rule, which is why the three screens could disagree about the
+// same session.
+//
+// Rules:
+//   session load  = heaviest working set
+//   session reps  = average reps across the working sets at that load
+//   first session with data = base load, never a PR
+//   LOAD PR = heavier than any previous session
+//   REP PR  = more reps than ever achieved at that exact load
+// A load PR records its own reps as the baseline for that load, so the
+// following session has something real to beat.
+
+function prSessionMetrics(l){
+  var sets=l.sets||normalizeSets(l);
+  var load=topWorkingLoad(sets);
+  var at=setsAtTopLoad(sets);
+  var reps=at.map(function(s){return parseFloat(s.r)||0;}).filter(function(r){return r>0;});
+  var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
+  return {load:load,avg:avg};
+}
+
+function computePRTimeline(logs){
+  // logs: one variant, oldest first. Returns a flag object per log.
+  var bestLoad=0, bestRepsAtLoad={}, seenData=false;
+  var out=logs.map(function(l){
+    var m=prSessionMetrics(l);
+    var f={prLoad:false,prRep:false,prLoadCurrent:false,prRepCurrent:false,
+           isBase:false,load:m.load,avg:m.avg};
+    if(!m.load&&!m.avg) return f;
+    var key=String(m.load);
+    if(!seenData){
+      seenData=true; f.isBase=true;
+      bestLoad=m.load; bestRepsAtLoad[key]=m.avg;
+      return f;
+    }
+    if(m.load>bestLoad){
+      f.prLoad=true;
+      bestLoad=m.load;
+      // Seed this load's rep baseline so the next session must beat the
+      // reps actually performed, not zero.
+      bestRepsAtLoad[key]=Math.max(bestRepsAtLoad[key]||0,m.avg);
+      return f;
+    }
+    var prev=bestRepsAtLoad.hasOwnProperty(key)?bestRepsAtLoad[key]:null;
+    if(prev===null){ bestRepsAtLoad[key]=m.avg; return f; }
+    if(m.avg>prev){ f.prRep=true; bestRepsAtLoad[key]=m.avg; }
+    return f;
+  });
+  for(var i=out.length-1;i>=0;i--){ if(out[i].prRep){ out[i].prRepCurrent=true; break; } }
+  for(var j=out.length-1;j>=0;j--){ if(out[j].prLoad){ out[j].prLoadCurrent=true; break; } }
+  return out;
+}
+
+function prVariantKey(l){ return resolveBilatMode(l.bilat)+'|'+(l.equipment||''); }
+
+function prFlagsByLog(name){
+  // Flags for EVERY logged session of this exercise, keyed by session.
+  // Always computed per variant over the full history, so no screen can
+  // disagree because it looked at a different slice.
+  var all=getLogsForExercise(name,'both');
+  var groups={};
+  all.forEach(function(l){
+    var k=prVariantKey(l);
+    (groups[k]=groups[k]||[]).push(l);
+  });
+  var map={};
+  Object.keys(groups).forEach(function(k){
+    var flags=computePRTimeline(groups[k]);
+    groups[k].forEach(function(l,i){ map[l.sessId+':'+l.exIdx]=flags[i]; });
+  });
+  return map;
+}
+
 function computeModeStats(logs){
-  // PR detection from WORKING SETS ONLY. Load PR = new heaviest working
-  // load. Rep PR = more reps at the current best load than ever before.
-  var bestLoad=0,bestLoadDate=null,maxAvgAtBest=0;
-  var runMaxLoad=0,lastPRIdx=-1,runL2=0,runA2=0,runMaxLoad2=0;
-  logs.forEach(function(l,i){
-    var sets=l.sets||normalizeSets(l);
-    var load=topWorkingLoad(sets);
-    var at=setsAtTopLoad(sets);
-    var reps=at.map(function(s){return parseFloat(s.r)||0;}).filter(function(r){return r>0;});
-    var avg=reps.length?reps.reduce(function(a,b){return a+b;},0)/reps.length:0;
-    if(load>runMaxLoad){runMaxLoad=load;bestLoad=load;bestLoadDate=l.date;maxAvgAtBest=avg;}
-    var isRepPRCandidate=load===runMaxLoad2;
-    if(i>0&&load>runL2){lastPRIdx=i;runL2=load;runA2=0;}
-    else if(i>0&&isRepPRCandidate&&avg>runA2){lastPRIdx=i;runA2=avg;}
-    else if(i===0){runL2=load;runA2=avg;}
-    if(load>runMaxLoad2) runMaxLoad2=load;
+  // Thin wrapper over the shared PR engine so the Insights list can never
+  // disagree with the detail view.
+  var flags=computePRTimeline(logs);
+  var bestLoad=0,bestLoadDate=null,bestAvgAtBest=0,lastPRIdx=-1;
+  flags.forEach(function(f,i){
+    if(f.load>bestLoad){bestLoad=f.load;bestLoadDate=logs[i].date;bestAvgAtBest=f.avg;}
+    else if(f.load===bestLoad&&f.avg>bestAvgAtBest){bestAvgAtBest=f.avg;}
+    if(f.prLoad||f.prRep) lastPRIdx=i;
   });
   var sincePR=lastPRIdx===-1?logs.length:(logs.length-1-lastPRIdx);
-  return {bestLoad:bestLoad,bestLoadDate:bestLoadDate,bestAvgReps:Math.round(maxAvgAtBest*10)/10,
+  return {bestLoad:bestLoad,bestLoadDate:bestLoadDate,bestAvgReps:Math.round(bestAvgAtBest*10)/10,
     sincePR:sincePR,lastPRIdx:lastPRIdx,count:logs.length};
 }
 
@@ -5400,41 +5458,23 @@ function renderProgModal(name,logs,allLogs){
   // Rep PR = more reps than ever before AT THE SAME LOAD
   var runMaxLoad=0;
   var maxRepsAtBestLoad=0; // tracks best reps seen so far at the overall best load
-  // Rep PRs are judged AT THE LOAD THEY WERE PERFORMED: more reps than you
-  // had ever managed at that same weight before. Judging them only at the
-  // all-time best load meant every session at a lighter weight showed
-  // nothing at all, so a session's outcome was invisible without reading
-  // the reps. Load PR detection is unchanged.
-  var bestRepsAtLoad={};
-  var enriched=logs.map(function(l,idx){
+  // PR flags come from the shared engine: computed per variant across the
+  // FULL history, then read for whichever sessions are on screen. Deriving
+  // them from the visible slice meant the range filter and the equipment
+  // filter could change what counted as a PR.
+  var prMap=prFlagsByLog(name);
+  var enriched=logs.map(function(l){
+    var f=prMap[l.sessId+':'+l.exIdx]||{};
     var repsArr=(l.reps||[]).map(function(r){return parseFloat(r)||0;}).filter(function(r){return r>0;});
     var avg=repsArr.length?repsArr.reduce(function(a,b){return a+b;},0)/repsArr.length:0;
-    var load=parseFloat(l.load)||0;var prLoad=false,prRep=false;
-    var isBase=idx===0;
-    // Load PR: new highest load
-    if(!isBase&&load>runMaxLoad){runMaxLoad=load;prLoad=true;}
-    else if(load>runMaxLoad){runMaxLoad=load;}
-    // Rep PR: more reps than ever before at this same load
-    var key=String(load);
-    var prevBest=bestRepsAtLoad.hasOwnProperty(key)?bestRepsAtLoad[key]:null;
-    if(avg>0){
-      if(prevBest===null) bestRepsAtLoad[key]=avg;
-      else if(avg>prevBest){ bestRepsAtLoad[key]=avg; if(!isBase) prRep=true; }
-    }
+    var load=parseFloat(l.load)||0;
     if(load>maxLoad) maxLoad=load;
     if(avg>maxAvg) maxAvg=avg;
     if(load===overallBestLoad&&avg>maxRepsAtBestLoad) maxRepsAtBestLoad=avg;
-    return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,prLoad:prLoad,prRep:prRep,prRepCurrent:false,prLoadCurrent:false,isBase:isBase,sessId:l.sessId,exIdx:l.exIdx};
+    return {date:l.date,workout:l.workout,reps:l.reps||[],rpe:l.rpe,load:load,avgReps:avg,
+      prLoad:!!f.prLoad,prRep:!!f.prRep,prRepCurrent:!!f.prRepCurrent,prLoadCurrent:!!f.prLoadCurrent,
+      isBase:!!f.isBase,sessId:l.sessId,exIdx:l.exIdx};
   });
-  // Colour says WHAT KIND of PR; a ring says THIS ONE STILL STANDS.
-  // The most recent PR of each kind is the one that holds; every earlier
-  // one was a record at the time but has since been beaten.
-  for(var ri=enriched.length-1;ri>=0;ri--){
-    if(enriched[ri].prRep){ enriched[ri].prRepCurrent=true; break; }
-  }
-  for(var li=enriched.length-1;li>=0;li--){
-    if(enriched[li].prLoad){ enriched[li].prLoadCurrent=true; break; }
-  }
   var chartEl=document.getElementById('prog-chart');
   var chartH=Math.round(window.innerHeight*0.32);chartEl.style.height=chartH+'px';
   if(modalBilatMode==='both'&&allLogs){
@@ -5449,9 +5489,16 @@ function renderProgModal(name,logs,allLogs){
   var prEntry=enriched.slice().reverse().find(function(l){return l.prLoad;});
   var prDate=prEntry?prEntry.date:null;
   var lastLoad=enriched.length?enriched[enriched.length-1].load:0;
-  var runL=0,runA=0,lastPRIdx=-1;
-  enriched.forEach(function(l,i){if(l.load>runL||l.avgReps>runA){lastPRIdx=i;if(l.load>runL)runL=l.load;if(l.avgReps>runA)runA=l.avgReps;}});
-  var sincePR=lastPRIdx===-1?totalSess:(totalSess-1-lastPRIdx);
+  // Since-PR from the shared engine, measured over the FULL history of the
+  // variant on screen rather than the range-filtered slice.
+  var scopeLogs=getLogsForExercise(name,modalBilatMode,modalEquip==='All'?'':modalEquip);
+  var lastPRIdx=-1;
+  scopeLogs.forEach(function(l,i){
+    var f=prMap[l.sessId+':'+l.exIdx];
+    if(f&&(f.prLoad||f.prRep)) lastPRIdx=i;
+  });
+  var scopeCount=scopeLogs.length;
+  var sincePR=lastPRIdx===-1?scopeCount:(scopeCount-1-lastPRIdx);
   var sinceCls=sincePR===0?'green':sincePR<=3?'gold':'red';
   var sinceLabel=sincePR===0?'PR ✓':sincePR+' sess';
   var bestAvgReps=Math.round(maxAvg*10)/10;

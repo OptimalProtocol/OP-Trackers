@@ -5,7 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230D1B2A'/%3E%3Ctext x='50' y='68' font-size='54' font-family='Arial,sans-serif' font-weight='700' fill='%2300B4D8' text-anchor='middle'%3EOP%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#0D1B2A">
+<meta name="apple-mobile-web-app-title" content="OP Nutrition">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<!-- The home screen icon is the OP mark on navy, embedded so it works from a single file as well
+     as from the hosted build. iOS reads apple-touch-icon; without one it screenshots the page. -->
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAEg0lEQVR4nO2WXWwUVRTHz7l3ZnZmd7u7/drublvKhxRKGkU+Wo1AEWksGBMUgyY+4AsPJuKDL/pkou8aX0z0QYkmajRiTGqC2JhgtSQqCCItAhYoBdrd7s5u93Pmzsw9Piy0BbZ9I+GB+zQ3uff/O+fe/zl3sK51HdzLwe6p+gPAfQFQbpshAhEABJatCq/sDMbbQfdzjohMEjAA13XAdYSZyl+6mL1wlqREZERyCQDO2xQZkIx0dse2Pc2DdeXJy+VrE1Ym6RRmpW0REBIyXffVNwVaYsGOh7juv/HrUPbc30szcGEdNPf2tQ7sM/8amT72gyjkl849+mhv2+4Xrw99n/xjmHEupaxmv+gRBRLtLX27s6dGrg5+CQDIGXky0r2hafOTjKtqMCzJ86xS8fyZ6eNDUojUqd9R0+L9e3Pnz9qzJgAgY0R0B2YeEOraQMCmh48CImNcem6i//no1l12NiWF5ZZz0vOUcENi4CWjJeHMmsARmc+tlNoHnps9dyY/ednOpgHmL/JOgN4YtbNpMWsCgPRcbvhjO/f88+5rse279IaG8S8+IgIiAgCm+RhXCAiI4MjXaijSvHZd7IX9xXRq8sdv3UplYQbzNuWGISslIkJkAGA0xYSZdkp5LdyIJKWkqjogSmG7lZJXKXtWxXNdy0xPHh8+/9XH/raOlS8f5KpWG0Cex7gKANUESRJWPwgBcG4ZEoVXdzc/tqO5Z3t990bGGAAwrohi8crhz/ztK5p6+moDnHKJ14W5rhMQIFqp69wfUIN1TiErEZBxZBwZY5q2av8bka71dcs7Yzue7Tr4zk0LIVaS14WZDnVtqH3JdnIqvLo7tHJtduw0UzXPEVND36058JZjV9zsNEnvZgaK6pazFw+9DwBaKNLz4aAWabAyM4AoPemUC4o/WBuQv3C6adPjLdsGSlfHRbGAjCdHfhK5TKx/jx5d1vbUMwCAqsY13TzxG9d1z7IaN24hz3GK+eoZImOoaJ7n1QZUZpLmmT+bn+jv2PvKjZ8HS9euAEB29GR29CTTfFqoHhGkEFXLA0CwdXnD+t6x9970hGCKIl3HiMZ99U3VjTUAyNj0sSOKEQw/0rti34H8+Fjh0r/2TNKrlJxiwc6mEBAVVW+OGS2J0LJVarjxv0Mf2LkMAEjXUf3B+M49zKjLj55cCLitVVRrJNzZ3bCpL5BoA0VB1xW5DFPUytQESEmMgSNcyyrfmMhdGEMkNRhSg2F/R2fj5q1GYrl54teJw5+QlIsAquUuJQD4Io3+1g5fNB55eJMzNTn+zadzMax+9W1koGo+YAr36egzANDKJM0Tv6RGhhat5OogKZExALBzGTuXgVEwonHu0wAREBFArQsHV6y5Nvg5CBsBPOGI4qwwZ6x08pbEIr1oIaMaKmOcQAIy8jy41SjIdYU5lRo+evdGZHzOzUsB5gIhkiQlKKpi6GogCIgkSQ1FuB7gPp903IVLgehu9SUBADfd7Yhwz5Z1r8dRUQGI64ZTKkghiAgAAWq8AbdJPPjxegC4/wH/A7GxKF1lxY0GAAAAAElFTkSuQmCC">
 <title>OP · Nutrition Tracker</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -285,6 +293,14 @@ details.optional-section summary::after{content:'';flex:1;height:1px;background:
 </style>
 </head>
 <body>
+
+<div id="update-bar" style="display:none;position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom));
+     z-index:400;margin:0 12px;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:10px;
+     padding:11px 14px;align-items:center;gap:12px;box-shadow:0 6px 24px rgba(0,0,0,0.45);">
+  <span style="flex:1;font-size:12.5px;line-height:1.45;color:var(--text);">A new version is ready.</span>
+  <button id="update-btn" style="flex-shrink:0;background:var(--cyan);border:none;border-radius:7px;color:#00131a;
+          font-family:inherit;font-size:12px;font-weight:700;padding:7px 13px;cursor:pointer;">Reload</button>
+</div>
 
 <div id="onboard-overlay" class="onboard-overlay" style="display:none;">
   <div class="onboard-step active" id="ob-step-1">
@@ -970,9 +986,24 @@ function calcTargets(){
   if(settings.customProtein){protein=parseInt(settings.customProtein);customApplied.push('protein');}
   var fat=Math.round(f.weightKg*1.0);
   if(settings.customFat){fat=parseInt(settings.customFat);customApplied.push('fat');}
-  var carbCals=calTarget-(protein*4)-(fat*9);
-  var carbs=Math.max(0,Math.round(carbCals/4));
-  if(settings.customCarbs){carbs=parseInt(settings.customCarbs);customApplied.push('carbs');}
+  // Protein and fat are held constant across the week — protein protects lean mass and fat
+  // supports hormone function, so neither should rise and fall with the training day swing.
+  // Carbohydrate is the macro that flexes, which means it has to be solved against the calorie
+  // figure for THE DAY BEING SHOWN. Solving it once against calTarget and then printing it
+  // beside trainingCal (calTarget + swing) left the three macros short by exactly `swing`,
+  // every day, in the same direction. A fixed offset like that reads as a rounding fault but
+  // is not one: rounding three macros to whole grams can only ever move the sum a few kcal.
+  function carbsForCalories(calFigure){
+    if(settings.customCarbs) return parseInt(settings.customCarbs);
+    return Math.max(0,Math.round((calFigure-(protein*4)-(fat*9))/4));
+  }
+  var carbs=carbsForCalories(calTarget);
+  var trainingCarbs=carbsForCalories(trainingCal);
+  var restCarbs=carbsForCalories(restCal);
+  if(settings.customCarbs) customApplied.push('carbs');
+  // A manual carb override is the user's explicit instruction, so it is honoured even though it
+  // breaks reconciliation. Everywhere else, the three macros must add up to the calories shown.
+  var macrosReconcile=!settings.customCarbs;
 
   // Signed kg/week the current calorie target is aiming to produce. This is the number the
   // rate-gap readout compares real, observed weight change against.
@@ -989,7 +1020,8 @@ function calcTargets(){
   return {
     tdee:effectiveTDEE,formulaTDEE:f.tdee,usingAdaptive:usingAdaptive,
     calTarget:calTarget,trainingCal:trainingCal,restCal:restCal,floorApplied:floorApplied,safetyFloor:safetyFloor,
-    protein:protein,carbs:carbs,fat:fat,weeklyChange:weeklyChange,
+    protein:protein,carbs:carbs,fat:fat,trainingCarbs:trainingCarbs,restCarbs:restCarbs,
+    macrosReconcile:macrosReconcile,weeklyChange:weeklyChange,
     bmr:f.bmr,goalLabel:gc.label,swing:swing,goalMultiplier:gc.multiplier,
     workingWeight:f.weight,workingWeightSource:f.workingWeightSource,unit:settings.unit,
     customApplied:customApplied,customBelowFloor:customBelowFloor,goalDirWarning:goalDirWarning
@@ -999,7 +1031,22 @@ function calcTargets(){
 function getActiveTarget(dayType){
   var t=calcTargets();
   if(!t) return null;
-  return {cal:dayType==='training'?t.trainingCal:t.restCal,protein:t.protein,carbs:t.carbs,fat:t.fat};
+  var training=dayType==='training';
+  return {cal:training?t.trainingCal:t.restCal,protein:t.protein,
+    carbs:training?t.trainingCarbs:t.restCarbs,fat:t.fat};
+}
+
+// Guard rail for D1. Protein and carbohydrate are 4 kcal/g, fat is 9. Any target the app shows a
+// customer must satisfy that identity, or the plan on screen is not internally consistent. Called
+// from the two places a target is rendered; logs rather than throws, because a reconciliation
+// warning must never be able to blank the screen the user is standing in front of.
+function assertMacrosReconcile(cal,protein,carbs,fat,where){
+  var sum=protein*4+carbs*4+fat*9;
+  if(Math.abs(sum-cal)>12){
+    console.error('Macro reconciliation failed at '+where+': macros sum to '+sum+' kcal against a target of '+cal+' kcal (out by '+(sum-cal)+')');
+    return false;
+  }
+  return true;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1073,6 +1120,7 @@ function renderTodayTarget(){
       '<div style="margin-top:8px;font-size:13px;color:var(--muted);">Complete your profile in Settings to see today\'s target here — the recommended calories and macros before you log anything.</div></div>';
     return;
   }
+  if(tgt) assertMacrosReconcile(tgt.cal,tgt.protein,tgt.carbs,tgt.fat,'Daily tab');
   var otherType=dayType==='training'?'rest':'training';
   var adaptiveNote=recal.workingMaintenance!=null?'<div class="today-target-adaptive">Adaptive — based on your logged intake and actual weight change over the last two weeks, not just the formula.</div>':'';
   el.innerHTML='<div class="today-target-card">'+
@@ -1457,10 +1505,23 @@ function getWorkingBodyFat(){
   return {pct:Math.round(pct*10)/10,source:'logged',method:chosen[0].bfMethod,count:chosen.length,asOf:chosen[chosen.length-1].date};
 }
 
+// A single morning's scale reading carries a kilo or more of water noise, and that noise lands
+// entirely in the lean-mass figure once fat mass is taken out of it. Averaging the weigh-ins in a
+// +/-3 day window around the reading damps that without inventing data. Falls back to the
+// reading's own weight when there is nothing nearby to average.
+function pairedWeightKg(entry){
+  var own=parseFloat(entry.weight);
+  var w=getAvgWeightInWindow(addDays(entry.date,-3),addDays(entry.date,3),false);
+  var v=(w&&w.count>=2)?w.avg:own;
+  return (v>0)?v:own;
+}
+
 function compositionForEntry(entry){
   if(!entry||entry.bf==null||!entry.weight) return null;
-  var kg=parseFloat(entry.weight),bf=parseFloat(entry.bf);
+  var kg=pairedWeightKg(entry),bf=parseFloat(entry.bf);
   if(!(kg>0)||!(bf>0)) return null;
+  // fatKg and leanKg are both derived from the SAME kg, so fatDelta + leanDelta is identically
+  // the weight delta between any two of these objects. That identity is what D2 broke.
   return {weightKg:kg,bf:bf,fatKg:kg*bf/100,leanKg:kg*(1-bf/100),method:entry.bfMethod||null,date:entry.date};
 }
 
@@ -1650,11 +1711,21 @@ function renderPhaseHistory(){
       var cd=compositionDelta(p.startDate,rangeEnd);
       if(cd&&cd.spanDays>0){
         var u=settings.unit;
+        // The composition split is measured between the two body fat readings, which almost never
+        // sit exactly on the phase start and end dates. Printing it beside the phase-length weight
+        // change made three numbers that could not add up. It now states its own window and its
+        // own weight change over that window, so fat + lean = weight on the figures shown.
+        var sameWindow=(cd.startDate===p.startDate&&cd.endDate===rangeEnd);
+        var reconciles=Math.abs((cd.fatDeltaKg+cd.leanDeltaKg)-cd.weightDeltaKg)<0.05;
+        if(!reconciles) console.error('Composition reconciliation failed for phase '+p.label);
         compHtml='<div class="working-weight-note" style="margin-top:10px;border-left-color:'+(cd.fatDeltaKg<0?'var(--green)':'var(--gold)')+';">'+
-          '<strong>Composition:</strong> '+fmtMass(Math.abs(cd.fatDeltaKg),u,1)+' '+u+' of fat '+(cd.fatDeltaKg<0?'lost':'gained')+
-          ', '+fmtMass(Math.abs(cd.leanDeltaKg),u,1)+' '+u+' of lean mass '+(cd.leanDeltaKg<0?'lost':'gained')+
+          '<strong>Composition</strong>'+(sameWindow?'':' <span style="color:var(--dim);">('+formatDate(cd.startDate)+' → '+formatDate(cd.endDate)+', '+cd.spanDays+' days of this phase)</span>')+': '+
+          describeWeightDelta(cd.weightDeltaKg,u)+' over that stretch, made up of '+
+          fmtMass(Math.abs(cd.fatDeltaKg),u,1)+' '+u+' of fat '+(cd.fatDeltaKg<0?'lost':'gained')+
+          ' and '+fmtMass(Math.abs(cd.leanDeltaKg),u,1)+' '+u+' of lean mass '+(cd.leanDeltaKg<0?'lost':'gained')+
           ' &nbsp;·&nbsp; '+cd.startBf.toFixed(1)+'% → '+cd.endBf.toFixed(1)+'% body fat'+
           ' <span class="method-badge">'+esc(bfMethodInfo(cd.method).short)+'</span>'+
+          (sameWindow?'':'<br><span style="color:var(--dim);">The Weight Change figure above covers the whole phase. This line covers only the stretch between your two readings, which is why the two can differ.</span>')+
           (cd.mixedMethods?'<br><span style="color:var(--gold);">Start and end readings used different methods — indicative only.</span>':'')+
         '</div>';
       }
@@ -1802,6 +1873,46 @@ function applySettings(){
   renderCurrentPhaseSettings();
 }
 
+// Plausible human ranges. A value outside these is a typo, not a preference, so it is rejected
+// and reverted rather than stored. Weight bounds are expressed in the display unit.
+function settingRange(key){
+  var lbs=settings.unit==='lbs';
+  switch(key){
+    case 'age': return {min:10,max:100,label:'Age',unit:''};
+    case 'height': return {min:80,max:250,label:'Height',unit:' cm'};
+    case 'weight': return {min:lbs?66:30,max:lbs?660:300,label:'Current weight',unit:' '+settings.unit};
+    case 'goalWeight': return {min:lbs?66:30,max:lbs?660:300,label:'Goal weight',unit:' '+settings.unit};
+    case 'bf': return {min:3,max:70,label:'Body fat',unit:'%'};
+    case 'customCal': return {min:800,max:8000,label:'Custom calories',unit:' kcal'};
+    case 'customProtein': return {min:20,max:500,label:'Custom protein',unit:'g'};
+    case 'customCarbs': return {min:0,max:1200,label:'Custom carbs',unit:'g'};
+    case 'customFat': return {min:10,max:400,label:'Custom fat',unit:'g'};
+  }
+  return null;
+}
+
+// Runs on blur, not on every keystroke, because settings save as you type: rejecting mid-entry
+// would fire on the "6" of "65". On a bad value the field and the stored setting are both
+// cleared, so an impossible goal can never reach a projection or a calorie calculation.
+function validateSettingField(inputId,key){
+  var el=document.getElementById(inputId);
+  if(!el) return true;
+  var raw=el.value;
+  if(raw==='') return true;
+  var r=settingRange(key);
+  if(!r) return true;
+  var n=parseFloat(raw);
+  if(isNaN(n)||n<r.min||n>r.max){
+    showToast(r.label+' must be between '+r.min+r.unit+' and '+r.max+r.unit);
+    el.value='';
+    settings[key]='';
+    lsSet('opn-settings',settings);
+    renderTargets();renderTodayTarget();renderETA();updateLogPreview();
+    return false;
+  }
+  return true;
+}
+
 function clampWarn(val,min,max,label){
   var n=parseFloat(val);
   if(val!==''&&val!=null&&!isNaN(n)&&(n<min||n>max)){
@@ -1896,10 +2007,20 @@ document.getElementById('unit-lbs').addEventListener('click',function(){setUnit(
 ['s-goal','s-activity'].forEach(function(id){
   document.getElementById(id).addEventListener('change',saveSettings);
 });
+[['s-age','age'],['s-height','height'],['s-weight','weight'],['s-bf','bf'],['s-goal-weight','goalWeight'],
+ ['s-custom-cal','customCal'],['s-custom-protein','customProtein'],['s-custom-carbs','customCarbs'],['s-custom-fat','customFat']
+].forEach(function(pair){
+  var el=document.getElementById(pair[0]);
+  if(el) el.addEventListener('blur',function(){validateSettingField(pair[0],pair[1]);});
+});
 
 function renderTargets(){
   var t=calcTargets();
   var container=document.getElementById('targets-display');
+  if(t&&t.macrosReconcile){
+    assertMacrosReconcile(t.trainingCal,t.protein,t.trainingCarbs,t.fat,'Settings training day');
+    assertMacrosReconcile(t.restCal,t.protein,t.restCarbs,t.fat,'Settings rest day');
+  }
   if(!t){container.innerHTML='<div class="card"><div class="card-body"><p style="font-size:12px;color:var(--muted);">Complete your profile above to generate targets.</p></div></div>';return;}
   var wc=t.weeklyChange;
   var wcSign=wc>0?'+':'';
@@ -1918,7 +2039,7 @@ function renderTargets(){
   container.innerHTML='<div class="targets-grid">'+
     '<div class="target-cell highlight full"><div class="target-label">'+esc(t.goalLabel)+' · Daily Average</div><div class="target-value">'+t.calTarget+'</div><div class="target-unit">kcal / day</div><div class="target-sub">Training days: '+t.trainingCal+' kcal &nbsp;·&nbsp; Rest days: '+t.restCal+' kcal</div></div>'+
     '<div class="target-cell"><div class="target-label">Protein</div><div class="target-value">'+t.protein+'</div><div class="target-unit">g / day</div></div>'+
-    '<div class="target-cell"><div class="target-label">Carbohydrates</div><div class="target-value">'+t.carbs+'</div><div class="target-unit">g / day</div></div>'+
+    '<div class="target-cell"><div class="target-label">Carbohydrates</div><div class="target-value">'+t.carbs+'</div><div class="target-unit">g / day</div><div class="target-sub">Training: '+t.trainingCarbs+'g &nbsp;·&nbsp; Rest: '+t.restCarbs+'g</div></div>'+
     '<div class="target-cell"><div class="target-label">Fat</div><div class="target-value">'+t.fat+'</div><div class="target-unit">g / day</div></div>'+
     '<div class="target-cell"><div class="target-label">Maintenance (TDEE)</div><div class="target-value">'+t.tdee+'</div><div class="target-unit">kcal / day'+(t.usingAdaptive?' · adaptive':' · formula')+'</div></div>'+
     '<div class="target-cell"><div class="target-label">Weekly Change</div><div class="target-value" style="font-size:16px;">'+wcSign+wc+' kg</div><div class="target-unit">'+wcNote+'</div></div>'+
@@ -2176,7 +2297,12 @@ document.getElementById('log-save-btn').addEventListener('click',function(){
   var carbs=parseFloat(document.getElementById('log-carbs').value)||0;
   var fat=parseFloat(document.getElementById('log-fat').value)||0;
   if(!date){showToast('Set a date');return;}
-  if(!cal&&!protein){showToast('Enter at least calories');return;}
+  // A bodyweight on its own is a complete, useful entry: the adaptive engine is driven by the
+  // weight trend, and refusing a weigh-in because no food was logged starved it of readings on
+  // precisely the days people are least likely to log food. Only a wholly empty row is refused.
+  var wCheck=document.getElementById('log-weight').value;
+  var bfCheck=settings.trackBodyFat?document.getElementById('log-bf').value:'';
+  if(!cal&&!protein&&wCheck===''&&bfCheck===''){showToast('Enter a bodyweight, calories, or a body fat reading');return;}
   if(cal<0||protein<0||carbs<0||fat<0){showToast('Values can\'t be negative');return;}
   var processed=document.getElementById('log-proc-yes').classList.contains('active');
   var confidence=document.getElementById('log-conf-estimated').classList.contains('active')?'estimated':'confirmed';
@@ -3207,6 +3333,51 @@ document.querySelectorAll('input[type="number"]').forEach(function(inp){
 loadAll();
 updateLogPreview();
 maybeShowOnboarding();
+
+// ══════════════════════════════════════════════════════════════
+// PWA: offline support and a controlled update
+// ──────────────────────────────────────────────────────────────
+// The service worker caches the app so it opens with no signal. It only registers over http(s),
+// because a worker cannot be registered from a file:// page — opening this file directly will
+// therefore never work offline, and that is a property of the browser, not a fault in the app.
+// A new build downloads in the background and then WAITS: swapping it in mid session would
+// discard whatever is half typed into the log form. The user reloads when it suits them.
+// ══════════════════════════════════════════════════════════════
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/sw.js').then(function(reg){
+      function offerUpdate(worker){
+        var bar=document.getElementById('update-bar');
+        var btn=document.getElementById('update-btn');
+        if(!bar||!btn) return;
+        bar.style.display='flex';
+        btn.onclick=function(){
+          btn.disabled=true;btn.textContent='Updating';
+          worker.postMessage({type:'SKIP_WAITING'});
+        };
+      }
+      if(reg.waiting&&navigator.serviceWorker.controller) offerUpdate(reg.waiting);
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange',function(){
+          // A controller already present means this is an update, not the first install.
+          if(nw.state==='installed'&&navigator.serviceWorker.controller) offerUpdate(nw);
+        });
+      });
+      document.addEventListener('visibilitychange',function(){
+        if(document.visibilityState==='visible') reg.update().catch(function(){});
+      });
+    }).catch(function(){ /* offline support is a bonus, never block the app on it */ });
+
+    var reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){
+      if(reloading) return;
+      reloading=true;
+      location.reload();
+    });
+  });
+}
 </script>
 </body>
 </html>

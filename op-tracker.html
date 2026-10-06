@@ -4825,9 +4825,12 @@ function isoDow(dateStr){
 }
 
 function weekSetsThroughDay(wkKey,maxDow,group){
-  // Working (and drop) sets logged in that ISO week up to and including
-  // maxDow. Used to compare a week in progress against the SAME point in
-  // the previous week, rather than against a completed week.
+  // Volume logged in that ISO week up to and including maxDow, counted on
+  // EXACTLY the same basis as the weekly cards:
+  //   no group  → working sets + weighted indirect credit (= totalSets)
+  //   a group   → that muscle's working sets + indirect credit (= group.sets)
+  // Counting it any other way made the like-for-like comparison compare
+  // different things on each side.
   var total=0;
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft'||!sess.date) return;
@@ -4835,16 +4838,24 @@ function weekSetsThroughDay(wkKey,maxDow,group){
     if(isoDow(sess.date)>maxDow) return;
     (sess.exercises||[]).forEach(function(ex){
       if(!ex.name) return;
-      if(group){
-        var lib=allExercises().find(function(e){return e.name===ex.name;});
-        if(!lib||lib.group!==group) return;
-      }
+      var lib=allExercises().find(function(e){return e.name===ex.name;});
+      if(!lib) return;
       var s=normalizeSets(ex);
-      total+=workingSets(s).length+dropSets(s).length;
+      var sets=workingSets(s).length;
+      var dropN=dropSets(s).length;
+      var sec=SECONDARY_MAP[ex.canonicalName||ex.name]||{};
+      if(!group){
+        total+=sets;
+        Object.keys(sec).forEach(function(g){ total+=(sets+dropN)*(sec[g]||0); });
+      } else {
+        if(lib.group===group) total+=sets;
+        if(sec[group]) total+=(sets+dropN)*sec[group];
+      }
     });
   });
   return total;
 }
+
 
 function getISOWeek(dateStr){
   var d=new Date(dateStr);var day=d.getDay()||7;d.setDate(d.getDate()+4-day);

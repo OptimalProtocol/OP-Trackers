@@ -361,6 +361,13 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .set-in{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;padding:7px 2px;text-align:center;width:100%;box-sizing:border-box;}
 .set-in:focus{border-color:var(--cyan);outline:none;}
 .set-in.rpe{font-size:11px;}
+.ex-dropdown-filter::-webkit-scrollbar{display:none;}
+.ex-filter-chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;color:var(--muted);font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px 11px;white-space:nowrap;flex-shrink:0;cursor:pointer;-webkit-appearance:none;}
+.ex-filter-chip.active{background:var(--accent);border-color:var(--accent);color:#0D1B2A;}
+
+body.rpe-off .set-row,body.rpe-off .sets-head{grid-template-columns:20px 78px 1fr 1fr 24px;}
+body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off .rpe-edit-cell{display:none !important;}
+
 .set-in.ghost-load{color:var(--muted);font-style:italic;opacity:0.62;border-style:dashed;}
 .set-in.ghost-load:focus{color:var(--text);font-style:normal;opacity:1;border-style:solid;}
 .set-in.disabled-rpe{background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.05);color:var(--muted);opacity:0.45;cursor:not-allowed;}
@@ -681,6 +688,18 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
           </div>
         </div>
       </div>
+      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-size:12px;color:var(--text);font-weight:600;">Track RPE</div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:3px;">Turn off to hide the RPE column everywhere. Loads, reps, PRs and progression are unaffected &mdash; any RPE already logged is kept.</div>
+          </div>
+          <div class="toggle-group" style="flex-shrink:0;">
+            <button class="toggle-opt active" id="rpe-on">On</button>
+            <button class="toggle-opt" id="rpe-off">Off</button>
+          </div>
+        </div>
+      </div>
       <p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;">Per-exercise overrides can be set in the Library tab.</p>
     </div></div>
   </div>
@@ -939,7 +958,7 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
     <div class="modal-log-section">
       <table class="hist-table" style="width:100%;min-width:580px;border-collapse:collapse;">
         <thead class="modal-log-thead"><tr>
-          <th>Date</th><th>Workout</th><th>Load</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th>RPE</th><th>PR</th><th></th>
+          <th>Date</th><th>Workout</th><th>Load</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th class="rpe-col">RPE</th><th>PR</th><th></th>
         </tr></thead>
         <tbody id="hist-body"></tbody>
       </table>
@@ -1188,7 +1207,7 @@ var EQUIPMENT_MAP = {
   "Pull-Through": ["Cable"],
   "Hip Thrust": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Glute Bridge": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
-  "Donkey Kick": ["Cable","Bodyweight","Band"],
+  "Donkey Kick": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Hip Abduction": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Standing Calf Raise": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Seated Calf Raise": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Band"],
@@ -2048,9 +2067,21 @@ function applyPrefillToggle(){
   if(b) b.classList.toggle('active',!on);
 }
 
+function applyRpeToggle(){
+  // Presentation only. The RPE inputs stay in the DOM so every reader,
+  // the PR engine and the progression algorithm are untouched — the
+  // column is simply collapsed out of the grid.
+  var on=settings.trackRPE!==false;
+  var a=document.getElementById('rpe-on'),b=document.getElementById('rpe-off');
+  if(a) a.classList.toggle('active',on);
+  if(b) b.classList.toggle('active',!on);
+  document.body.classList.toggle('rpe-off',!on);
+}
+
 function applySettings(){
   setUnit(settings.unit||'kg',false);
   applyPrefillToggle();
+  applyRpeToggle();
   applyPhaseToggle();
   // Rep ranges
   ['compound','isolation','stability'].forEach(function(type){
@@ -3930,7 +3961,7 @@ function setsBlockHtml(sets,unit){
     '<div class="last-sets" data-last-sets><div class="ls-tag">Last Session</div><div data-last-text></div></div>'+
     '<div class="sets-head">'+
       '<div class="sh"></div><div class="sh">Type</div><div class="sh">'+unit+'</div>'+
-      '<div class="sh">Reps</div><div class="sh">RPE</div><div class="sh"></div>'+
+      '<div class="sh">Reps</div><div class="sh sh-rpe">RPE</div><div class="sh"></div>'+
     '</div>'+
     '<div class="set-rows">'+rows+'</div>'+
     '<button class="add-set-btn" data-add-set>+ Add Set</button>'+
@@ -4082,7 +4113,7 @@ function renderLastSetsLine(card,sets,unit){
       '<td style="color:var(--muted);font-size:10px;padding:2px 0;width:26px;">'+tag+'</td>'+
       '<td style="font-weight:700;color:var(--text);padding:2px 6px;">'+(s.l||'\u2014')+unit+'</td>'+
       '<td style="color:var(--dim);padding:2px 6px;">'+(s.r||'\u2014')+'</td>'+
-      '<td style="color:var(--muted);padding:2px 0;">'+(s.rpe||'\u2014')+'</td>'+
+      '<td class="rpe-col" style="color:var(--muted);padding:2px 0;">'+(s.rpe||'\u2014')+'</td>'+
     '</tr>';
   }).join('');
   el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:JetBrains Mono,monospace;">'+
@@ -4090,7 +4121,7 @@ function renderLastSetsLine(card,sets,unit){
       '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding-bottom:3px;">SET</th>'+
       '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding:0 6px 3px;">LOAD</th>'+
       '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding:0 6px 3px;">REPS</th>'+
-      '<th style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding-bottom:3px;">RPE</th>'+
+      '<th class="rpe-col" style="text-align:left;font-size:8px;letter-spacing:0.08em;color:var(--muted);font-weight:700;padding-bottom:3px;">RPE</th>'+
     '</tr>'+rows+'</table>';
 }
 
@@ -4262,10 +4293,13 @@ function createSearchableDropdown(card,selectedName){
   var display=card.querySelector('.ex-selected-display');
   var dropdown=null;
   var currentValue=selectedName||'';
+  var activeGroup='';   // '' = All muscle groups
   function updateDisplay(){display.textContent=currentValue||'Select exercise…';display.style.color=currentValue?'var(--text)':'var(--muted)';}
   updateDisplay();
   function getFiltered(q){
-    var groups=GROUPS.slice(1);var results=[];
+    var groups=GROUPS.slice(1);
+    if(activeGroup) groups=groups.filter(function(g){return g===activeGroup;});
+    var results=[];
     groups.forEach(function(g){
       var exs=allExercises().filter(function(e){return e.group===g&&(!q||e.name.toLowerCase().indexOf(q.toLowerCase())>-1);});
       if(exs.length) results.push({group:g,exs:exs});
@@ -4276,8 +4310,9 @@ function createSearchableDropdown(card,selectedName){
     var listEl=dropdown.querySelector('.ex-dropdown-list');listEl.innerHTML='';
     var groups=getFiltered(q||'');
     if(!groups.length){listEl.innerHTML='<div class="ex-dropdown-empty">No exercises found</div>';return;}
+    var hideHeaders=!!activeGroup&&groups.length===1;
     groups.forEach(function(g){
-      var grpDiv=document.createElement('div');grpDiv.className='ex-dropdown-group';grpDiv.textContent=g.group;listEl.appendChild(grpDiv);
+      if(!hideHeaders){var grpDiv=document.createElement('div');grpDiv.className='ex-dropdown-group';grpDiv.textContent=g.group;listEl.appendChild(grpDiv);}
       g.exs.forEach(function(e){
         var item=document.createElement('div');item.className='ex-dropdown-item'+(e.name===currentValue?' selected':'');item.textContent=e.name;
         item.addEventListener('mousedown',function(ev){ev.preventDefault();});
@@ -4352,6 +4387,30 @@ function createSearchableDropdown(card,selectedName){
     searchIn.addEventListener('input',function(){buildList(searchIn.value);});
     searchIn.addEventListener('mousedown',function(e){e.stopPropagation();});
     searchWrap.appendChild(searchIn);dropdown.appendChild(searchWrap);
+    // Muscle-group filter — for users who know the muscle but not the name
+    var filtWrap=document.createElement('div');
+    filtWrap.className='ex-dropdown-filter';
+    filtWrap.style.cssText='display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0;scrollbar-width:none;';
+    var chipDefs=[{v:'',label:'All'}].concat(GROUPS.slice(1).map(function(g){return {v:g,label:g};}));
+    chipDefs.forEach(function(d){
+      var chip=document.createElement('button');
+      chip.type='button';
+      chip.className='ex-filter-chip'+(d.v===activeGroup?' active':'');
+      chip.setAttribute('data-group',d.v);
+      chip.textContent=d.label;
+      chip.addEventListener('mousedown',function(ev){ev.preventDefault();});
+      chip.addEventListener('click',function(ev){
+        ev.stopPropagation();
+        activeGroup=(activeGroup===d.v)?'':d.v;
+        filtWrap.querySelectorAll('.ex-filter-chip').forEach(function(x){
+          x.classList.toggle('active',x.getAttribute('data-group')===activeGroup);
+        });
+        buildList(searchIn.value);
+        haptic('save');
+      });
+      filtWrap.appendChild(chip);
+    });
+    dropdown.appendChild(filtWrap);
     var listEl=document.createElement('div');listEl.className='ex-dropdown-list';listEl.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;';
     dropdown.appendChild(listEl);buildList('');searchIn.focus();
     // Position at top of screen so keyboard doesn't cover it
@@ -5633,7 +5692,7 @@ function renderProgModal(name,logs,allLogs){
       '<td style="font-size:10px;color:var(--muted);white-space:nowrap;">'+(l.workout||'&mdash;')+'</td>'+
       '<td class="'+cls+'" style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;text-align:center;">'+(l.load||'&mdash;')+(l.load?unit:'')+'</td>'+
       (l.reps||[]).map(function(r){return '<td style="font-family:JetBrains Mono,monospace;font-size:11px;text-align:center;">'+(r||'&mdash;')+'</td>';}).join('')+
-      '<td style="font-size:11px;text-align:center;">'+(l.rpe||'&mdash;')+'</td>'+
+      '<td class="rpe-col" style="font-size:11px;text-align:center;">'+(l.rpe||'&mdash;')+'</td>'+
       '<td>'+badge+'</td>'+
       '<td style="white-space:nowrap;"><button class="edit-entry-btn" data-row="'+origIdx+'">Edit</button><button class="del-entry-btn" data-row="'+origIdx+'" style="margin-left:4px;">Del</button></td>';
     tbody.appendChild(tr);
@@ -5641,7 +5700,7 @@ function renderProgModal(name,logs,allLogs){
     editTr.innerHTML='<td colspan="11" style="padding:0;"><div class="edit-form-row">'+
       '<div class="edit-cell"><div class="edit-cell-label">Load</div><input type="number" class="edit-cell-input" value="'+(l.load||'')+'" data-field="load" inputmode="decimal"></div>'+
       [0,1,2,3,4].map(function(i){return '<div class="edit-cell"><div class="edit-cell-label">S'+(i+1)+'</div><input type="number" class="edit-cell-input" value="'+((l.reps&&l.reps[i])||'')+'" data-field="rep'+i+'" inputmode="numeric"></div>';}).join('')+
-      '<div class="edit-cell"><div class="edit-cell-label">RPE</div><input type="number" class="edit-cell-input" value="'+(l.rpe||'')+'" data-field="rpe" inputmode="decimal"></div>'+
+      '<div class="edit-cell rpe-edit-cell"><div class="edit-cell-label">RPE</div><input type="number" class="edit-cell-input" value="'+(l.rpe||'')+'" data-field="rpe" inputmode="decimal"></div>'+
       '</div><div class="edit-form-actions"><button class="btn btn-primary btn-sm save-edit-btn" data-row="'+origIdx+'">Save</button><button class="btn btn-secondary btn-sm cancel-edit-btn" data-row="'+origIdx+'">Cancel</button></div></td>';
     tbody.appendChild(editTr);
   });
@@ -6837,6 +6896,15 @@ document.getElementById('prefill-on').addEventListener('click',function(){
 document.getElementById('prefill-off').addEventListener('click',function(){
   settings.prefillLoads=false;lsSet('op-settings',settings);applyPrefillToggle();
   showToast('Exercises will start blank');
+});
+
+document.getElementById('rpe-on').addEventListener('click',function(){
+  settings.trackRPE=true;lsSet('op-settings',settings);applyRpeToggle();
+  showToast('RPE tracking on');
+});
+document.getElementById('rpe-off').addEventListener('click',function(){
+  settings.trackRPE=false;lsSet('op-settings',settings);applyRpeToggle();
+  showToast('RPE hidden \u2014 loads and reps unchanged');
 });
 
 document.getElementById('save-rep-ranges-btn').addEventListener('click',function(){

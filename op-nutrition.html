@@ -736,7 +736,7 @@ document.getElementById('op-logo').src = 'data:image/png;base64,' + LOGO_B64;
 // ══════════════════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════════════════
-var APP_BUILD='1.0.2';
+var APP_BUILD='1.0.3';
 var CONFIG={
   COMPLIANCE_CAL_BAND:0.10,        // calories must land within ±10% of that day's target
   COMPLIANCE_PROTEIN_FLOOR:0.90,   // protein must be at or above 90% of target
@@ -1223,6 +1223,14 @@ function getRecalStatus(){
     calDays:calDays.length, calDaysNeeded:CONFIG.RECAL_MIN_CAL_DAYS,
     confirmedCalDays:confirmedCalDays.length,
     confirmedShare:Math.round(confirmedShare*100),
+    // Two different things, kept apart because conflating them is what made a passing row look
+    // like a failing one. trustMet is the hard gate: below it the intake figure is mostly
+    // fiction and the engine refuses. cleanData is a quality level: above it the engine can
+    // work to a tighter trigger. Between the two it works perfectly well, just more cautiously.
+    confirmedShareNeeded:Math.round(CONFIG.RECAL_MIN_CONFIRMED_SHARE*100),
+    confirmedShareClean:Math.round(CONFIG.RECAL_GOOD_CONFIRMED_SHARE*100),
+    trustMet:confirmedShare>=CONFIG.RECAL_MIN_CONFIRMED_SHARE,
+    cleanData:confirmedShare>=CONFIG.RECAL_GOOD_CONFIRMED_SHARE,
     lowTrust:confirmedShare<CONFIG.RECAL_GOOD_CONFIRMED_SHARE,
     weighFirst:weighFirst.length, weighSecond:weighSecond.length, weighNeeded:CONFIG.RECAL_MIN_WEIGH_PER_HALF,
     weighIns:weighDays.length, totalLogged:inWindow.length,
@@ -2517,6 +2525,13 @@ function renderPlateauBanner(){
 
 // The engine explaining itself. Whether it is acting, waiting, or deliberately holding still,
 // the user can see which — and what would have to change for it to act.
+function TRUST_EXPLAIN(st){
+  var short=Math.max(1,Math.ceil((CONFIG.RECAL_MIN_CONFIRMED_SHARE*st.calDays)-st.confirmedCalDays));
+  return 'Only '+st.confirmedShare+'% of your logged days were marked Confirmed, against the '+st.confirmedShareNeeded+
+    '% this needs. The engine works by treating your calorie figure as fact and solving for maintenance — below about a third weighed, that figure is mostly guesswork, and it would be overriding a formula with a worse guess. Weigh your food on '+
+    short+' more day'+(short===1?'':'s')+' in this window and it will start.';
+}
+
 function renderEngineStatus(){
   var el=document.getElementById('engine-status');
   if(!el) return;
@@ -2532,12 +2547,18 @@ function renderEngineStatus(){
   if(!st.eligible&&st.blockedBy==='profile'){
     dotColor='var(--muted)';label='Waiting on your profile';
     explain='Fill in age, height and current weight in Settings so there is a baseline to measure against.';
+  } else if(st.blockedBy==='trust'){
+    // This branch used to sit AFTER the generic "not eligible" one. Being blocked for trust also
+    // sets eligible=false, so the generic branch always caught it first and this state could
+    // never render: a customer blocked on weighed-food share was told "Collecting data" and had
+    // no way to learn what was actually holding it up.
+    dotColor='var(--gold)';label='Intake too speculative';
+    explain=TRUST_EXPLAIN(st);
   } else if(!st.eligible){
     dotColor='var(--gold)';label='Collecting data';
     explain='The engine needs enough of the last '+st.windowDays+' days covered before it will move your numbers. It will not guess from thin data — a maintenance figure built on three weigh-ins would move your target around for no good reason.';
-  } else if(st.blockedBy==='trust'){
-    dotColor='var(--gold)';label='Intake too speculative';
-    explain='Only '+st.confirmedShare+'% of your logged days were marked Confirmed. The engine works by treating your calorie figure as fact and solving for maintenance — if most of that figure is estimated, it would be overriding a formula with a guess. Weigh your food on more days and it will start.';
+  } else if(false){
+    dotColor='var(--gold)';label='Intake too speculative';explain='';
   } else if(st.blockedBy==='agreement'){
     dotColor='var(--green)';label='Measured and holding';
     explain='This is the engine working, not the engine idle. Across the last '+st.windowDays+' days your intake averaged <b>'+st.avgLoggedCal+' kcal</b> and your weight trend moved <b>'+fmtRate(st.weeklyRateKg,unit)+'</b>. That implies real maintenance of <b>'+st.impliedMaintenance+' kcal</b>, against the <b>'+st.baseline+'</b> in use — a gap of '+Math.abs(st.divergence)+' kcal. Your data supports measuring that to about ±'+st.measurementSE+' kcal, so it waits for a gap of '+st.triggerKcal+' before moving anything. Below that it would be reacting to scatter, not to you.';
@@ -2551,10 +2572,13 @@ function renderEngineStatus(){
   html+='<div class="eng-req"><span class="eng-req-icon '+(calMet?'eng-req-met':'eng-req-unmet')+'">'+(calMet?'✓':'!')+'</span>'+
     '<span class="eng-req-text">Days with calories logged, last '+st.windowDays+' days</span>'+
     '<span class="eng-req-count">'+st.calDays+'/'+st.calDaysNeeded+'</span></div>';
-  var trustMet=!st.lowTrust;
+  // Requirement row: pass or fail against the real gate, with the threshold printed, exactly as
+  // the two rows either side of it do. Anything short of the gate is a genuine blocker; anything
+  // above it passes, and the quality note below says what a higher share would buy.
+  var trustMet=st.trustMet;
   html+='<div class="eng-req"><span class="eng-req-icon '+(trustMet?'eng-req-met':'eng-req-unmet')+'">'+(trustMet?'✓':'!')+'</span>'+
     '<span class="eng-req-text">...of those, days you weighed your food</span>'+
-    '<span class="eng-req-count">'+st.confirmedCalDays+' &nbsp;·&nbsp; '+st.confirmedShare+'%</span></div>';
+    '<span class="eng-req-count">'+st.confirmedShare+'% / '+st.confirmedShareNeeded+'% min</span></div>';
   html+='<div class="eng-req"><span class="eng-req-icon '+(weighMet?'eng-req-met':'eng-req-unmet')+'">'+(weighMet?'✓':'!')+'</span>'+
     '<span class="eng-req-text">Weigh-ins in each half of that window</span>'+
     '<span class="eng-req-count">'+st.weighFirst+'/'+st.weighNeeded+' &nbsp;·&nbsp; '+st.weighSecond+'/'+st.weighNeeded+'</span></div>';
@@ -2573,10 +2597,12 @@ function renderEngineStatus(){
   html+='<div class="eng-explain">'+explain+'</div>';
 
   if(st.eligible&&st.lowTrust){
-    html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--gold);">Only '+st.confirmedShare+
-      '% of these days were weighed'+(st.avgConfirmedCal!=null?' — those averaged '+st.avgConfirmedCal+' kcal against '+st.avgLoggedCal+' across all days':'')+
-      '. Both sets are counted, because the food on the estimated days moved the scale just the same. But guessed days widen the error bar, which is why the engine is waiting for a '+
-      st.triggerKcal+' kcal gap here rather than the '+CONFIG.RECAL_TRIGGER_MIN+' it would need from clean data.</div>';
+    html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;">'+
+      '<b style="color:var(--green);">'+st.confirmedShare+'% weighed is above the '+st.confirmedShareNeeded+'% the engine requires, so nothing is being held up by it.</b> '+
+      'At '+st.confirmedShareClean+'% or more it treats your intake figure as clean'+
+      (st.avgConfirmedCal!=null?'. Your weighed days averaged '+st.avgConfirmedCal+' kcal against '+st.avgLoggedCal+' across all days':'')+
+      '. Both sets are counted either way, because the food on the estimated days moved the scale just the same. Guessed days only widen the error bar, which is why the engine is waiting for a '+
+      st.triggerKcal+' kcal gap here rather than the '+CONFIG.RECAL_TRIGGER_MIN+' it would ask of perfectly clean data. Nothing is rejected, it is simply more cautious.</div>';
   }
   if(st.eligible&&st.weightNoiseKg!=null&&st.weightNoiseKg>0.7){
     html+='<div class="eng-explain" style="border-top:none;padding-top:0;margin-top:8px;color:var(--gold);">Your weigh-ins scatter about '+
@@ -3445,41 +3471,142 @@ document.addEventListener('opn-installed',function(){
 });
 document.getElementById('install-btn').addEventListener('click',function(){
   var e=window.__opnInstall;
-  if(!e){showToast('Your browser has not offered an install yet — try reloading the page');return;}
+  if(!e){showToast('Chrome has not offered an install yet. Check the lines below for the reason.');renderAppDiagnostics();return;}
   e.prompt();
   e.userChoice.then(function(){window.__opnInstall=null;renderInstallUI();renderAppDiagnostics();});
 });
 
+// Chrome shows "Add to Home screen" (a plain shortcut) instead of "Install app" when ANY ONE of
+// its installability criteria fails, and it tells the user nothing about which. This checks each
+// one and names the failure, because "it only offers a shortcut" is otherwise unanswerable.
+var DIAG = null;
+
+function collectDiagnostics(){
+  var d = {
+    build: APP_BUILD,
+    url: location.href.split('#')[0],
+    origin: location.protocol + '//' + location.host,
+    secure: !!window.isSecureContext,
+    standalone: isStandalone(),
+    ua: navigator.userAgent,
+    swSupported: ('serviceWorker' in navigator),
+    swError: window.__opnSwError || null,
+    swActive: false, swScope: null,
+    manifestOk: false, manifestError: null, manifestFields: null,
+    iconsOk: false, iconsDetail: null,
+    promptOffered: !!window.__opnInstall
+  };
+  var manifestHref = (document.getElementById('manifest-link') || {}).href || 'manifest.json';
+  var jobs = [];
+
+  if (d.swSupported) {
+    jobs.push(navigator.serviceWorker.getRegistration().then(function(r){
+      d.swActive = !!(r && (r.active || r.installing || r.waiting));
+      d.swScope = r ? r.scope : null;
+    }).catch(function(e){ d.swError = d.swError || String(e); }));
+  }
+
+  jobs.push(fetch(manifestHref, { cache: 'no-store' }).then(function(r){
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(j){
+    d.manifestOk = true;
+    var icons = j.icons || [];
+    var has = function(sz){ return icons.some(function(i){ return (i.sizes||'').split(' ').indexOf(sz) > -1; }); };
+    d.manifestFields = {
+      name: !!j.name, short_name: !!j.short_name, start_url: !!j.start_url,
+      display: j.display, icon192: has('192x192'), icon512: has('512x512'),
+      maskable: icons.some(function(i){ return (i.purpose||'').indexOf('maskable') > -1; })
+    };
+    // Resolve the icon URLs against the manifest, which is how the browser does it.
+    var want = icons.filter(function(i){ return /192x192|512x512/.test(i.sizes||''); })
+      .map(function(i){ return new URL(i.src, manifestHref).href; });
+    return Promise.all(want.map(function(u){
+      return fetch(u, { method: 'GET', cache: 'no-store' }).then(function(r){ return { u: u, s: r.status }; })
+        .catch(function(){ return { u: u, s: 0 }; });
+    })).then(function(res){
+      d.iconsOk = res.length > 0 && res.every(function(r){ return r.s === 200; });
+      d.iconsDetail = res.map(function(r){ return r.u.split('/').pop() + '=' + r.s; }).join(', ');
+    });
+  }).catch(function(e){ d.manifestError = (e && e.message) ? e.message : String(e); }));
+
+  return Promise.all(jobs).then(function(){ DIAG = d; return d; });
+}
+
 function renderAppDiagnostics(){
-  var el=document.getElementById('app-diag');
-  if(!el) return;
-  var rows=[];
-  function row(label,ok,note){
-    var color=ok===true?'var(--green)':ok===false?'var(--gold)':'var(--muted)';
-    var mark=ok===true?'✓':ok===false?'!':'·';
-    rows.push('<div><span style="color:'+color+';font-weight:700;display:inline-block;width:14px;">'+mark+'</span>'+label+(note?' <span style="color:var(--muted);">'+note+'</span>':'')+'</div>');
-  }
-  var local=location.protocol==='file:';
-  row('Version '+APP_BUILD,null,'');
-  row(isStandalone()?'Installed to home screen':'Running in a browser tab',isStandalone(),isStandalone()?'':'install it to protect your data');
-  if(local){
-    row('Served over the web',false,'opened as a local file');
-    el.innerHTML=rows.join('')+'<div style="margin-top:9px;color:var(--gold);line-height:1.6;">You have opened this file directly from your device. Browsers do not allow offline support or a proper install from a local file, so neither will work here. Both work once the file is served from a web address, which is how it is delivered to customers.</div>';
-    return;
-  }
-  row('Served over the web',true,'');
-  var hasSW='serviceWorker' in navigator;
-  var reg=hasSW?navigator.serviceWorker.controller:null;
-  row('Offline support active',!!reg,reg?'':'checking');
-  el.innerHTML=rows.join('');
-  if(hasSW){
-    navigator.serviceWorker.getRegistration().then(function(r){
-      var active=!!(r&&r.active);
-      var rows2=rows.slice(0,3);
-      rows2.push('<div><span style="color:'+(active?'var(--green)':'var(--gold)')+';font-weight:700;display:inline-block;width:14px;">'+(active?'✓':'!')+'</span>Offline support active'+(active?'':' <span style="color:var(--muted);">sw.js not found beside this file</span>')+'</div>');
-      el.innerHTML=rows2.join('')+(active?'':'<div style="margin-top:9px;color:var(--gold);line-height:1.6;">The tracker is three files: op-nutrition.html, sw.js and manifest.json, plus the icons folder. They must sit together. Offline support comes from sw.js and cannot be built into a single file, because browsers refuse to run a service worker that is not its own file on the same address.</div>');
-    }).catch(function(){});
-  }
+  var el = document.getElementById('app-diag');
+  if (!el) return;
+  collectDiagnostics().then(function(d){
+    var rows = [];
+    function row(ok, label, note){
+      var c = ok === true ? 'var(--green)' : ok === false ? 'var(--red)' : 'var(--muted)';
+      var m = ok === true ? '\u2713' : ok === false ? '\u2715' : '\u00b7';
+      rows.push('<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:' + c +
+        ';font-weight:700;flex-shrink:0;">' + m + '</span><span style="flex:1;min-width:0;">' + label +
+        (note ? ' <span style="color:var(--muted);">' + note + '</span>' : '') + '</span></div>');
+    }
+
+    row(null, 'Version ' + d.build, '');
+    // Deliberately not a pass/fail mark: running in a tab is a state, not one of Chrome's
+    // installability criteria, and a red cross here read as though something were broken.
+    row(d.standalone ? true : null, d.standalone ? 'Installed to home screen' : 'Running in a browser tab',
+        d.standalone ? '' : 'installing protects your data from browser clean-ups');
+
+    if (location.protocol === 'file:') {
+      row(false, 'Served from a web address', 'opened as a local file');
+      el.innerHTML = rows.join('') + '<div style="margin-top:10px;color:var(--gold);line-height:1.6;">' +
+        'This file was opened directly from your device. Browsers do not allow a real install or any offline support from a local file. Both need the folder to be served from a web address.</div>';
+      return;
+    }
+
+    // localhost counts as secure without https, so the label is "secure context" rather than
+    // "https", and the actual origin is printed so there is nothing to infer.
+    row(d.secure, 'Secure context', d.origin + (d.secure ? '' : ' — not https, which blocks service workers and installs'));
+    row(d.manifestOk, 'App manifest found', d.manifestOk ? '' : (d.manifestError || 'not found beside this file'));
+    if (d.manifestOk && d.manifestFields) {
+      var f = d.manifestFields;
+      var mOk = f.name && f.short_name && f.start_url && f.display === 'standalone' && f.icon192 && f.icon512;
+      row(mOk, 'Manifest has everything Chrome requires',
+          mOk ? '' : 'missing ' + [!f.name && 'name', !f.short_name && 'short_name', f.display !== 'standalone' && 'display:standalone',
+                                   !f.icon192 && '192px icon', !f.icon512 && '512px icon'].filter(Boolean).join(', '));
+      row(d.iconsOk, 'Icon files reachable', d.iconsOk ? '' : (d.iconsDetail || 'not served'));
+    }
+    row(d.swActive, 'Offline support active',
+        d.swActive ? ('scope ' + (d.swScope || '')) : (d.swError || 'sw.js not found beside this file'));
+
+    var allGreen = d.secure && d.manifestOk && d.iconsOk && d.swActive;
+    var verdict;
+    if (d.standalone) {
+      verdict = '<div style="margin-top:10px;color:var(--green);line-height:1.6;">Installed and running as an app.' +
+        (d.swActive ? ' Offline support is active, so this will open with no signal.' : ' Offline support is not active, so it will need a connection.') + '</div>';
+    } else if (allGreen) {
+      verdict = '<div style="margin-top:10px;color:var(--green);line-height:1.6;">Everything Chrome needs is in place. ' +
+        (d.promptOffered ? 'Use the Install button above.' : 'Chrome sometimes waits for a second visit before offering it, so reload once if the Install button has not appeared. On iPhone, Safari never offers one: use Share, then Add to Home Screen.') + '</div>';
+    } else {
+      var first = !d.secure ? 'the connection is not https' :
+                  !d.manifestOk ? 'manifest.json is not being served beside this file' :
+                  !d.iconsOk ? 'the icon files are not being served' :
+                  'sw.js is not registering';
+      verdict = '<div style="margin-top:10px;color:var(--gold);line-height:1.6;"><b>This is why your phone offers a shortcut instead of an install, and why it will not open offline:</b> ' + first +
+        '. Android only offers a real install when every line above is green, and it never says which one failed. ' +
+        'All four files must sit in the same folder and be served over https: op-nutrition.html, sw.js, manifest.json and the icons folder.</div>';
+    }
+
+    el.innerHTML = rows.join('') + verdict +
+      '<button id="diag-copy-btn" style="margin-top:12px;width:100%;background:var(--surface2);border:1px solid var(--border);' +
+      'border-radius:7px;color:var(--dim);font-family:inherit;font-size:12px;padding:9px;cursor:pointer;">Copy diagnostics</button>';
+
+    var btn = document.getElementById('diag-copy-btn');
+    if (btn) btn.addEventListener('click', function(){
+      var text = JSON.stringify(DIAG, null, 2);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function(){ showToast('Diagnostics copied'); })
+          .catch(function(){ showBackupAsText(text); });
+      } else { showBackupAsText(text); }
+    });
+  }).catch(function(e){
+    el.textContent = 'Diagnostics unavailable: ' + e;
+  });
 }
 renderInstallUI();
 renderAppDiagnostics();
@@ -3494,7 +3621,10 @@ setTimeout(function(){renderInstallUI();renderAppDiagnostics();},1500);
 // A new build downloads in the background and then WAITS: swapping it in mid session would
 // discard whatever is half typed into the log form. The user reloads when it suits them.
 // ══════════════════════════════════════════════════════════════
-if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+window.__opnSwError=null;
+if(!('serviceWorker' in navigator)) window.__opnSwError='This browser has no service worker support';
+else if(!window.isSecureContext) window.__opnSwError='Not a secure context. Service workers need https, or localhost. This page is on '+location.protocol+'//'+location.host;
+if('serviceWorker' in navigator && window.isSecureContext){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js').then(function(reg){
       function offerUpdate(worker){
@@ -3519,7 +3649,12 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
       document.addEventListener('visibilitychange',function(){
         if(document.visibilityState==='visible') reg.update().catch(function(){});
       });
-    }).catch(function(){ /* offline support is a bonus, never block the app on it */ });
+    }).catch(function(err){
+      // Swallowing this was a mistake: a failed registration is the single most common reason
+      // offline and the Android install prompt both silently never appear.
+      window.__opnSwError=(err&&err.message)?err.message:String(err);
+      try{renderAppDiagnostics();}catch(e){}
+    });
 
     var reloading=false;
     navigator.serviceWorker.addEventListener('controllerchange',function(){

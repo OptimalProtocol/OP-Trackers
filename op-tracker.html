@@ -503,6 +503,11 @@ body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off
 .prog-prompt .pp-head{font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;line-height:1.3;}
 .prog-prompt .pp-sub{font-size:11px;line-height:1.45;margin-top:2px;}
 
+.prog-prompt.build{background:rgba(0,180,216,0.06);border:1px solid rgba(0,180,216,0.22);}
+.prog-prompt.build .pp-head{color:var(--muted);font-size:9px;letter-spacing:0.1em;}
+.prog-prompt.build .pp-icon{color:var(--cyan);font-size:13px;}
+.prog-prompt.build .pp-sub{color:var(--dim);}
+.prog-prompt .pp-big{font-size:15px;font-weight:800;color:var(--text);line-height:1.25;margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:-0.01em;}
 .prog-prompt.repeat{background:rgba(0,180,216,0.09);border:1px solid rgba(0,180,216,0.32);}
 .prog-prompt.repeat .pp-head{color:var(--cyan);}
 .prog-prompt.repeat .pp-sub{color:var(--dim);}
@@ -949,10 +954,9 @@ body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off
     <div class="modal-chart-section"><svg class="chart-svg" id="prog-chart"></svg>
       <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
         <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#DCE6F0;margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>No PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Load PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);border:2px solid var(--orange);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Current load PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--orange);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Rep PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--orange);border:2px solid var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Current rep PR</span></div>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>PR</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);border:2px solid #F0F6FC;margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>PR still stands</span>
+        <span style="font-size:9px;color:var(--muted);font-style:italic;">Tap any dot for the detail</span></div>
     </div>
     <div class="modal-summary-strip" id="modal-summary"></div>
     <div class="modal-log-section">
@@ -1209,6 +1213,7 @@ var EQUIPMENT_MAP = {
   "Glute Bridge": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Donkey Kick": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Hip Abduction": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
+  "Hip Adduction": ["Cable","Pin-Select Machine","Plate-Loaded Machine","Band"],
   "Standing Calf Raise": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Cable","Pin-Select Machine","Plate-Loaded Machine","Bodyweight","Band"],
   "Seated Calf Raise": ["Barbell","Dumbbell","Kettlebell","Smith Machine","Pin-Select Machine","Plate-Loaded Machine","Band"],
   "Leg Press Calf Raise": ["Pin-Select Machine","Plate-Loaded Machine"],
@@ -1323,6 +1328,7 @@ var BILAT_MAP = {
   "Glute Bridge": "both",
   "Donkey Kick": "unilateral",
   "Hip Abduction": "both",
+  "Hip Adduction": "both",
   "Standing Calf Raise": "both",
   "Seated Calf Raise": "both",
   "Leg Press Calf Raise": "both",
@@ -1525,6 +1531,10 @@ var MIGRATION_MAP = {
   "Cable Donkey Kick": {canonical:"Donkey Kick",equipment:"Cable"},
   "Cable Hip Abduction": {canonical:"Hip Abduction",equipment:"Cable"},
   "Machine Hip Abduction": {canonical:"Hip Abduction",equipment:"Pin-Select Machine"},
+  "Cable Hip Adduction": {canonical:"Hip Adduction",equipment:"Cable"},
+  "Machine Hip Adduction": {canonical:"Hip Adduction",equipment:"Pin-Select Machine"},
+  "Adductor Machine": {canonical:"Hip Adduction",equipment:"Pin-Select Machine"},
+  "Inner Thigh Machine": {canonical:"Hip Adduction",equipment:"Pin-Select Machine"},
   "Cable Pull-Through": {canonical:"Pull-Through",equipment:"Cable"},
   "Standing Calf Raise": {canonical:"Standing Calf Raise",equipment:"Pin-Select Machine"},
   "Seated Calf Raise": {canonical:"Seated Calf Raise",equipment:"Pin-Select Machine"},
@@ -1757,6 +1767,7 @@ var BUILT_IN = [
   {id:26,name:"Glute Bridge",group:"Glutes",muscles:"Glutes",type:"Compound"},
   {id:27,name:"Donkey Kick",group:"Glutes",muscles:"Glutes",type:"Isolation"},
   {id:28,name:"Hip Abduction",group:"Glutes",muscles:"Glutes",type:"Isolation"},
+  {id:33,name:"Hip Adduction",group:"Adductors",muscles:"Adductors",type:"Isolation"},
   {id:29,name:"Standing Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
   {id:30,name:"Seated Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
   {id:31,name:"Leg Press Calf Raise",group:"Calves",muscles:"Calves",type:"Isolation"},
@@ -2150,7 +2161,7 @@ document.getElementById('import-file').addEventListener('change',function(e){
 });
 
 // ── LIBRARY ──
-var GROUPS=['All','Quads','Hamstrings','Glutes','Calves','Back – Lats','Back – Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
+var GROUPS=['All','Quads','Hamstrings','Glutes','Adductors','Calves','Back – Lats','Back – Mid','Shoulders','Chest','Biceps','Triceps','Abs & Core'];
 document.getElementById('lib-search').addEventListener('input',renderLibrary);
 var editingCustomId=null;
 
@@ -2443,7 +2454,9 @@ function getProgressionTarget(exName,bilatMode,equipment){
   if(!lastLoad) return {type:'none',text:''};
 
   if(logs.length===1){
-    return {type:'base',text:'Target: '+lastLoad+unit+' \u00d7 '+(minRepsAtTop(last)+1)+' reps per set'};
+    return {type:'base',text:'Target: '+lastLoad+unit+' \u00d7 '+(minRepsAtTop(last)+1)+' reps per set',
+      load:lastLoad,unit:unit,lastReps:minRepsAtTop(last),targetReps:minRepsAtTop(last)+1,
+      sets:workingSets(last.sets).length,maxReps:maxReps};
   }
 
   var prev=logs[logs.length-2];
@@ -2466,12 +2479,18 @@ function getProgressionTarget(exName,bilatMode,equipment){
   var wsLast=workingSets(last.sets);
   var belowTop=wsLast.length-countAtTop(last);
   if(belowTop>0){
-    return {type:'build',
+    return {type:'build',mode:'bring-up',
       text:'Target: '+wsLast.length+' \u00d7 '+maxReps+' reps at '+lastLoad+unit+
-           ' ('+countAtTop(last)+' of '+wsLast.length+' at load last time)'};
+           ' ('+countAtTop(last)+' of '+wsLast.length+' at load last time)',
+      load:lastLoad,unit:unit,sets:wsLast.length,atTop:countAtTop(last),
+      targetReps:maxReps,maxReps:maxReps};
   }
   var nextTarget=Math.min(minRepsAtTop(last)+1,maxReps);
-  return {type:'build',text:'Target: '+lastLoad+unit+' \u00d7 '+nextTarget+' reps per set'};
+  return {type:'build',mode:'add-rep',
+    text:'Target: '+lastLoad+unit+' \u00d7 '+nextTarget+' reps per set',
+    load:lastLoad,unit:unit,sets:wsLast.length,
+    lastReps:minRepsAtTop(last),targetReps:nextTarget,maxReps:maxReps,
+    atCeiling:nextTarget===minRepsAtTop(last)};
 }
 
 // ── LOAD PREFILL ────────────────────────────────────────────────
@@ -2696,8 +2715,11 @@ function showExerciseStatusBar(card,exName){
 
     var rrF=getRepRange(exName);
     var tgtF=document.createElement('div');
-    tgtF.className='ex-card-target';
-    tgtF.textContent='Pick a weight you can hold for '+rrF.min+'\u2013'+rrF.max+' reps \u2014 this becomes your base load';
+    tgtF.className='prog-prompt build';
+    tgtF.innerHTML='<span class="pp-icon">\u25b8</span>'+
+      '<div class="pp-body"><div class="pp-head">Today\u2019s target</div>'+
+      '<div class="pp-big">'+rrF.min+'\u2013'+rrF.max+' reps per set</div>'+
+      '<div class="pp-sub">Pick a weight you can hold for that range on every working set \u2014 it becomes your base load.</div></div>';
     firstMeta.after(tgtF);
     return;
   }
@@ -2802,10 +2824,38 @@ function showExerciseStatusBar(card,exName){
       meta.after(p);
       if(type==='increase') card.classList.add('ready-to-progress');
     } else {
-      var tgt=document.createElement('div');
-      tgt.className='ex-card-target';
-      tgt.textContent=targetText;
-      meta.after(tgt);
+      // The build state is the one the user sees most weeks, and it used
+      // to be a 10px grey line that was easy to miss. It now carries the
+      // same visual weight as the other two, and states the target as a
+      // number against last session rather than leaving the user to work
+      // out what "+1 rep" means.
+      var p2=document.createElement('div');
+      p2.className='prog-prompt build';
+      var bigTxt='',subTxt='';
+      var d=progTarget||{};
+      if(isBase||type==='base'){
+        bigTxt=d.load?(d.load+(d.unit||unit)+' \u00d7 '+d.targetReps+' reps'):'Establish your working weight';
+        subTxt=d.load
+          ? 'Last session you managed '+d.lastReps+' on your lowest set at this weight. One more on every working set today.'
+          : 'Pick a weight you can hold for your full rep range \u2014 this becomes your base load.';
+      } else if(d.mode==='bring-up'){
+        bigTxt=d.sets+' \u00d7 '+d.targetReps+' reps at '+d.load+(d.unit||unit);
+        subTxt='Last session '+d.atTop+' of '+d.sets+' working sets were at '+d.load+(d.unit||unit)+
+               '. Bring every set up to that weight before the load goes up.';
+      } else if(d.atCeiling){
+        bigTxt=d.load+(d.unit||unit)+' \u00d7 '+d.targetReps+' reps on every set';
+        subTxt='You are at the top of your rep range on your best set. Match '+d.targetReps+
+               ' on every working set to unlock a load increase.';
+      } else {
+        bigTxt=d.load+(d.unit||unit)+' \u00d7 '+d.targetReps+' reps on every set';
+        subTxt='Last session: '+d.load+(d.unit||unit)+' \u00d7 '+d.lastReps+
+               '. Today is one rep more \u2014 '+d.targetReps+' on every working set.';
+      }
+      p2.innerHTML='<span class="pp-icon">\u25b8</span>'+
+        '<div class="pp-body"><div class="pp-head">Today\u2019s target</div>'+
+        '<div class="pp-big">'+bigTxt+'</div>'+
+        '<div class="pp-sub">'+subTxt+'</div></div>';
+      meta.after(p2);
     }
   }
   updateProgressAlert();
@@ -3787,7 +3837,8 @@ function shareSessionSummary(sess){
 
 var DEFAULT_LANDMARKS={
   'Quads':{mev:8,mav:16,mrv:22},'Hamstrings':{mev:6,mav:14,mrv:20},
-  'Glutes':{mev:6,mav:14,mrv:20},'Calves':{mev:8,mav:16,mrv:22},
+  'Glutes':{mev:6,mav:14,mrv:20},'Adductors':{mev:4,mav:10,mrv:16},
+  'Calves':{mev:8,mav:16,mrv:22},
   'Back \u2013 Lats':{mev:10,mav:18,mrv:25},'Back \u2013 Mid':{mev:8,mav:16,mrv:22},
   'Shoulders':{mev:8,mav:18,mrv:26},'Chest':{mev:8,mav:16,mrv:22},
   'Biceps':{mev:6,mav:14,mrv:20},'Triceps':{mev:6,mav:14,mrv:20},
@@ -5767,13 +5818,25 @@ function enrichLogs(logs){
   });
 }
 
-function showChartTooltip(evt,load,reps,date,unit,rpe){
+function prLabel(log,flags){
+  // The chart says only "a PR happened here". This names it on tap.
+  var f=flags||log||{};
+  var isLoad=!!f.prLoad,isRep=!!f.prRep;
+  if(!isLoad&&!isRep) return '';
+  var kind=(isLoad&&isRep)?'Load + rep PR':(isLoad?'Load PR':'Rep PR');
+  var stands=!!(f.prLoadCurrent||f.prRepCurrent);
+  return kind+(stands?' \u00b7 still stands':' \u00b7 since beaten');
+}
+
+function showChartTooltip(evt,load,reps,date,unit,rpe,prText,seriesText){
   var tip=document.getElementById('chart-tooltip');
   if(!tip){tip=document.createElement('div');tip.id='chart-tooltip';tip.className='chart-tooltip';document.body.appendChild(tip);}
   var repsArr=(reps||[]).filter(function(r){return r&&parseFloat(r)>0;}).map(function(r){return parseFloat(r);});
   tip.innerHTML='<div class="chart-tooltip-date">'+(date||'')+'</div>'+
     '<div class="chart-tooltip-load">'+(load||'')+(unit||'kg')+'</div>'+
-    '<div class="chart-tooltip-reps">'+repsArr.join(', ')+' reps'+(rpe?' · RPE '+rpe:'')+'</div>';
+    '<div class="chart-tooltip-reps">'+repsArr.join(', ')+' reps'+(rpe?' · RPE '+rpe:'')+'</div>'+
+    (seriesText?'<div style="font-size:9px;color:var(--muted);margin-top:3px;">'+seriesText+'</div>':'')+
+    (prText?'<div style="font-size:10px;font-weight:700;color:var(--cyan);margin-top:3px;">★ '+prText+'</div>':'');
   tip.style.display='block';
   var tw=tip.offsetWidth||150;
   var th=tip.offsetHeight||64;
@@ -5848,29 +5911,32 @@ function drawChartBoth(bilatLogs,uniLogs,exName){
   });
 
   // Draw a line + dots for a log set
-  function drawLine(logs, color, label){
+  function drawLine(logs, color, label, dashed){
     if(!logs.length) return;
     var pts=logs.map(function(l,i){return {x:xp(i,logs.length),y:yp(parseFloat(l.load)||0),log:l,i:i};});
     if(pts.length>1){
       var poly=document.createElementNS(ns,'polyline');
       poly.setAttribute('points',pts.map(function(p){return p.x+','+p.y;}).join(' '));
-      poly.setAttribute('fill','none');poly.setAttribute('stroke',color.replace('1)','0.4)'));
-      poly.setAttribute('stroke-width','2');svg.appendChild(poly);
+      poly.setAttribute('fill','none');poly.setAttribute('stroke',color);
+      poly.setAttribute('stroke-width','2');
+      if(dashed) poly.setAttribute('stroke-dasharray','5 4');
+      svg.appendChild(poly);
     }
     pts.forEach(function(p){
       var c=document.createElementNS(ns,'circle');
       c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',5);
-      // PRs are shown on BOTH lines, using the same meaning as the single
-      // view: cyan a load PR, orange a rep PR, ring = it still stands.
-      // The line colour keeps the two series apart.
+      // Same two states as the single view: cyan = a PR was set here,
+      // off-white = none, white ring = that PR still stands. Cyan is
+      // reserved for PRs, so the two series are told apart by line
+      // style (solid vs dashed) rather than by colour.
       var f=bothPrMap[p.log.sessId+':'+p.log.exIdx]||{};
-      var fill=f.prLoad?'#00B4D8':f.prRep?'#FF8C00':'#DCE6F0';
-      var ring=f.prLoadCurrent?'#FF8C00':f.prRepCurrent?'#00B4D8':null;
+      var fill=(f.prLoad||f.prRep)?'#00B4D8':'#DCE6F0';
+      var ring=(f.prLoadCurrent||f.prRepCurrent)?'#F0F6FC':null;
       c.setAttribute('fill',fill);c.setAttribute('opacity','0.95');
       if(ring){c.setAttribute('stroke',ring);c.setAttribute('stroke-width','3');}
       c.style.cursor='pointer';
       c.addEventListener('click',function(evt){
-        showChartTooltip(evt,p.log.load,p.log.reps,p.log.date,unit);
+        showChartTooltip(evt,p.log.load,p.log.reps,p.log.date,unit,p.log.rpe,prLabel(p.log,f),label);
         evt.stopPropagation();
       });
       svg.appendChild(c);
@@ -5887,19 +5953,25 @@ function drawChartBoth(bilatLogs,uniLogs,exName){
     });
   }
 
-  drawLine(bLogs,'rgba(0,180,216,1)','Bilateral');
-  drawLine(uLogs,'rgba(255,184,0,1)','Unilateral');
+  drawLine(bLogs,'rgba(220,230,240,0.45)','Bilateral',false);
+  drawLine(uLogs,'rgba(220,230,240,0.45)','Unilateral',true);
 
   // Legend
   var legY=pad.t+10;
-  function leg(x,col,label){
-    var c=document.createElementNS(ns,'circle');c.setAttribute('cx',x);c.setAttribute('cy',legY);
-    c.setAttribute('r',4);c.setAttribute('fill',col);svg.appendChild(c);
-    var t=document.createElementNS(ns,'text');t.setAttribute('x',x+7);t.setAttribute('y',legY+4);
+  // The series are distinguished by line style now, not colour, so the
+  // legend has to show a line rather than a dot.
+  function leg(x,label,dashed){
+    var ln=document.createElementNS(ns,'line');
+    ln.setAttribute('x1',x);ln.setAttribute('x2',x+14);
+    ln.setAttribute('y1',legY);ln.setAttribute('y2',legY);
+    ln.setAttribute('stroke','rgba(220,230,240,0.75)');ln.setAttribute('stroke-width','2');
+    if(dashed) ln.setAttribute('stroke-dasharray','4 3');
+    svg.appendChild(ln);
+    var t=document.createElementNS(ns,'text');t.setAttribute('x',x+19);t.setAttribute('y',legY+3.5);
     t.setAttribute('fill','#888');t.setAttribute('font-size','9');t.textContent=label;svg.appendChild(t);
   }
-  if(bLogs.length) leg(pad.l+4,'rgba(0,180,216,1)','Bilateral');
-  if(uLogs.length) leg(pad.l+(bLogs.length?70:4),'rgba(255,184,0,1)','Unilateral');
+  if(bLogs.length) leg(pad.l+4,'Bilateral',false);
+  if(uLogs.length) leg(pad.l+(bLogs.length?78:4),'Unilateral',true);
 }
 
 
@@ -5921,7 +5993,7 @@ function drawChart(logs){
     var line=document.createElementNS(ns,'line');line.setAttribute('x1',pad.l);line.setAttribute('x2',W-pad.r);line.setAttribute('y1',yy);line.setAttribute('y2',yy);line.setAttribute('stroke','rgba(255,255,255,0.05)');line.setAttribute('stroke-width','1');svg.appendChild(line);
     var txt=document.createElementNS(ns,'text');txt.setAttribute('x',pad.l-4);txt.setAttribute('y',yy+4);txt.setAttribute('fill','#555');txt.setAttribute('font-size','9');txt.setAttribute('text-anchor','end');txt.textContent=Math.round(minL+(maxL-minL)*t);svg.appendChild(txt);
   });
-  if(n>1){var poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',logs.map(function(l,i){return xp(i)+','+yp(l.load);}).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','rgba(0,180,216,0.25)');poly.setAttribute('stroke-width','2');svg.appendChild(poly);}
+  if(n>1){var poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',logs.map(function(l,i){return xp(i)+','+yp(l.load);}).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','rgba(220,230,240,0.22)');poly.setAttribute('stroke-width','2');svg.appendChild(poly);}
   var maxAvg=Math.max.apply(null,logs.map(function(l){return l.avgReps;}));if(!maxAvg) maxAvg=1;
   logs.forEach(function(l,i){
     var r=4+(l.avgReps/maxAvg)*8;
@@ -5930,14 +6002,19 @@ function drawChart(logs){
     // Fill = kind of PR (cyan load, orange rep, soft white nothing).
     // Ring = this PR still stands, in the opposite PR colour so it reads
     // clearly against the fill.
-    var color=l.prLoad?'#00B4D8':l.prRep?'#FF8C00':'#DCE6F0';
-    var stroke=l.prLoadCurrent?'#FF8C00':l.prRepCurrent?'#00B4D8':'none';
+    // Two states only. Which KIND of PR it was is answered by tapping the
+    // dot — on the chart itself, "a PR happened here" is the whole signal,
+    // and a load PR is already obvious from the dot sitting higher.
+    var anyPR=!!(l.prLoad||l.prRep);
+    var stillStands=!!(l.prLoadCurrent||l.prRepCurrent);
+    var color=anyPR?'#00B4D8':'#DCE6F0';
+    var stroke=stillStands?'#F0F6FC':'none';
     var c=document.createElementNS(ns,'circle');c.setAttribute('cx',xp(i));c.setAttribute('cy',yp(l.load));c.setAttribute('r',r);c.setAttribute('fill',color);c.setAttribute('opacity','0.9');
     if(stroke!=='none'){c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','3');}svg.appendChild(c);
     (function(dot,log){
       dot.style.cursor='pointer';
       dot.addEventListener('click',function(evt){
-        showChartTooltip(evt,log.load,log.reps,log.date,settings.unit||'kg');
+        showChartTooltip(evt,log.load,log.reps,log.date,settings.unit||'kg',log.rpe,prLabel(log));
         evt.stopPropagation();
       });
     })(c,l);

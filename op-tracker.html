@@ -252,16 +252,16 @@ select.field-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http:/
 .hist-table td{font-size:12px;padding:8px 8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
 .hist-table td:first-child{font-family:'Inter',sans-serif;color:var(--dim);}
 .hist-table tr:last-child td{border-bottom:none;}
-.pr-load-cell{color:var(--cyan);font-weight:700;}
-.pr-load-current-cell{color:var(--cyan);font-weight:700;text-decoration:underline;text-decoration-color:var(--orange);text-underline-offset:3px;}
-.pr-rep-cell{color:var(--orange);font-weight:700;}
-.pr-rep-current-cell{color:var(--orange);font-weight:700;text-decoration:underline;text-decoration-color:var(--cyan);text-underline-offset:3px;}
+.pr-pr-cell{color:var(--cyan);font-weight:700;}
+.pr-current-cell{color:var(--cyan);font-weight:700;text-decoration:underline;text-decoration-color:#F0F6FC;text-decoration-thickness:2px;text-underline-offset:3px;}
+
+
 .pr-both-cell{color:var(--green);font-weight:700;}
 .pr-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;display:inline-block;}
-.pr-badge-load{background:rgba(0,180,216,0.15);color:var(--cyan);}
-.pr-badge-rep{background:rgba(255,140,0,0.15);color:var(--orange);}
-.pr-badge-rep-current{background:rgba(255,140,0,0.18);color:var(--orange);box-shadow:inset 0 0 0 1px var(--cyan);}
-.pr-badge-load-current{background:rgba(0,180,216,0.18);color:var(--cyan);box-shadow:inset 0 0 0 1px var(--orange);}
+.pr-badge-prior{background:rgba(0,180,216,0.15);color:var(--cyan);}
+
+
+.pr-badge-current{background:rgba(0,180,216,0.22);color:var(--cyan);box-shadow:inset 0 0 0 1.5px #F0F6FC;}
 .edit-entry-btn{background:none;border:1px solid var(--cyan-border);border-radius:5px;color:var(--cyan);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;margin-right:4px;}
 .del-entry-btn{background:none;border:1px solid rgba(255,77,77,0.3);border-radius:5px;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;}
 .edit-form-row{background:var(--surface2);padding:10px 14px;display:grid;grid-template-columns:56px repeat(5,1fr) 44px;gap:4px;border-bottom:1px solid var(--border);}
@@ -954,8 +954,8 @@ body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off
     <div class="modal-chart-section"><svg class="chart-svg" id="prog-chart"></svg>
       <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
         <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#DCE6F0;margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>No PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>PR</span>
-        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);border:2px solid #F0F6FC;margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>PR still stands</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Prior PR</span>
+        <span style="font-size:9px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cyan);border:2px solid #F0F6FC;margin-right:4px;vertical-align:middle;box-sizing:border-box;"></span>Current PR</span>
         <span style="font-size:9px;color:var(--muted);font-style:italic;">Tap any dot for the detail</span></div>
     </div>
     <div class="modal-summary-strip" id="modal-summary"></div>
@@ -5728,16 +5728,20 @@ function renderProgModal(name,logs,allLogs){
   var tbody=document.getElementById('hist-body');tbody.innerHTML='';
   enriched.slice().reverse().forEach(function(l,rowIdx){
     var origIdx=enriched.length-1-rowIdx;
+    // Same two states as the chart: cyan says a PR happened, the white
+    // ring/underline says it is the one that still stands. The badge text
+    // keeps naming which KIND it was, which the chart leaves to the tap.
     var pr=l.isBase?'base':(l.prLoad&&l.prRep?'both':l.prLoad?'load':l.prRep?'rep':'');
-    var repCur=l.prRepCurrent;
-    var loadCur=l.prLoadCurrent;
-    var cls=pr==='load'||pr==='both'?(loadCur?'pr-load-current-cell':'pr-load-cell')
-           :pr==='rep'?(repCur?'pr-rep-current-cell':'pr-rep-cell'):'';
-    var repBadge='<span class="pr-badge '+(repCur?'pr-badge-rep-current':'pr-badge-rep')+'">'+(repCur?'Rep PR \u2605':'Rep PR')+'</span>';
+    var isCur=!!(l.prLoadCurrent||l.prRepCurrent);
+    var cls=pr&&pr!=='base'?(isCur?'pr-current-cell':'pr-pr-cell'):'';
+    var bCls='pr-badge '+(isCur?'pr-badge-current':'pr-badge-prior');
+    var bTitle=isCur?'Current PR':'Prior PR';
+    var star=isCur?' \u2605':'';
+    function pb(txt){return '<span class="'+bCls+'" title="'+bTitle+'">'+txt+star+'</span>';}
     var badge=pr==='base'?'<span class="pr-badge" style="background:rgba(255,255,255,0.08);color:var(--dim);">Base Load</span>'
-      :pr==='both'?'<span class="pr-badge pr-badge-load">L</span>'+'<span class="pr-badge '+(repCur?'pr-badge-rep-current':'pr-badge-rep')+'">R'+(repCur?' \u2605':'')+'</span>'
-      :pr==='load'?'<span class="pr-badge '+(loadCur?'pr-badge-load-current':'pr-badge-load')+'">Load PR'+(loadCur?' ★':'')+'</span>'
-      :pr==='rep'?repBadge:'&mdash;';
+      :pr==='both'?pb('Load + Rep PR')
+      :pr==='load'?pb('Load PR')
+      :pr==='rep'?pb('Rep PR'):'&mdash;';
     var tr=document.createElement('tr');tr.setAttribute('data-row',origIdx);
     tr.innerHTML='<td style="font-size:11px;color:var(--dim);white-space:nowrap;">'+(l.date||'&mdash;')+'</td>'+
       '<td style="font-size:10px;color:var(--muted);white-space:nowrap;">'+(l.workout||'&mdash;')+'</td>'+
@@ -5823,9 +5827,9 @@ function prLabel(log,flags){
   var f=flags||log||{};
   var isLoad=!!f.prLoad,isRep=!!f.prRep;
   if(!isLoad&&!isRep) return '';
-  var kind=(isLoad&&isRep)?'Load + rep PR':(isLoad?'Load PR':'Rep PR');
+  var kind=(isLoad&&isRep)?'load + rep PR':(isLoad?'load PR':'rep PR');
   var stands=!!(f.prLoadCurrent||f.prRepCurrent);
-  return kind+(stands?' \u00b7 still stands':' \u00b7 since beaten');
+  return (stands?'Current ':'Prior ')+kind;
 }
 
 function showChartTooltip(evt,load,reps,date,unit,rpe,prText,seriesText){
@@ -5926,7 +5930,7 @@ function drawChartBoth(bilatLogs,uniLogs,exName){
       var c=document.createElementNS(ns,'circle');
       c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',5);
       // Same two states as the single view: cyan = a PR was set here,
-      // off-white = none, white ring = that PR still stands. Cyan is
+      // off-white = none, white ring = it is the current PR. Cyan is
       // reserved for PRs, so the two series are told apart by line
       // style (solid vs dashed) rather than by colour.
       var f=bothPrMap[p.log.sessId+':'+p.log.exIdx]||{};
@@ -5997,11 +6001,6 @@ function drawChart(logs){
   var maxAvg=Math.max.apply(null,logs.map(function(l){return l.avgReps;}));if(!maxAvg) maxAvg=1;
   logs.forEach(function(l,i){
     var r=4+(l.avgReps/maxAvg)*8;
-    // Same meaning as the session table: orange = the rep PR that still
-    // stands, green = a rep PR since beaten, cyan ring = a load PR.
-    // Fill = kind of PR (cyan load, orange rep, soft white nothing).
-    // Ring = this PR still stands, in the opposite PR colour so it reads
-    // clearly against the fill.
     // Two states only. Which KIND of PR it was is answered by tapping the
     // dot — on the chart itself, "a PR happened here" is the whole signal,
     // and a load PR is already obvious from the dot sitting higher.

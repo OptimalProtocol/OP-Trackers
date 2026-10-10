@@ -2684,10 +2684,16 @@ function renderRepRangeChip(card,exName){
 }
 
 function showExerciseStatusBar(card,exName){
-  // Remove existing status bar and note
-  ['ex-status-bar','ex-last-note','ex-card-meta','ex-card-target'].forEach(function(cls){
-    var el=card.querySelector('.'+cls);if(el) el.remove();
+  // Clear EVERYTHING this function draws before deciding what to draw.
+  // This must run before any early return: the first-time branch returns
+  // early, so cleanup placed further down never ran for it, and each
+  // re-render (bilat flip, equipment change, Add Set) stacked another
+  // target banner on the card. querySelectorAll, not querySelector, so
+  // any copies already stacked in a live session are swept up too.
+  ['ex-status-bar','ex-last-note','ex-card-meta','ex-card-target','prog-prompt'].forEach(function(cls){
+    card.querySelectorAll('.'+cls).forEach(function(el){el.remove();});
   });
+  card.classList.remove('ready-to-progress');
 
   if(!exName) return;
   var unit=settings.unit||'kg';
@@ -2696,7 +2702,11 @@ function showExerciseStatusBar(card,exName){
   var bt=document.getElementById('bt-'+card.id);
   var activeBtn=bt?bt.querySelector('.bilat-btn.active'):null;
   var bilatMode=activeBtn?activeBtn.getAttribute('data-mode'):'bilateral';
-  var logs=getLogsForExercise(exName,bilatMode);
+  // Equipment as well as bilat mode: the target below is computed per
+  // variant, so "first time?", "since PR" and the last-session line must
+  // be too, or a switch to an untried variant shows the old variant's
+  // history with no target at all.
+  var logs=getLogsForExercise(exName,bilatMode,card.getAttribute('data-equipment')||'');
 
   // The rep range is exactly what a first-timer needs, so render the chip
   // before bailing out on empty history. Without it a brand-new exercise

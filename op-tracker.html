@@ -479,6 +479,7 @@ body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off
 .ex-collapsed-row .cr-tick::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:8px;
   border:solid var(--green);border-width:0 2px 2px 0;transform:rotate(45deg);}
 .ex-collapsed-row .cr-main{flex:1;min-width:0;}
+.cr-name,.cr-sum{display:block;}
 .ex-collapsed-row .cr-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ex-collapsed-row .cr-sum{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1003,6 +1004,8 @@ body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off
       <textarea class="ps-notes" id="ps-notes-input" placeholder="Anything worth noting about this session&hellip;" rows="3"></textarea>
     </div>
     <button class="btn btn-primary btn-full" style="margin-top:8px;" id="ps-done-btn">Done &#10003;</button>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px;" id="ps-back-btn">&#8592; Back to session</button>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5;">Tapped Complete too early? Go back and keep logging &mdash; nothing is saved until you tap Done.</div>
   </div>
 </div>
 
@@ -1177,7 +1180,7 @@ body.rpe-off .set-in.rpe,body.rpe-off .sh-rpe,body.rpe-off .rpe-col,body.rpe-off
 <script>
 // ── MUSCL
 // ── MUSCLE GROUPS ──
-var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Calves","Back – Lats","Back – Mid","Shoulders","Chest","Biceps","Triceps","Abs & Core"];
+var MUSCLE_GROUPS=["Quads","Hamstrings","Glutes","Adductors","Calves","Back – Lats","Back – Mid","Shoulders","Chest","Biceps","Triceps","Abs & Core"];
 
 
 
@@ -1415,14 +1418,14 @@ var BILAT_MAP = {
 };
 
 var SECONDARY_MAP = {
-  "Squat": {"Glutes":0.5},
-  "Hack Squat": {"Glutes":0.5},
-  "Leg Press": {"Glutes":0.5},
-  "Bulgarian Split Squat": {"Glutes":0.5},
-  "Goblet Squat": {"Glutes":0.5},
-  "Walking Lunge": {"Glutes":0.5},
-  "Reverse Lunge": {"Glutes":0.5},
-  "Step-Up": {"Glutes":0.5},
+  "Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Hack Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Leg Press": {"Glutes":0.5,"Adductors":0.5},
+  "Bulgarian Split Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Goblet Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Walking Lunge": {"Glutes":0.5,"Adductors":0.5},
+  "Reverse Lunge": {"Glutes":0.5,"Adductors":0.5},
+  "Step-Up": {"Glutes":0.5,"Adductors":0.25},
   "Conventional Deadlift": {"Glutes":0.5,"Back – Mid":0.5},
   "Nordic Curl / Nordic Hamstring Curl": {"Glutes":0.25},
   "Romanian Deadlift (RDL)": {"Glutes":0.5,"Back – Mid":0.25},
@@ -1458,13 +1461,13 @@ var SECONDARY_MAP = {
   "Close-Grip Press": {"Shoulders":0.25,"Chest":0.5},
   "Dip": {"Shoulders":0.25,"Chest":0.5},
   "Ab Wheel Rollout": {"Back – Lats":0.25},
-  "Copenhagen Plank": {"Glutes":0.25},
-  "Front Squat": {"Glutes":0.5},
-  "Box Squat": {"Glutes":0.5},
-  "Pendulum Squat": {"Glutes":0.5},
-  "Belt Squat": {"Glutes":0.5},
-  "Sumo Deadlift": {"Hamstrings":0.5,"Back – Mid":0.5},
-  "Curtsy Lunge": {"Quads":0.5},
+  "Copenhagen Plank": {"Glutes":0.25,"Adductors":0.5},
+  "Front Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Box Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Pendulum Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Belt Squat": {"Glutes":0.5,"Adductors":0.5},
+  "Sumo Deadlift": {"Hamstrings":0.5,"Back – Mid":0.5,"Adductors":0.5},
+  "Curtsy Lunge": {"Quads":0.5,"Adductors":0.5},
   "Rack Pull": {"Hamstrings":0.5,"Glutes":0.25},
   "Farmer Carry": {"Back – Mid":0.5},
   "Back Extension (Prone)": {"Glutes":0.5},
@@ -4815,6 +4818,10 @@ document.getElementById('save-btn').addEventListener('click',function(){
   if(!sess.workout){showToast('Select a workout type');return;}
   var hasData=sess.exercises.some(function(e){return e.name&&setsHaveData(e.sets);});
   if(!hasData){showToast('Log at least one exercise');return;}
+  // Everything Complete Session changes, captured first so Back to session
+  // can undo it exactly: the history entry, any draft it replaced, and the
+  // deloads it marks as finished.
+  completeUndo={history:JSON.stringify(sessionHistory),deloads:JSON.stringify(getActiveDeloads()),draftId:draftSessionId};
   if(draftSessionId){sessionHistory=sessionHistory.filter(function(s){return s.id!==draftSessionId;});draftSessionId=null;}
   sess.id=Date.now();sess.status='complete';
   // Tag exercises performed under an active deload, then clear the flag so
@@ -4906,7 +4913,24 @@ document.querySelectorAll('#ps-targets-opts .ps-opt').forEach(function(btn){
 document.querySelectorAll('#ps-energy-opts .ps-opt').forEach(function(btn){
   btn.addEventListener('click',function(){document.querySelectorAll('#ps-energy-opts .ps-opt').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');});
 });
+var completeUndo=null;
+document.getElementById('ps-back-btn').addEventListener('click',function(){
+  if(!completeUndo){ document.getElementById('post-session-overlay').classList.remove('open'); return; }
+  try{
+    sessionHistory=JSON.parse(completeUndo.history);
+    lsSet('op-history',sessionHistory);
+    lsSet('op-deloads',JSON.parse(completeUndo.deloads));
+    draftSessionId=completeUndo.draftId;
+  }catch(e){}
+  completeUndo=null;
+  document.getElementById('post-session-overlay').classList.remove('open');
+  // The cards never left the screen; refresh what depends on history.
+  try{ refreshAllCardBanners(); }catch(e){}
+  saveCurrentSession();
+  showToast('Back to your session \u2014 nothing saved yet');
+});
 document.getElementById('ps-done-btn').addEventListener('click',function(){
+  completeUndo=null;
   var feel=document.getElementById('ps-feel').value;
   var targets=document.querySelector('#ps-targets-opts .ps-opt.selected');
   var energy=document.querySelector('#ps-energy-opts .ps-opt.selected');
@@ -4944,6 +4968,14 @@ function isoDow(dateStr){
   return d.getDay()||7;
 }
 
+function creditWords(credit){
+  if(credit>=1) return 'full credit';
+  if(credit>=0.75) return 'three-quarter credit';
+  if(credit>=0.5) return 'half credit';
+  if(credit>=0.25) return 'quarter credit';
+  return 'partial credit';
+}
+
 function weekSetsThroughDay(wkKey,maxDow,group){
   // Volume logged in that ISO week up to and including maxDow, counted on
   // EXACTLY the same basis as the weekly cards:
@@ -4951,7 +4983,10 @@ function weekSetsThroughDay(wkKey,maxDow,group){
   //   a group   → that muscle's working sets + indirect credit (= group.sets)
   // Counting it any other way made the like-for-like comparison compare
   // different things on each side.
-  var total=0;
+  // Whole-set basis, identical to the cards: direct + indirect rounded once
+  // per muscle, summed across muscles when no group is given.
+  var per={};
+  function slot(g){ if(!per[g]) per[g]={d:0,i:0}; return per[g]; }
   sessionHistory.forEach(function(sess){
     if(sess.status==='draft'||!sess.date) return;
     if(getISOWeek(sess.date)!==wkKey) return;
@@ -4964,16 +4999,13 @@ function weekSetsThroughDay(wkKey,maxDow,group){
       var sets=workingSets(s).length;
       var dropN=dropSets(s).length;
       var sec=SECONDARY_MAP[ex.canonicalName||ex.name]||{};
-      if(!group){
-        total+=sets;
-        Object.keys(sec).forEach(function(g){ total+=(sets+dropN)*(sec[g]||0); });
-      } else {
-        if(lib.group===group) total+=sets;
-        if(sec[group]) total+=(sets+dropN)*sec[group];
-      }
+      slot(lib.group).d+=sets;
+      Object.keys(sec).forEach(function(g){ slot(g).i+=(sets+dropN)*(sec[g]||0); });
     });
   });
-  return total;
+  function shown(g){ var p=per[g]; return p?p.d+Math.round(p.i):0; }
+  if(group) return shown(group);
+  return Object.keys(per).reduce(function(a,g){return a+shown(g);},0);
 }
 
 
@@ -5012,7 +5044,7 @@ function renderVolumeTab(){
       weekMap[wk].groups[grp].sets+=sets;
       weekMap[wk].groups[grp].directSets+=sets;
       weekMap[wk].groups[grp].dropSets+=dropN;
-      if(!weekMap[wk].groups[grp].exercises[ex.name]) weekMap[wk].groups[grp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,totalReps:0};
+      if(!weekMap[wk].groups[grp].exercises[ex.name]) weekMap[wk].groups[grp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,rawIndirect:0,credit:0,totalReps:0};
       weekMap[wk].groups[grp].exercises[ex.name].sets+=sets;
       weekMap[wk].groups[grp].exercises[ex.name].directSets+=sets;
       weekMap[wk].groups[grp].exercises[ex.name].totalReps+=totalReps;
@@ -5025,12 +5057,30 @@ function renderVolumeTab(){
         if(!weekMap[wk].groups[secGrp]) weekMap[wk].groups[secGrp]={sets:0,directSets:0,indirectSets:0,exercises:{}};
         weekMap[wk].groups[secGrp].sets+=indirectSets;
         weekMap[wk].groups[secGrp].indirectSets+=indirectSets;
-        if(!weekMap[wk].groups[secGrp].exercises[ex.name]) weekMap[wk].groups[secGrp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,totalReps:0};
+        if(!weekMap[wk].groups[secGrp].exercises[ex.name]) weekMap[wk].groups[secGrp].exercises[ex.name]={sets:0,directSets:0,indirectSets:0,rawIndirect:0,credit:0,totalReps:0};
         weekMap[wk].groups[secGrp].exercises[ex.name].sets+=indirectSets;
         weekMap[wk].groups[secGrp].exercises[ex.name].indirectSets+=indirectSets;
+        weekMap[wk].groups[secGrp].exercises[ex.name].rawIndirect+=(sets+dropN);
+        weekMap[wk].groups[secGrp].exercises[ex.name].credit=credit;
         weekMap[wk].totalSets+=indirectSets;
       });
     });
+  });
+
+  // Whole sets on screen. Indirect credit is weighted (an RDL set is half a
+  // glute set), which produced totals like 10.5 that read as nonsense. It is
+  // now rounded ONCE per muscle per week, and every total shown is
+  // direct + that rounded figure, so the breakdown always adds up to the
+  // headline and the week total always equals the sum of its rows.
+  Object.keys(weekMap).forEach(function(wk){
+    var t=0;
+    Object.keys(weekMap[wk].groups).forEach(function(g){
+      var gd=weekMap[wk].groups[g];
+      gd.shownIndirect=Math.round(gd.indirectSets||0);
+      gd.shownSets=(gd.directSets||0)+gd.shownIndirect;
+      t+=gd.shownSets;
+    });
+    weekMap[wk].totalSets=t;
   });
 
   var weeks=Object.keys(weekMap).sort().reverse().slice(0,12);
@@ -5166,7 +5216,7 @@ function renderVolumeTab(){
         '<div style="font-size:11px;font-weight:700;color:'+color+';min-width:80px;text-align:right;">'+mc.hits+'/'+mc.total+' weeks</div>'+
       '</div>';
     });
-    mevHtml+='<div style="padding:8px 14px;font-size:10px;color:var(--muted);">MEV = 10+ sets per muscle per week. Green \u2265 75% consistency, amber \u2265 50%, red below 50%.</div>';
+    mevHtml+='<div style="padding:8px 14px;font-size:10px;color:var(--muted);">Weeks where direct sets reached that muscle\u2019s MEV (set per muscle in Settings). Green \u2265 75% of weeks, amber \u2265 50%, red below 50%.</div>';
     mevCard.innerHTML=mevHtml;
     container.appendChild(mevCard);
   }
@@ -5175,7 +5225,7 @@ function renderVolumeTab(){
   weeks.forEach(function(wk,wkIdx){
     var wkData=weekMap[wk];
     var groups=wkData.groups;
-    var maxSets=Math.max.apply(null,Object.values(groups).map(function(g){return g.sets;}).concat([1]));
+    var maxSets=Math.max.apply(null,Object.values(groups).map(function(g){return g.shownSets;}).concat([1]));
     var startDate=getWeekStartDate(wk);
     var todayDow=new Date().getDay()||7;
     var isBest=wk===bestWk&&weeks.length>1&&wk!==currentWk;
@@ -5241,9 +5291,9 @@ function renderVolumeTab(){
     // Muscle detail (expanded for current week, collapsed for prior)
     html+='<div id="'+weekDrillId+'" style="display:'+(isCurrentWk?'block':'none')+';">';
     Object.keys(groups).sort().forEach(function(grp){
-      var gData=groups[grp];var sets=gData.sets;var pct=Math.round(sets/maxSets*100);
-      var directS=gData.directSets||0,dropS=gData.dropSets||0,indirectS=gData.indirectSets||0;
-      var prevSets=prevGroups[grp]?prevGroups[grp].sets:null;
+      var gData=groups[grp];var sets=gData.shownSets;var pct=Math.round(sets/maxSets*100);
+      var directS=gData.directSets||0,dropS=gData.dropSets||0,indirectS=gData.shownIndirect||0;
+      var prevSets=prevGroups[grp]?prevGroups[grp].shownSets:null;
       var trend='';
       if(prevSets!==null){
         if(sets>prevSets) trend='<span style="color:var(--green);font-size:11px;margin-left:3px;">&#9650;</span>';
@@ -5269,21 +5319,46 @@ function renderVolumeTab(){
       }
       var exDrillId='exdrill-'+wk.replace('-','_')+'-'+grp.replace(/[^a-z0-9]/gi,'_');
       html+='<div style="border-bottom:1px solid var(--border);">';
-      html+='<div data-drill="'+exDrillId+'" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;">'+
-        '<div style="min-width:100px;font-size:12px;font-weight:500;display:flex;align-items:center;">'+grp+trend+'</div>'+
-        '<div style="flex:1;">'+landmarkBarHtml(grp,directS)+'</div>'+
-        '<div style="font-size:12px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';">'+Math.round(directS*10)/10+' work'+(dropS?' · '+Math.round(dropS*10)/10+' drop':'')+' · '+Math.round(indirectS*10)/10+' indirect</div>'+
-        mevTip+
-        '<span style="color:var(--muted);font-size:10px;">&#9660;</span>'+
+      var parts=[directS+' direct'];
+      if(indirectS) parts.push(indirectS+' indirect');
+      if(dropS) parts.push(dropS+' drop');
+      html+='<div data-drill="'+exDrillId+'" style="padding:9px 14px;cursor:pointer;">'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+          '<div style="min-width:96px;font-size:12px;font-weight:500;display:flex;align-items:center;">'+grp+trend+'</div>'+
+          '<div style="flex:1;min-width:0;">'+landmarkBarHtml(grp,directS)+'</div>'+
+          '<div style="font-size:13px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+mevColor+';white-space:nowrap;">'+sets+' set'+(sets===1?'':'s')+'</div>'+
+          '<span style="color:var(--muted);font-size:10px;">&#9660;</span>'+
+        '</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:2px 8px;margin-top:3px;padding-left:104px;font-size:10px;color:var(--dim);font-family:JetBrains Mono,monospace;">'+
+          '<span>'+parts.join(' \u00b7 ')+'</span>'+mevTip+
+        '</div>'+
       '</div>';
       html+='<div id="'+exDrillId+'" style="display:none;background:var(--surface2);padding:4px 14px 10px;">';
-      Object.keys(gData.exercises).sort(function(a,b){return gData.exercises[b].sets-gData.exercises[a].sets;}).forEach(function(exName){
+      // Direct work first, then exercises that only assisted. Assisting
+      // sets are shown as the sets actually done, with the credit in words,
+      // so no fractional "sets" ever appear.
+      var exNames=Object.keys(gData.exercises);
+      var directNames=exNames.filter(function(n){return gData.exercises[n].directSets>0;})
+        .sort(function(a,b){return gData.exercises[b].directSets-gData.exercises[a].directSets;});
+      var assistNames=exNames.filter(function(n){return !(gData.exercises[n].directSets>0)&&gData.exercises[n].rawIndirect>0;})
+        .sort(function(a,b){return gData.exercises[b].rawIndirect-gData.exercises[a].rawIndirect;});
+      directNames.forEach(function(exName){
         var exData=gData.exercises[exName];
-        html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">'+
-          '<span>'+exName+'</span>'+
-          '<div style="display:flex;gap:10px;"><span style="color:var(--dim);">'+exData.totalReps+' reps</span><span style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+exData.sets+' sets</span></div>'+
+        html+='<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">'+
+          '<span style="min-width:0;">'+exName+'</span>'+
+          '<div style="display:flex;gap:10px;white-space:nowrap;"><span style="color:var(--dim);">'+exData.totalReps+' reps</span><span style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--cyan);">'+exData.directSets+' set'+(exData.directSets===1?'':'s')+'</span></div>'+
         '</div>';
       });
+      if(assistNames.length){
+        html+='<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 0 2px;">Assisting \u2014 counts as '+indirectS+' indirect</div>';
+        assistNames.forEach(function(exName){
+          var exData=gData.exercises[exName];
+          html+='<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">'+
+            '<span style="min-width:0;color:var(--dim);">'+exName+'</span>'+
+            '<span style="white-space:nowrap;color:var(--dim);font-family:JetBrains Mono,monospace;">'+exData.rawIndirect+' set'+(exData.rawIndirect===1?'':'s')+' \u00b7 '+creditWords(exData.credit)+'</span>'+
+          '</div>';
+        });
+      }
       html+='</div></div>';
     });
     html+='</div>';
@@ -5295,7 +5370,7 @@ function renderVolumeTab(){
   // MEV legend
   var legend=document.createElement('div');
   legend.style.cssText='padding:12px 16px;font-size:10px;color:var(--muted);line-height:1.6;';
-  legend.innerHTML='<strong style="color:var(--dim);">MEV = Minimum Effective Volume.</strong> 10+ sets/week per muscle is the evidence-based threshold for hypertrophy stimulus.';
+  legend.innerHTML='<strong style="color:var(--dim);">How sets are counted.</strong> Direct sets are working sets where the muscle is the main target. Indirect sets are credit from exercises where it assists \u2014 an RDL set counts as half a glute set \u2014 rounded to whole sets for each muscle each week. The bar and the MEV, MAV and MRV zones are judged on direct sets only, set per muscle in Settings.';
   container.appendChild(legend);
 }
 
@@ -5338,7 +5413,7 @@ function buildProgFilterChips(){
     wc.querySelectorAll('.filter-chip').forEach(function(btn){btn.addEventListener('click',function(){progFilters.workout=btn.getAttribute('data-workout');renderProgression();});});
   }
   var prBtn=document.getElementById('prog-pr-toggle');
-  if(prBtn){prBtn.style.background=progFilters.prOnly?'rgba(255,184,0,0.15)':'var(--surface)';prBtn.style.borderColor=progFilters.prOnly?'#FFB800':'var(--border)';prBtn.style.color=progFilters.prOnly?'#FFB800':'var(--dim)';}
+  if(prBtn){prBtn.style.background=progFilters.prOnly?'rgba(0,180,216,0.15)':'var(--surface)';prBtn.style.borderColor=progFilters.prOnly?'var(--cyan)':'var(--border)';prBtn.style.color=progFilters.prOnly?'var(--cyan)':'var(--dim)';}
   var clearBtn=document.getElementById('prog-clear-filters');
   var hasFilter=progFilters.muscle!=='All'||progFilters.workout!=='All'||progFilters.prOnly||(document.getElementById('prog-search')&&document.getElementById('prog-search').value);
   if(clearBtn) clearBtn.style.display=hasFilter?'block':'none';
@@ -6010,7 +6085,9 @@ function drawChart(logs){
   if(n>1){var poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',logs.map(function(l,i){return xp(i)+','+yp(l.load);}).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','rgba(220,230,240,0.22)');poly.setAttribute('stroke-width','2');svg.appendChild(poly);}
   var maxAvg=Math.max.apply(null,logs.map(function(l){return l.avgReps;}));if(!maxAvg) maxAvg=1;
   logs.forEach(function(l,i){
-    var r=4+(l.avgReps/maxAvg)*8;
+    // One size for every dot. Size used to scale with average reps, but it
+    // was unlabelled, so it read as meaning something it did not explain.
+    var r=6;
     // Two states only. Which KIND of PR it was is answered by tapping the
     // dot — on the chart itself, "a PR happened here" is the whole signal,
     // and a load PR is already obvious from the dot sitting higher.
